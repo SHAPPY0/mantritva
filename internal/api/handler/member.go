@@ -1,0 +1,76 @@
+package handler
+
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/shappy0/mantritva/internal/dto"
+	"github.com/shappy0/mantritva/internal/service"
+	"github.com/shappy0/mantritva/pkg/utils"
+)
+
+type MemberHandler struct {
+	Service service.MemberService
+}
+
+func NewMemberHandler(serivce service.MemberService) *MemberHandler {
+	return &MemberHandler{
+		Service: serivce,
+	}
+}
+
+func (h *MemberHandler) CreateMember(c *gin.Context) {
+	var req dto.MemberReq
+	if err := c.ShouldBind(&req); err != nil {
+		utils.Error(c, 400, "Invalid request data", err)
+		return
+	}
+	photo, err := c.FormFile("photo")
+	if err != nil {
+		utils.Error(c, 400, "Failed to get photo from request", err)
+		return
+	}
+	reps, err := h.Service.Create(c, req, photo)
+	if err != nil {
+		utils.Error(c, 500, "Failed to create member", err)
+		return
+	}
+	utils.Success(c, "Member created successfully", reps)
+}
+
+func (h *MemberHandler) ListMember(c *gin.Context) {
+	val, err := h.Service.List()
+	if err != nil {
+		utils.Error(c, 500, "Failed to fetch member", nil)
+		return
+	}
+	utils.Success(c, "Member fetched successfully", val)
+}
+
+func (h *MemberHandler) BulkMemberUpload(c *gin.Context) {
+	filePath := c.PostForm("filePath")
+
+	if filePath == "" {
+		utils.Error(c, 400, "Failed to get file path from request", nil)
+		return
+	}
+
+	ok, err := h.Service.BulkMemberUpload(c, filePath)
+	if err != nil {
+		utils.Error(c, 500, "Failed to upload party symbol", err)
+		return
+	}
+	if !ok {
+		utils.Error(c, 500, "Internal server error occured while uploading party symbol", err)
+		return
+	}
+	utils.Success(c, "Party symbol uploaded successfully", nil)
+}
+
+func (h *MemberHandler) GetMemberByName(c *gin.Context) {
+	name := c.Param("name")
+	member, err := h.Service.GetByName(name)
+	if err != nil {
+		utils.Error(c, 500, "Failed to fetch member", err)
+		return
+	}
+	utils.Success(c, "Member fetched successfully", member)
+}

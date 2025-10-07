@@ -1,0 +1,31 @@
+package model
+
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+type NewsPressPost struct {
+	ID              primitive.ObjectID `json:"_id" bson:"_id,omitempty"`
+	MemberId        uint               `json:"member_id" bson:"member_id"`
+	PartyId         uint               `json:"party_id" bson:"party_id"`
+	Subject         string             `json:"subject" bson:"subject"`
+	Type            string             `json:"type" bson:"type"`
+	Tone            string             `json:"tone" bson:"tone"`
+	Statement       string             `json:"statement" bson:"statement"`
+	StatementDate   time.Time          `json:"statement_date" bson:"statement_date"`
+	Status          string             `json:"status" bson:"status"`
+	UpvoteCount     uint               `json:"upvote_count" bson:"upvote_count"`
+	DownvoteCount   uint               `json:"downvote_count" bson:"downvote_count"`
+	AuditFieldsBSON `bson:",inline"`
+}
+
+type PostReaction struct {
+	ID              primitive.ObjectID `json:"_id" bson:"_id,omitempty"`
+	PostID          primitive.ObjectID `json:"post_id" bson:"post_id"`
+	UserID          int                `json:"user_id" bson:"user_id"`
+	Reaction        string             `json:"reaction" bson:"reaction"`
+	UserIP          string             `json:"user_ip" bson:"user_ip"`
+	AuditFieldsBSON `bson:",inline"`
+}

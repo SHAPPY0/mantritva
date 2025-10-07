@@ -1,0 +1,21 @@
+package api
+
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/shappy0/mantritva/internal/api/handler"
+	"github.com/shappy0/mantritva/internal/repository"
+	"github.com/shappy0/mantritva/internal/service"
+)
+
+func userRouter(rg *gin.RouterGroup, repos *repository.Repos) *gin.RouterGroup {
+	service := service.NewUserService(repos)
+	handler := handler.NewUserHandler(service)
+	//make route with url param
+	user := rg.Group("/user")
+	{
+		user.POST("/register", handler.CreateUser)
+		user.POST("/login", handler.LoginUser)
+	}
+
+	return rg
+}
