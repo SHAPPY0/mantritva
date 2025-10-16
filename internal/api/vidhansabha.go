@@ -13,10 +13,12 @@ func vidhanSabhaRouter(rg *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 	service := service.NewVidhanSabhaService(repository)
 	handler := handler.NewVidhanSabhaHandler(service)
 
-	state := rg.Group("/vidhansabha")
+	vs := rg.Group("/vidhansabha")
 	{
-		state.GET("/", handler.ListVidhanSabha)
-		state.POST("/", handler.CreateVidhanSabha)
+		vs.GET("/", handler.ListVidhanSabha)
+		vs.POST("/", handler.CreateVidhanSabha)
+		vs.GET("/getByStateId/:id", handler.GetByStateID)
+
 	}
 	return rg
 }

@@ -31,13 +31,21 @@ type CareerReq struct {
 	TermEndDate   utils.DateOnly `form:"term_end_date,omitempty" gorm:"type:date"`
 }
 
+type CareerRes struct {
+	Party     Party          `json:"party"`
+	TermStart utils.DateOnly `json:"term_start"`
+	TermEnd   utils.DateOnly `json:"term_end,omitempty"`
+	Position  Position       `json:"position"`
+	Region    Region         `json:"region,omitempty"`
+}
+
 type MemberParty struct {
-	Name          string         `json:"name,omitempty"`
-	Abbrv         string         `json:"abbrv,omitempty"`
-	Symbol        string         `json:"symbol,omitempty"`
-	Position      string         `json:"position,omitempty"`
-	TermStartDate utils.DateOnly `json:"term_start_date,omitempty"`
-	TermEndDate   utils.DateOnly `json:"term_end_date,omitempty"`
+	Name        string         `json:"name,omitempty"`
+	Abbrv       string         `json:"abbrv,omitempty"`
+	Symbol      string         `json:"symbol,omitempty"`
+	Position    string         `json:"position,omitempty"`
+	JoiningDate utils.DateOnly `json:"joining_date,omitempty"`
+	ExitDate    utils.DateOnly `json:"exit_date,omitempty"`
 }
 
 type MemberRes struct {

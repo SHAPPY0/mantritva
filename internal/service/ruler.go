@@ -6,14 +6,17 @@ import (
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
+	"github.com/shappy0/mantritva/pkg/utils"
 )
 
 type RulerService interface {
 	List() ([]model.Ruler, error)
 	Create(dto.RulerReq) (*model.Ruler, error)
 	GetCentralRuler() (*dto.RulerRes, error)
-	GetStateRuler(stateId string) (*dto.RulerRes, error)
 	GetCenterLeadership() (map[string][]dto.Leader, error)
+	GetStateRuler(string) (*dto.RulerRes, error)
+	GetStateLeadership(string) ([]map[string]interface{}, error)
+	GetRajyasabhaByStateID(string) ([]map[string]interface{}, error)
 }
 
 type rulerService struct {
@@ -23,6 +26,7 @@ type rulerService struct {
 	LeadershipRepository repository.LeadershipRepository
 	MemberRepository     repository.MemberRepository
 	StateRepository      repository.StateRepository
+	LoksabhRepository    repository.LoksabhaRepository
 }
 
 func NewRulerService(repos *repository.Repos) RulerService {
@@ -33,6 +37,7 @@ func NewRulerService(repos *repository.Repos) RulerService {
 		LeadershipRepository: repos.Leadership,
 		MemberRepository:     repos.Member,
 		StateRepository:      repos.State,
+		LoksabhRepository:    repos.Loksabha,
 	}
 }
 
@@ -95,7 +100,7 @@ func (s *rulerService) GetCentralRuler() (*dto.RulerRes, error) {
 			}
 		}
 		if ruler.ID > 0 {
-			leadership, err := s.LeadershipRepository.GetByRulerID(ruler.ID)
+			leadership, err := s.LeadershipRepository.GetByRulerID(ruler.ID, true)
 			if err != nil {
 				log.Printf("Failed to get leadership details by rulerID")
 			} else {
@@ -155,7 +160,7 @@ func (s *rulerService) GetStateRuler(stateId string) (*dto.RulerRes, error) {
 		}
 		//Fetch Leaders
 		if ruler.ID > 0 {
-			leadership, err := s.LeadershipRepository.GetByRulerID(ruler.ID)
+			leadership, err := s.LeadershipRepository.GetByRulerIDAndPosition(ruler.ID, string(utils.CHIEFMINISTER), false)
 			if err != nil {
 				log.Printf("Failed to get leadership details by rulerID")
 			} else {
@@ -179,6 +184,23 @@ func (s *rulerService) GetStateRuler(stateId string) (*dto.RulerRes, error) {
 	return &rulerDetail, nil
 }
 
+func (s *rulerService) GetStateLeadership(stateId string) ([]map[string]interface{}, error) {
+	// result := make(map[string][]dto.Leader)
+	stateRuler, err := s.Repository.GetStateRuler(stateId)
+	if err != nil {
+		return nil, err
+	}
+	if stateRuler != nil && stateRuler.ID > 0 {
+		postitons := []string{string(utils.CHIEFMINISTER), string(utils.MLA), string(utils.DEPUTYCHIEFMINISTER)}
+		leaders, err := s.LeadershipRepository.GetByRulerIDAndPositions(stateRuler.ID, stateId, postitons, false)
+		if err != nil {
+			log.Printf("Failed to get state leadership by rulerID %d", stateRuler.ID)
+		}
+		return leaders, nil
+	}
+	return nil, err
+}
+
 func (s *rulerService) GetCenterLeadership() (map[string][]dto.Leader, error) {
 	result := make(map[string][]dto.Leader)
 	centerRuler, err := s.Repository.GetCentralRuler()
@@ -186,7 +208,7 @@ func (s *rulerService) GetCenterLeadership() (map[string][]dto.Leader, error) {
 		return nil, err
 	}
 	if centerRuler != nil && centerRuler.ID > 0 {
-		leadership, err := s.LeadershipRepository.GetByRulerIDAndPosition(centerRuler.ID, "Cabinet Minister")
+		leadership, err := s.LeadershipRepository.GetByRulerIDAndPosition(centerRuler.ID, string(utils.CABINETMINISTER), true)
 		if err != nil {
 			log.Printf("Failed to get leadership details by rulerID")
 		} else {
@@ -196,20 +218,122 @@ func (s *rulerService) GetCenterLeadership() (map[string][]dto.Leader, error) {
 				if err != nil {
 					log.Printf("Failed to get member details by memberID %d", leader.MemberID)
 				} else {
-					cabMinLeader := dto.Leader{
+					item := dto.Leader{
 						Name:        member.Name,
 						Designation: dto.Position{Position: leader.Position, Role: leader.Role, Departments: leader.Departments},
 						Photo:       member.Photo,
 						TermStart:   leader.TermStart,
 					}
+					if leader.StateID > 0 {
+						state, err := s.StateRepository.GetByID(int(leader.StateID))
+						log.Printf("State fetch error: %v", err)
+						if err == nil {
+							item.State = state.Name
+						}
+					}
+					if leader.LoksabhaID > 0 {
+						loksabha, err := s.LoksabhRepository.GetByID(int(leader.LoksabhaID))
+						log.Printf("Loksabha fetch error: %v", err)
+						if err == nil {
+							item.Loksabha = loksabha.Name
+						}
+					}
+
 					// if !leader.TermEnd.IsNull() {
 					// 	cabMinLeader.TermEnd = *leader.TermEnd
 					// }
-					leaders = append(leaders, cabMinLeader)
+					leaders = append(leaders, item)
 				}
 			}
 			result["cabinet_minister"] = leaders
 		}
+
+		mpLeadership, err := s.LeadershipRepository.GetByRulerIDAndPosition(centerRuler.ID, string(utils.MP), true)
+		if err != nil {
+			log.Printf("Failed to get MPs details by rulerID")
+		} else {
+			var leaders []dto.Leader
+			for _, leader := range mpLeadership {
+				member, err := s.MemberRepository.GetByID(leader.MemberID)
+				if err != nil {
+					log.Printf("Failed to get member details by memberID %d", leader.MemberID)
+				} else {
+					item := dto.Leader{
+						Name:        member.Name,
+						Designation: dto.Position{Position: leader.Position, Role: leader.Role, Departments: leader.Departments},
+						Photo:       member.Photo,
+						TermStart:   leader.TermStart,
+					}
+					if leader.StateID > 0 {
+						state, err := s.StateRepository.GetByID(int(leader.StateID))
+						log.Printf("State fetch error: %v", err)
+						if err == nil {
+							item.State = state.Name
+						}
+					}
+					if leader.LoksabhaID > 0 {
+						loksabha, err := s.LoksabhRepository.GetByID(int(leader.LoksabhaID))
+						log.Printf("Loksabha fetch error: %v", err)
+						if err == nil {
+							item.Loksabha = loksabha.Name
+						}
+					}
+
+					// if !leader.TermEnd.IsNull() {
+					// 	cabMinLeader.TermEnd = *leader.TermEnd
+					// }
+					leaders = append(leaders, item)
+				}
+			}
+			result["member_of_parliament"] = leaders
+		}
+		mosLeadership, err := s.LeadershipRepository.GetByRulerIDAndPosition(centerRuler.ID, string(utils.MOS), true)
+		if err != nil {
+			log.Printf("Failed to get MOS details by rulerID")
+		} else {
+			var leaders []dto.Leader
+			for _, leader := range mosLeadership {
+				member, err := s.MemberRepository.GetByID(leader.MemberID)
+				if err != nil {
+					log.Printf("Failed to get member details by memberID %d", leader.MemberID)
+				} else {
+					item := dto.Leader{
+						Name:        member.Name,
+						Designation: dto.Position{Position: leader.Position, Role: leader.Role, Departments: leader.Departments},
+						Photo:       member.Photo,
+						TermStart:   leader.TermStart,
+					}
+					if leader.StateID > 0 {
+						state, err := s.StateRepository.GetByID(int(leader.StateID))
+						log.Printf("State fetch error: %v", err)
+						if err == nil {
+							item.State = state.Name
+						}
+					}
+					if leader.LoksabhaID > 0 {
+						loksabha, err := s.LoksabhRepository.GetByID(int(leader.LoksabhaID))
+						log.Printf("Loksabha fetch error: %v", err)
+						if err == nil {
+							item.Loksabha = loksabha.Name
+						}
+					}
+
+					// if !leader.TermEnd.IsNull() {
+					// 	cabMinLeader.TermEnd = *leader.TermEnd
+					// }
+					leaders = append(leaders, item)
+				}
+			}
+			result["member_of_state"] = leaders
+		}
 	}
 	return result, nil
+}
+
+func (s *rulerService) GetRajyasabhaByStateID(stateId string) ([]map[string]interface{}, error) {
+	rsMembers, err := s.LeadershipRepository.GetRajyaSabhMembersByStateID(stateId)
+	if err != nil {
+		return nil, err
+	}
+	return rsMembers, nil
 }

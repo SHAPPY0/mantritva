@@ -18,6 +18,8 @@ func rulersRouter(rg *gin.RouterGroup, repos *repository.Repos) *gin.RouterGroup
 		ruler.GET("/central", handler.GetCentralRuler)
 		ruler.GET("/center/leadership", handler.GetCenterLeadership)
 		ruler.GET("/state/:stateId", handler.GetStateRuler)
+		ruler.GET("/state/:stateId/leadership", handler.GetStateRulerLeadership)
+		ruler.GET("/rajyasabha/getByStateId/:stateId", handler.GetRajyasabhaByStateID)
 	}
 	return rg
 }

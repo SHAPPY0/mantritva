@@ -2,14 +2,18 @@ package repository
 
 import (
 	"github.com/shappy0/mantritva/internal/model"
+	"github.com/shappy0/mantritva/pkg/utils"
 	"gorm.io/gorm"
 )
 
 type LeadershipRepository interface {
 	Create(*model.Leadership) error
-	GetByMemberID(id uint) (*model.Leadership, error)
-	GetByRulerID(rulerID uint) ([]model.Leadership, error)
-	GetByRulerIDAndPosition(rulerID uint, position string) ([]model.Leadership, error)
+	GetByMemberID(uint) (*model.Leadership, error)
+	GetByRulerID(uint, bool) ([]model.Leadership, error)
+	GetByRulerIDAndPosition(uint, string, bool) ([]model.Leadership, error)
+	GetByRulerIDAndPositions(uint, string, []string, bool) ([]map[string]interface{}, error)
+	GetCareerByMemberID(int) ([]map[string]interface{}, error)
+	GetRajyaSabhMembersByStateID(string) ([]map[string]interface{}, error)
 }
 
 type leadershipRepository struct {
@@ -29,21 +33,6 @@ func (r *leadershipRepository) Create(leadership *model.Leadership) error {
 	return nil
 }
 
-// func (r *leadershipRepository) GetPositionByMemberID(id uint) (string, error) {
-// 	var leadership model.Leadership
-// 	var position string
-// 	if err := r.DB.Where("id = ? AND term_end IS NULL", id).First(&leadership).Error; err != nil {
-// 		return "", err
-// 	}
-// 	if leadership.Role == "" {
-// 		position = leadership.Position
-// 	} else {
-// 		position = leadership.Role
-// 	}
-
-// 	return position, nil
-// }
-
 func (r *leadershipRepository) GetByMemberID(id uint) (*model.Leadership, error) {
 	var leadership model.Leadership
 	if err := r.DB.Where("member_id = ? AND term_end IS NULL", id).First(&leadership).Error; err != nil {
@@ -52,18 +41,114 @@ func (r *leadershipRepository) GetByMemberID(id uint) (*model.Leadership, error)
 	return &leadership, nil
 }
 
-func (r *leadershipRepository) GetByRulerID(rulerID uint) ([]model.Leadership, error) {
+func (r *leadershipRepository) GetByRulerID(rulerID uint, isCentral bool) ([]model.Leadership, error) {
 	var leadership []model.Leadership
-	if err := r.DB.Where("ruler_id = ? AND is_central = ? AND term_end IS NULL", rulerID, true).Find(&leadership).Error; err != nil {
+	if err := r.DB.Where("ruler_id = ? AND is_central = ? AND term_end IS NULL", rulerID, isCentral).Find(&leadership).Error; err != nil {
 		return nil, err
 	}
 	return leadership, nil
 }
 
-func (r *leadershipRepository) GetByRulerIDAndPosition(rulerID uint, position string) ([]model.Leadership, error) {
+func (r *leadershipRepository) GetByRulerIDAndPosition(rulerID uint, position string, isCentral bool) ([]model.Leadership, error) {
 	var leadership []model.Leadership
-	if err := r.DB.Where("ruler_id = ? AND is_central = ? AND term_end IS NULL AND position = ?", rulerID, true, position).Find(&leadership).Error; err != nil {
+	if err := r.DB.Where("ruler_id = ? AND is_central = ? AND term_end IS NULL AND position = ?", rulerID, isCentral, position).Find(&leadership).Error; err != nil {
 		return nil, err
 	}
 	return leadership, nil
+}
+
+func (r *leadershipRepository) GetByRulerIDAndPositions(rulerID uint, stateID string, positions []string, isCentral bool) ([]map[string]interface{}, error) {
+	var results []map[string]interface{}
+	query := `SELECT l.*, 
+				JSON_BUILD_OBJECT(
+					'name', m.name,
+					'photo', m.photo
+				) AS member,
+				JSON_BUILD_OBJECT(
+					'name', p.name,
+					'abbrv', p.abbrv,
+					'symbol', p.symbol
+				) AS party,
+				JSON_BUILD_OBJECT(
+					'position', l."position",
+					'role', l.role,
+					'departments', l.departments
+				) AS "position",
+				JSON_BUILD_OBJECT(
+					'state', s.name,
+					'vidhansabha', v.name
+				) AS region
+			FROM leaderships l 
+				LEFT JOIN members m ON m.id = l.member_id
+				LEFT JOIN parties p ON p.id = l.party_id
+				LEFT JOIN states s ON s.id = l.state_id
+				LEFT JOIN vidhansabhas v ON v.id = l.vidhansabha_id
+			WHERE l.ruler_id  = ? AND l.state_id = ? AND l.position IN (?) AND l.is_central = ?`
+	if err := r.DB.Raw(query, rulerID, stateID, positions, isCentral).Scan(&results).Error; err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+func (r *leadershipRepository) GetCareerByMemberID(memberID int) ([]map[string]interface{}, error) {
+	var leadership []map[string]interface{}
+	query := `SELECT l.term_start, l.term_end,
+			JSON_BUILD_OBJECT(
+				'position', l."position",
+				'role', l.role,
+				'departments', l.departments
+			) AS "position", 
+ 			JSON_BUILD_OBJECT(
+				'name', p.name,
+				'abbrv', p.abbrv,
+				'symbol', p.symbol
+			) AS party,
+			JSON_BUILD_OBJECT(
+				'state', s.name,
+				'loksabha', l2.name,
+				'vidhansabha', v.name
+			) AS region
+			FROM leaderships l 
+				LEFT JOIN parties p ON p.id = l.party_id
+				LEFT JOIN states s ON s.id = l.state_id 
+				LEFT JOIN loksabhas l2 ON l2.id = l.loksabha_id
+				LEFT JOIN vidhansabhas v ON v.id = l.vidhansabha_id
+			WHERE l.member_id = ? ORDER BY l.term_start DESC, l.term_end DESC;`
+	if err := r.DB.Raw(query, memberID).Scan(&leadership).Error; err != nil {
+		return nil, err
+	}
+	return leadership, nil
+}
+
+func (r *leadershipRepository) GetRajyaSabhMembersByStateID(stateId string) ([]map[string]interface{}, error) {
+	var results []map[string]interface{}
+	query := `SELECT l.*,
+			JSON_BUILD_OBJECT(
+				'position', l."position",
+				'role', l.role,
+				'departments', l.departments
+			) AS "position", 
+ 			JSON_BUILD_OBJECT(
+				'name', p.name,
+				'abbrv', p.abbrv,
+				'symbol', p.symbol
+			) AS party,
+			JSON_BUILD_OBJECT(
+				'state', s.name
+			) AS region,
+			JSON_BUILD_OBJECT(
+				'name', m.name,
+				'photo', m.photo
+			) AS member
+			FROM leaderships l 
+				LEFT JOIN parties p ON p.id = l.party_id
+				LEFT JOIN states s ON s.id = l.state_id 
+				LEFT JOIN members m ON m.id = l.member_id
+			WHERE l.state_id = ? AND l."position"  = ? AND l.term_end IS NULL 
+			ORDER BY l.term_start DESC, l.term_end DESC;	
+	`
+	if err := r.DB.Raw(query, stateId, utils.RAJYASABHAMEMEBER).Scan(&results).Error; err != nil {
+		return nil, err
+	}
+	return results, nil
 }

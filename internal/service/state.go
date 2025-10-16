@@ -10,6 +10,7 @@ type StateService interface {
 	List() ([]model.State, error)
 	Create(dto.StateReq) (*model.State, error)
 	Get(name string) (*model.StateDetail, error)
+	GetByID(id int) (*model.State, error)
 }
 
 type stateService struct {
@@ -47,6 +48,14 @@ func (s *stateService) List() ([]model.State, error) {
 
 func (s *stateService) Get(name string) (*model.StateDetail, error) {
 	state, err := s.Repository.Get(name)
+	if err != nil {
+		return nil, err
+	}
+	return state, nil
+}
+
+func (s *stateService) GetByID(id int) (*model.State, error) {
+	state, err := s.Repository.GetByID(id)
 	if err != nil {
 		return nil, err
 	}

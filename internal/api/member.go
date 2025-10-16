@@ -17,6 +17,7 @@ func memberRouter(rg *gin.RouterGroup, repos *repository.Repos) *gin.RouterGroup
 		member.POST("/", handler.CreateMember)
 		member.POST("/bulkUpload", handler.BulkMemberUpload)
 		member.GET("/:name", handler.GetMemberByName)
+		member.GET("/id/:memberID/career", handler.GetMemberCareer)
 	}
 	return rg
 }

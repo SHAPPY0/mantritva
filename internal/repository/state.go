@@ -42,7 +42,16 @@ func (r *stateRepository) List() ([]model.State, error) {
 
 func (r *stateRepository) Get(name string) (*model.StateDetail, error) {
 	var stateDetail model.StateDetail
-	query := "SELECT * FROM states WHERE slug = ? LIMIT 1"
+	query := `SELECT s.*, 
+					COUNT(distinct d.id) AS district_count, 
+					COUNT(distinct l.id) AS loksabha_count,
+					COUNT(distinct v.id) AS vidhansabha_count
+				FROM states s
+					LEFT JOIN districts d ON d.state_id = s.id
+					LEFT JOIN loksabhas l ON l.state_id = s.id
+					LEFT JOIN vidhansabhas v ON v.state_id = s.id
+				WHERE s.slug = ? AND s.is_deleted = false 
+				GROUP BY s.id`
 	if err := r.DB.Raw(query, strings.ToLower(name)).Scan(&stateDetail).Error; err != nil {
 		return nil, err
 	}

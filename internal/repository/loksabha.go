@@ -8,6 +8,8 @@ import (
 type LoksabhaRepository interface {
 	Create(*model.Loksabha) error
 	List() ([]model.Loksabha, error)
+	GetByID(id int) (*model.Loksabha, error)
+	GetByStateID(stateId int) ([]model.Loksabha, error)
 }
 
 type loksabhaRepository struct {
@@ -31,6 +33,25 @@ func (r *loksabhaRepository) List() ([]model.Loksabha, error) {
 	var loksabhas []model.Loksabha
 	if err := r.DB.Find(&loksabhas).Error; err != nil {
 		return nil, err
+	}
+	return loksabhas, nil
+}
+
+func (r *loksabhaRepository) GetByID(id int) (*model.Loksabha, error) {
+	var loksabha model.Loksabha
+	if err := r.DB.Where("id = ? AND is_deleted = false", id).First(&loksabha).Error; err != nil {
+		return nil, err
+	}
+	return &loksabha, nil
+}
+
+func (r *loksabhaRepository) GetByStateID(stateId int) ([]model.Loksabha, error) {
+	var loksabhas []model.Loksabha
+	if err := r.DB.Where("state_id = ?", stateId).Order("name ASC").Find(&loksabhas).Error; err != nil {
+		return nil, err
+	}
+	if len(loksabhas) == 0 {
+		return nil, nil
 	}
 	return loksabhas, nil
 }

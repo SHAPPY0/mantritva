@@ -39,3 +39,22 @@ func (h *LoksabhaHandler) ListLoksabha(c *gin.Context) {
 	}
 	utils.Success(c, "Loksabha fetched successfully", val)
 }
+
+func (h *LoksabhaHandler) GetLoksabhaByStateId(c *gin.Context) {
+	stateId := c.Param("stateId")
+	if stateId == "" {
+		utils.Error(c, 400, "State ID is required", nil)
+		return
+	}
+	stateIdInt, err := utils.StrToInt(stateId)
+	if err != nil {
+		utils.Error(c, 400, "Invalid State ID", err)
+		return
+	}
+	val, err := h.Service.GetByStateID(stateIdInt)
+	if err != nil {
+		utils.Error(c, 500, "Failed to fetch loksabha", nil)
+		return
+	}
+	utils.Success(c, "Loksabha fetched successfully", val)
+}

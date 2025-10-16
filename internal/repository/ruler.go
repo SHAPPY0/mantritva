@@ -55,7 +55,7 @@ func (r *rulerRepository) GetCentralRuler() (*model.Ruler, error) {
 func (r *rulerRepository) GetStateRuler(stateId string) (*model.Ruler, error) {
 	var ruler model.Ruler
 	currentDate := time.Now().Format("2006-01-02")
-	if err := r.DB.Where("state_id = ? and start_date < ? and end_date > ? and is_active = ?", stateId, currentDate, currentDate, true).First(&ruler).Error; err != nil {
+	if err := r.DB.Where("state_id = ? AND is_central = false AND start_date < ? AND end_date > ? AND is_active = ?", stateId, currentDate, currentDate, true).First(&ruler).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil // No state ruler found
 		}

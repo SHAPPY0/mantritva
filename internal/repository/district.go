@@ -38,7 +38,7 @@ func (r *districtRepository) List() ([]model.District, error) {
 
 func (r *districtRepository) GetByState(stateId string) ([]model.District, error) {
 	var districts []model.District
-	if err := r.DB.Where("state_id = ?", stateId).Find(&districts).Error; err != nil {
+	if err := r.DB.Where("state_id = ?", stateId).Order("name ASC").Find(&districts).Error; err != nil {
 		return nil, err
 	}
 	if len(districts) == 0 {

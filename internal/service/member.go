@@ -24,6 +24,7 @@ type MemberService interface {
 	Create(c *gin.Context, req dto.MemberReq, photo *multipart.FileHeader) (*model.Member, error)
 	BulkMemberUpload(c *gin.Context, filePath string) (bool, error)
 	GetByName(name string) (*dto.MemberRes, error)
+	GetCareerByMemberID(memberID int) ([]map[string]interface{}, error)
 }
 
 type memberService struct {
@@ -90,18 +91,16 @@ func (s *memberService) List() ([]dto.MemberRes, error) {
 		dtoMember := dto.MemberRes{Member: member}
 		//Get Party
 		party, err := s.PartyRepository.GetByMemberID(member.ID)
-		log.Println(err)
-		log.Println(party)
 		if err != nil {
 			log.Printf("Failed to get party details by memberID %d", member.ID)
 		} else {
 			dtoMember.Party = dto.MemberParty{
-				Name:          party.Name,
-				Abbrv:         party.Abbrv,
-				Symbol:        party.Symbol,
-				TermStartDate: party.TermStartDate,
-				TermEndDate:   party.TermEndDate,
-				Position:      party.Position,
+				Name:        party.Name,
+				Abbrv:       party.Abbrv,
+				Symbol:      party.Symbol,
+				JoiningDate: party.JoiningDate,
+				ExitDate:    party.ExitDate,
+				Position:    party.Position,
 			}
 		}
 		result = append(result, dtoMember)
@@ -147,4 +146,12 @@ func (s *memberService) GetByName(name string) (*dto.MemberRes, error) {
 	data.Position = leadership.Position
 	data.Departments = leadership.Departments
 	return &data, nil
+}
+
+func (s *memberService) GetCareerByMemberID(memberID int) ([]map[string]interface{}, error) {
+	careers, err := s.LeadershipRepository.GetCareerByMemberID(memberID)
+	if err != nil {
+		return nil, err
+	}
+	return careers, nil
 }

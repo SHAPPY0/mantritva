@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"gorm.io/gorm"
 )
@@ -8,6 +9,8 @@ import (
 type VidhansabhaRepository interface {
 	Create(*model.Vidhansabha) error
 	List() ([]model.Vidhansabha, error)
+	GetByID(id int) (*model.Vidhansabha, error)
+	GetByStateID(int) (*[]dto.VidhanSabhaRes, error)
 }
 
 type vidhansabhaRepository struct {
@@ -33,4 +36,34 @@ func (r *vidhansabhaRepository) List() ([]model.Vidhansabha, error) {
 		return nil, err
 	}
 	return vidhanSabhas, nil
+}
+
+func (r *vidhansabhaRepository) GetByID(id int) (*model.Vidhansabha, error) {
+	var vidhanSabha model.Vidhansabha
+	if err := r.DB.First(&vidhanSabha, id).Error; err != nil {
+		return nil, err
+	}
+	return &vidhanSabha, nil
+}
+
+func (r *vidhansabhaRepository) GetByStateID(id int) (*[]dto.VidhanSabhaRes, error) {
+	var vidhanSabha []dto.VidhanSabhaRes
+	query := `SELECT
+				vs.id,
+				vs.name AS name,
+				s.name AS state,
+				d.name AS district
+			FROM
+				vidhansabhas vs
+			LEFT JOIN states s ON
+				s.id = vs.state_id
+			LEFT JOIN districts d ON
+				d.id = vs.district_id
+			WHERE
+				vs.state_id = ?
+			ORDER BY vs.name ASC`
+	if err := r.DB.Raw(query, id).Scan(&vidhanSabha).Error; err != nil {
+		return nil, err
+	}
+	return &vidhanSabha, nil
 }

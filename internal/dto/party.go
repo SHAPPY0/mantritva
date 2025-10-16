@@ -19,11 +19,11 @@ type PartyReq struct {
 }
 
 type AddMemberReq struct {
-	PartyId   uint           `json:"party_id" binding:"required"`
-	MemberId  uint           `json:"member_id" binding:"required"`
-	Position  string         `json:"position"`
-	TermStart utils.DateOnly `json:"term_start"`
-	TermEnd   utils.DateOnly `json:"term_end,omitempty"`
+	PartyId     uint           `json:"party_id" binding:"required"`
+	MemberId    uint           `json:"member_id" binding:"required"`
+	Position    string         `json:"position"`
+	JoiningDate utils.DateOnly `json:"joining_date"`
+	ExitDate    utils.DateOnly `json:"exit_date,omitempty"`
 }
 
 type PartyMemberRes struct {

@@ -9,6 +9,7 @@ import (
 type VidhanSabhaService interface {
 	List() ([]model.Vidhansabha, error)
 	Create(dto.VidhanReq) (*model.Vidhansabha, error)
+	GetByStateID(int) (*[]dto.VidhanSabhaRes, error)
 }
 
 type vidhanSabhaService struct {
@@ -23,9 +24,14 @@ func NewVidhanSabhaService(repo repository.VidhansabhaRepository) VidhanSabhaSer
 
 func (s *vidhanSabhaService) Create(req dto.VidhanReq) (*model.Vidhansabha, error) {
 	vidhanSabha := &model.Vidhansabha{
-		Name:       req.Name,
-		LoksabhaID: req.LoksabhaID,
-		ACNumber:   req.ACNumber,
+		Name:        req.Name,
+		StateID:     req.StateID,
+		DistrictID:  req.DistrictID,
+		ACNumber:    req.ACNumber,
+		AuditFields: model.AuditFields{CreatedBy: "SYSTEM"},
+	}
+	if req.ACNumber > 0 {
+		vidhanSabha.ACNumber = req.ACNumber
 	}
 	if err := s.Repository.Create(vidhanSabha); err != nil {
 		return nil, err
@@ -35,6 +41,14 @@ func (s *vidhanSabhaService) Create(req dto.VidhanReq) (*model.Vidhansabha, erro
 
 func (s *vidhanSabhaService) List() ([]model.Vidhansabha, error) {
 	vidhanSabhas, err := s.Repository.List()
+	if err != nil {
+		return nil, err
+	}
+	return vidhanSabhas, nil
+}
+
+func (s *vidhanSabhaService) GetByStateID(stateId int) (*[]dto.VidhanSabhaRes, error) {
+	vidhanSabhas, err := s.Repository.GetByStateID(stateId)
 	if err != nil {
 		return nil, err
 	}

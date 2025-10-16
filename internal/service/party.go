@@ -88,11 +88,11 @@ func (s *partyService) UploadSymbol(ctx *gin.Context, partyId string, file *mult
 
 func (s *partyService) AddMember(req dto.AddMemberReq) (bool, error) {
 	partyMember := &model.PartyMembers{
-		PartyID:       req.PartyId,
-		MemberID:      req.MemberId,
-		Position:      req.Position,
-		TermStartDate: req.TermStart,
-		TermEndDate:   &req.TermEnd,
+		PartyID:     req.PartyId,
+		MemberID:    req.MemberId,
+		Position:    req.Position,
+		JoiningDate: req.JoiningDate,
+		ExitDate:    &req.ExitDate,
 	}
 	if err := s.Repository.AddMember(partyMember); err != nil {
 		return false, err

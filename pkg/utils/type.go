@@ -20,6 +20,7 @@ type PostStatus string
 type UserRole string
 type FeedType string
 type PostReactionType string
+type Position string
 
 const (
 	ADMIN     UserRole = "ADMIN"
@@ -71,18 +72,41 @@ const (
 	DOWNVOTE PostReactionType = "DOWNVOTE"
 )
 
+const (
+	PRIMEMINISTER       Position = "Prime Minister"
+	PRESIDENT           Position = "President"
+	VICEPRESIDENT       Position = "Vice President"
+	CABINETMINISTER     Position = "Cabinet Minister"
+	CHIEFMINISTER       Position = "Chief Minister"
+	DEPUTYCHIEFMINISTER Position = "Deputy Chief Minister"
+	OPPOSITIONLEADER    Position = "Opposition Leader"
+	MP                  Position = "Member Of Parliament"
+	MOS                 Position = "Member Of State"
+	MLA                 Position = "Member Of Legislative Assembly"
+	RAJYASABHAMEMEBER   Position = "Rajyasabha Member"
+)
+
 func (d *DateOnly) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), `"`)
 	if s == "" || s == "null" {
 		d.Time = nil
 		return nil
 	}
-	t, err := time.Parse("2006-01-02", s)
-	if err != nil {
-		return err
+	var err error
+	layouts := []string{
+		time.RFC3339,
+		"2006-01-02",
+		"2006-01-02 15:04:05",
 	}
-	d.Time = &t
-	return nil
+	for _, layout := range layouts {
+		var t time.Time
+		t, err = time.Parse(layout, s)
+		if err == nil {
+			d.Time = &t
+			return nil
+		}
+	}
+	return err
 }
 
 func (d DateOnly) MarshalJSON() ([]byte, error) {

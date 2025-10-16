@@ -78,7 +78,7 @@ func (r *partyRepository) AddMember(member *model.PartyMembers) error {
 
 func (r *partyRepository) GetPartyMembers(partyId string) ([]model.PartyMembers, error) {
 	var members []model.PartyMembers
-	if err := r.DB.Model(&model.PartyMembers{}).Where("party_id = ? AND term_end_date IS NULL", partyId).Find(&members).Error; err != nil {
+	if err := r.DB.Model(&model.PartyMembers{}).Where("party_id = ? AND exit_date IS NULL", partyId).Find(&members).Error; err != nil {
 		return nil, err
 	}
 	return members, nil
@@ -91,12 +91,12 @@ func (r *partyRepository) GetByMemberID(memberId uint) (*dto.MemberParty, error)
 				p.abbrv, 
 				p.symbol, 
 				pm."position",
-				pm.term_start_date,
-				pm.term_end_date
+				pm.joining_date,
+				pm.exit_date
 			FROM party_members pm
 				INNER JOIN parties p ON p.ID = pm.party_id
 			WHERE pm.member_id = ?
-				AND pm.term_end_date IS NULL
+				AND pm.exit_date IS NULL
 				AND p.is_deleted = ?`
 	if err := r.DB.Raw(query, memberId, false).Scan(&memberParty).Error; err != nil {
 		return nil, err

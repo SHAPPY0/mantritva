@@ -15,6 +15,7 @@ type MemberRepository interface {
 	GetByName(name string) (*model.Member, error)
 	GetByID(id uint) (*model.Member, error)
 	ConsoleGetMembersList() (*[]model.Member, error)
+	// GetCareerByMemberID(memberID uint) (*[]model.CareerRes, error)
 }
 
 type memberRepository struct {

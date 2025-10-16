@@ -98,12 +98,12 @@ func (s *consoleService) GetMembersList() (*[]dto.MemberRes, error) {
 			log.Printf("Failed to get party details by memberID %d", member.ID)
 		} else {
 			dtoMember.Party = dto.MemberParty{
-				Name:          party.Name,
-				Abbrv:         party.Abbrv,
-				Symbol:        party.Symbol,
-				TermStartDate: party.TermStartDate,
-				TermEndDate:   party.TermEndDate,
-				Position:      party.Position,
+				Name:        party.Name,
+				Abbrv:       party.Abbrv,
+				Symbol:      party.Symbol,
+				JoiningDate: party.JoiningDate,
+				ExitDate:    party.ExitDate,
+				Position:    party.Position,
 			}
 		}
 		result = append(result, dtoMember)
@@ -156,7 +156,7 @@ func (s *consoleService) GetLeadershipByRulerID(rulerID int) (*[]dto.LeadershipR
 	var results []dto.LeadershipRes
 	var leaderships []model.Leadership
 	var err error
-	leaderships, err = s.LeadershipRepository.GetByRulerID(uint(rulerID))
+	leaderships, err = s.LeadershipRepository.GetByRulerID(uint(rulerID), true)
 	if err != nil {
 		return nil, err
 	}

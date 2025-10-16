@@ -28,11 +28,30 @@ func (h *VidhanSabhaHandler) CreateVidhanSabha(c *gin.Context) {
 		utils.Error(c, 500, "Failed to create loksabha", err)
 		return
 	}
-	utils.Success(c, "Loksabha created successfully", reps)
+	utils.Success(c, "Vidhansabh created successfully", reps)
 }
 
 func (h *VidhanSabhaHandler) ListVidhanSabha(c *gin.Context) {
 	val, err := h.Service.List()
+	if err != nil {
+		utils.Error(c, 500, "Failed to fetch vidhanSabha", nil)
+		return
+	}
+	utils.Success(c, "VidhanSabha fetched successfully", val)
+}
+
+func (h *VidhanSabhaHandler) GetByStateID(c *gin.Context) {
+	stateId := c.Param("id")
+	if stateId == "" {
+		utils.Error(c, 400, "State ID is required", nil)
+		return
+	}
+	stateIdInt, err := utils.StrToInt(stateId)
+	if err != nil {
+		utils.Error(c, 400, "Invalid state ID", nil)
+		return
+	}
+	val, err := h.Service.GetByStateID(stateIdInt)
 	if err != nil {
 		utils.Error(c, 500, "Failed to fetch vidhanSabha", nil)
 		return

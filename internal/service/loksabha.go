@@ -9,6 +9,7 @@ import (
 type LoksabhaService interface {
 	List() ([]model.Loksabha, error)
 	Create(dto.LoksabhaReq) (*model.Loksabha, error)
+	GetByStateID(stateId int) ([]model.Loksabha, error)
 }
 
 type loksabhaService struct {
@@ -36,6 +37,14 @@ func (s *loksabhaService) Create(req dto.LoksabhaReq) (*model.Loksabha, error) {
 
 func (s *loksabhaService) List() ([]model.Loksabha, error) {
 	loksabhas, err := s.Repository.List()
+	if err != nil {
+		return nil, err
+	}
+	return loksabhas, nil
+}
+
+func (s *loksabhaService) GetByStateID(stateId int) ([]model.Loksabha, error) {
+	loksabhas, err := s.Repository.GetByStateID(stateId)
 	if err != nil {
 		return nil, err
 	}

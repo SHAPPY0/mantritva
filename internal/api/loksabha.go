@@ -13,10 +13,11 @@ func loksabhaRouter(rg *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 	service := service.NewLoksabhaService(repository)
 	handler := handler.NewLoksabhaHandler(service)
 
-	state := rg.Group("/loksabha")
+	ls := rg.Group("/loksabha")
 	{
-		state.GET("/", handler.ListLoksabha)
-		state.POST("/", handler.CreateLoksabha)
+		ls.GET("/", handler.ListLoksabha)
+		ls.POST("/", handler.CreateLoksabha)
+		ls.GET("/getByStateId/:stateId", handler.GetLoksabhaByStateId)
 	}
 	return rg
 }

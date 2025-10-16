@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/service"
@@ -73,4 +75,28 @@ func (h *MemberHandler) GetMemberByName(c *gin.Context) {
 		return
 	}
 	utils.Success(c, "Member fetched successfully", member)
+}
+
+func (h *MemberHandler) GetMemberCareer(c *gin.Context) {
+	var careersDto []dto.CareerRes
+	memberID := c.Param("memberID")
+	memberIdInt, err := utils.StrToInt(memberID)
+	if err != nil {
+		utils.Error(c, 400, "Invalid member ID", nil)
+		return
+	}
+	careers, err := h.Service.GetCareerByMemberID(memberIdInt)
+	if err != nil {
+		utils.Error(c, 500, "Failed to fetch member career", err)
+		return
+	}
+	for _, career := range careers {
+		careerDto := dto.CareerRes{}
+		if err := utils.MapToStruct(career, &careerDto); err != nil {
+			log.Fatal("Failed to parse career data. Error: ", err)
+		} else {
+			careersDto = append(careersDto, careerDto)
+		}
+	}
+	utils.Success(c, "Member career fetched successfully", careersDto)
 }
