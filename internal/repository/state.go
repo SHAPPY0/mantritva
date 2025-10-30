@@ -44,8 +44,8 @@ func (r *stateRepository) Get(name string) (*model.StateDetail, error) {
 	var stateDetail model.StateDetail
 	query := `SELECT s.*, 
 					COUNT(distinct d.id) AS district_count, 
-					COUNT(distinct l.id) AS loksabha_count,
-					COUNT(distinct v.id) AS vidhansabha_count
+					COUNT(distinct l.id) AS lok_sabha_count,
+					COUNT(distinct v.id) AS vidhan_sabha_count
 				FROM states s
 					LEFT JOIN districts d ON d.state_id = s.id
 					LEFT JOIN loksabhas l ON l.state_id = s.id

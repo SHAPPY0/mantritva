@@ -47,6 +47,7 @@ func SetupRouter(db *gorm.DB, mongoDB *config.MongoDB) *gin.Engine {
 		feedRouter(v1, services)
 		userRouter(v1, repos)
 		consoleRouter(v1, services)
+		entityRouter(v1, repos)
 	}
 	return r
 }

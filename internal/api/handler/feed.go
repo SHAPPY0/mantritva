@@ -22,7 +22,6 @@ func NewFeedHandler(service *service.Services) *FeedHandler {
 func (h *FeedHandler) GetLatestFeed(c *gin.Context) {
 	userID, err := utils.GetKeyInCtx[int](c, "user_id")
 	if err != nil {
-		fmt.Println("Error gettig userID from ctx " + err.Error())
 		utils.Error(c, 401, "Unauthorized Access", nil)
 		return
 	}

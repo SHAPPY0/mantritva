@@ -18,6 +18,7 @@ func memberRouter(rg *gin.RouterGroup, repos *repository.Repos) *gin.RouterGroup
 		member.POST("/bulkUpload", handler.BulkMemberUpload)
 		member.GET("/:name", handler.GetMemberByName)
 		member.GET("/id/:memberID/career", handler.GetMemberCareer)
+		member.GET("/unaffiliated", handler.ListUnaffiliatedMembers)
 	}
 	return rg
 }

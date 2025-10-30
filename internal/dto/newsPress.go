@@ -6,8 +6,9 @@ import (
 )
 
 type NewsPressReq struct {
-	MemberID      uint                `json:"member_id" binding:"required"`
-	PartyID       uint                `json:"party_id" binding:"required"`
+	MemberID      uint                `json:"member_id"`
+	PartyID       uint                `json:"party_id"`
+	EntityID      uint                `json:"entity_id"`
 	Subject       utils.Subject       `json:"subject" binding:"required"`
 	Type          utils.StatementType `json:"type" binding:"required"`
 	Tone          utils.StatementTone `json:"tone" binding:"required"`
@@ -18,7 +19,8 @@ type NewsPressReq struct {
 
 type NewsPressPostRes struct {
 	model.NewsPressPost
-	Member   Member                 `json:"member"`
-	Party    Party                  `json:"party"`
+	Member   Member                 `json:"member,omitempty"`
+	Entity   Entity                 `json:"entity,omitempty"`
+	Party    Party                  `json:"party,omitempty"`
 	Reaction utils.PostReactionType `json:"reaction"`
 }

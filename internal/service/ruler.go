@@ -226,14 +226,12 @@ func (s *rulerService) GetCenterLeadership() (map[string][]dto.Leader, error) {
 					}
 					if leader.StateID > 0 {
 						state, err := s.StateRepository.GetByID(int(leader.StateID))
-						log.Printf("State fetch error: %v", err)
 						if err == nil {
 							item.State = state.Name
 						}
 					}
 					if leader.LoksabhaID > 0 {
 						loksabha, err := s.LoksabhRepository.GetByID(int(leader.LoksabhaID))
-						log.Printf("Loksabha fetch error: %v", err)
 						if err == nil {
 							item.Loksabha = loksabha.Name
 						}
@@ -266,14 +264,12 @@ func (s *rulerService) GetCenterLeadership() (map[string][]dto.Leader, error) {
 					}
 					if leader.StateID > 0 {
 						state, err := s.StateRepository.GetByID(int(leader.StateID))
-						log.Printf("State fetch error: %v", err)
 						if err == nil {
 							item.State = state.Name
 						}
 					}
 					if leader.LoksabhaID > 0 {
 						loksabha, err := s.LoksabhRepository.GetByID(int(leader.LoksabhaID))
-						log.Printf("Loksabha fetch error: %v", err)
 						if err == nil {
 							item.Loksabha = loksabha.Name
 						}
@@ -305,7 +301,6 @@ func (s *rulerService) GetCenterLeadership() (map[string][]dto.Leader, error) {
 					}
 					if leader.StateID > 0 {
 						state, err := s.StateRepository.GetByID(int(leader.StateID))
-						log.Printf("State fetch error: %v", err)
 						if err == nil {
 							item.State = state.Name
 						}

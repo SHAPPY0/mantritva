@@ -29,6 +29,7 @@ type consoleService struct {
 	RulerRepository      repository.RulerRepository
 	LeadershipRepository repository.LeadershipRepository
 	NewsPressRepository  repository.NewsPressPostRepository
+	EntityRepository     repository.EntityRepository
 }
 
 func NewConsoleService(repos *repository.Repos) ConsoleService {
@@ -41,6 +42,7 @@ func NewConsoleService(repos *repository.Repos) ConsoleService {
 		RulerRepository:      repos.Ruler,
 		LeadershipRepository: repos.Leadership,
 		NewsPressRepository:  repos.NewsPressPost,
+		EntityRepository:     repos.Entity,
 	}
 }
 
@@ -215,6 +217,20 @@ func (s *consoleService) GetNewsPressList() (*[]dto.NewsPressPostRes, error) {
 				log.Printf("Error: While getting Party Detail %d, %v", post.PartyId, err)
 			} else {
 				newsPostRes.Party = dto.Party{Name: party.Name, Abbrv: party.Abbrv, Symbol: party.Symbol}
+			}
+		}
+		if post.EntityId > 0 {
+			entity, err := s.EntityRepository.GetEntityByID(int(post.EntityId))
+			if err != nil {
+				log.Printf("Error: While getting Entity Detail %d, %v", post.EntityId, err)
+			} else if entity != nil {
+				newsPostRes.Entity = dto.Entity{
+					Name:         entity.Name,
+					Abbrv:        entity.Abbrv,
+					IsCentral:    entity.IsCentral,
+					StateName:    entity.StateName,
+					DistrictName: entity.DistrictName,
+				}
 			}
 		}
 		results = append(results, newsPostRes)

@@ -100,3 +100,12 @@ func (h *MemberHandler) GetMemberCareer(c *gin.Context) {
 	}
 	utils.Success(c, "Member career fetched successfully", careersDto)
 }
+
+func (h *MemberHandler) ListUnaffiliatedMembers(c *gin.Context) {
+	val, err := h.Service.ListUnaffiliatedMembers()
+	if err != nil {
+		utils.Error(c, 500, "Failed to fetch unaffiliated members", nil)
+		return
+	}
+	utils.Success(c, "Unaffiliated members fetched successfully", val)
+}

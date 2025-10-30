@@ -41,6 +41,7 @@ func SetupDatabase() *gorm.DB {
 	db.AutoMigrate(&model.PartyMembers{})
 	db.AutoMigrate(&model.Leadership{})
 	db.AutoMigrate(&model.User{})
+	db.AutoMigrate(&model.Entity{})
 
 	return db
 }

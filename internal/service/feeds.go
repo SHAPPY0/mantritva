@@ -22,6 +22,9 @@ type feedService struct {
 	NewsPressPostRepository repository.NewsPressPostRepository
 	MemberRepository        repository.MemberRepository
 	PartyRepository         repository.PartyRepository
+	LeadershipRepository    repository.LeadershipRepository
+	StateRepository         repository.StateRepository
+	EntityRepository        repository.EntityRepository
 }
 
 func NewFeedService(repos *repository.Repos) FeedService {
@@ -30,6 +33,9 @@ func NewFeedService(repos *repository.Repos) FeedService {
 		NewsPressPostRepository: repos.NewsPressPost,
 		MemberRepository:        repos.Member,
 		PartyRepository:         repos.Party,
+		LeadershipRepository:    repos.Leadership,
+		StateRepository:         repos.State,
+		EntityRepository:        repos.Entity,
 	}
 }
 
@@ -149,18 +155,53 @@ func (s *feedService) GetNewsPressFeed(userID int, postID primitive.ObjectID) (d
 	}
 
 	newsPressPostRes.NewsPressPost = *np
-	member, err := s.MemberRepository.GetByID(np.MemberId)
-	if err != nil {
-		return newsPressPostRes, err
-	}
+	if np.MemberId > 0 {
+		member, err := s.MemberRepository.GetByID(np.MemberId)
+		if err != nil {
+			return newsPressPostRes, err
+		}
 
-	newsPressPostRes.Member = dto.Member{Name: member.Name, Photo: member.Photo}
+		newsPressPostRes.Member = dto.Member{Name: member.Name, Photo: member.Photo}
 
-	party, err := s.PartyRepository.GetByID(int(np.PartyId))
-	if err != nil {
-		return newsPressPostRes, err
+		leader, err := s.LeadershipRepository.GetByMemberID(member.ID)
+		if err == nil {
+			if leader.Role != "" {
+				newsPressPostRes.Member.Position = leader.Role
+			} else {
+				position := leader.Position
+				newsPressPostRes.Member.Position = position
+				if leader.StateID > 0 {
+					state, err := s.StateRepository.GetByID(int(leader.StateID))
+					if err == nil {
+						newsPressPostRes.Member.Position = position + ", " + state.Name
+					}
+				}
+			}
+		}
 	}
-	newsPressPostRes.Party = dto.Party{Name: party.Name, Abbrv: party.Abbrv, Symbol: party.Symbol}
+	if np.PartyId > 0 {
+		party, err := s.PartyRepository.GetByID(int(np.PartyId))
+		if err != nil {
+			return newsPressPostRes, err
+		}
+		newsPressPostRes.Party = dto.Party{Name: party.Name, Abbrv: party.Abbrv, Symbol: party.Symbol}
+	}
+	if np.EntityId > 0 {
+		entity, err := s.EntityRepository.GetEntityByID(int(np.EntityId))
+		log.Print(entity)
+		if err != nil {
+			return newsPressPostRes, err
+		}
+		if entity != nil {
+			newsPressPostRes.Entity = dto.Entity{
+				Name:         entity.Name,
+				Abbrv:        entity.Abbrv,
+				IsCentral:    entity.IsCentral,
+				StateName:    entity.StateName,
+				DistrictName: entity.DistrictName,
+			}
+		}
+	}
 
 	if userID > 0 {
 		reaction, err := s.NewsPressPostRepository.GetReactionByUserIDAndPostID(userID, np.ID)

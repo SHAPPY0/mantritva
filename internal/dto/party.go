@@ -27,11 +27,13 @@ type AddMemberReq struct {
 }
 
 type PartyMemberRes struct {
-	ID       uint   `json:"id"`
-	MemberID uint   `json:"member_id"`
-	Name     string `json:"name"`
-	Photo    string `json:"photo"`
-	Position string `json:"position"`
+	ID          uint           `json:"id"`
+	MemberID    uint           `json:"member_id"`
+	Name        string         `json:"name"`
+	Photo       string         `json:"photo"`
+	Position    string         `json:"position"`
+	JoiningDate utils.DateOnly `json:"joining_date"`
+	ExitDate    utils.DateOnly `json:"exit_date,omitempty"`
 }
 
 type Party struct {

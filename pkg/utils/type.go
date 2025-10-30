@@ -138,7 +138,7 @@ func (d *DateOnly) Scan(value interface{}) error {
 }
 
 func (d *DateOnly) IsNull() bool {
-	return d.Time == nil || d.Time.IsZero()
+	return d == nil || d.Time == nil || d.Time.IsZero()
 }
 
 // Method to convert CustomObjectID to string

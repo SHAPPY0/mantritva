@@ -15,6 +15,7 @@ type MemberRepository interface {
 	GetByName(name string) (*model.Member, error)
 	GetByID(id uint) (*model.Member, error)
 	ConsoleGetMembersList() (*[]model.Member, error)
+	ListUnaffiliatedMembers() ([]model.Member, error)
 	// GetCareerByMemberID(memberID uint) (*[]model.CareerRes, error)
 }
 
@@ -80,4 +81,19 @@ func (r *memberRepository) ConsoleGetMembersList() (*[]model.Member, error) {
 		return nil, err
 	}
 	return &members, nil
+}
+
+func (r *memberRepository) ListUnaffiliatedMembers() ([]model.Member, error) {
+	var members []model.Member
+	query := `
+		SELECT m.*
+		FROM members m
+		LEFT JOIN party_members pm ON m.id = pm.member_id AND pm.exit_date IS NULL
+		WHERE pm.member_id IS NULL
+		ORDER BY m.name ASC
+	`
+	if err := r.DB.Raw(query).Scan(&members).Error; err != nil {
+		return nil, err
+	}
+	return members, nil
 }

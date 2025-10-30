@@ -21,11 +21,11 @@ type Party struct {
 }
 
 type PartyMembers struct {
-	ID          uint            `json:"id" gorm:"primaryKey"`
-	PartyID     uint            `json:"party_id" gorm:"required"`
-	MemberID    uint            `json:"member_id" gorm:"required"`
-	Position    string          `json:"position" gorm:"required"`
-	JoiningDate utils.DateOnly  `json:"joining_date" gorm:"type:date"`
-	ExitDate    *utils.DateOnly `json:"exit_date,omitempty" gorm:"type:date"`
+	ID          uint           `json:"id" gorm:"primaryKey"`
+	PartyID     uint           `json:"party_id" gorm:"required"`
+	MemberID    uint           `json:"member_id" gorm:"required"`
+	Position    string         `json:"position" gorm:"required"`
+	JoiningDate utils.DateOnly `json:"joining_date" gorm:"type:date"`
+	ExitDate    utils.DateOnly `json:"exit_date,omitempty" gorm:"type:date"`
 	AuditFields
 }

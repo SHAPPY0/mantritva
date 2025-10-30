@@ -25,6 +25,7 @@ type MemberService interface {
 	BulkMemberUpload(c *gin.Context, filePath string) (bool, error)
 	GetByName(name string) (*dto.MemberRes, error)
 	GetCareerByMemberID(memberID int) ([]map[string]interface{}, error)
+	ListUnaffiliatedMembers() ([]dto.MemberRes, error)
 }
 
 type memberService struct {
@@ -154,4 +155,17 @@ func (s *memberService) GetCareerByMemberID(memberID int) ([]map[string]interfac
 		return nil, err
 	}
 	return careers, nil
+}
+
+func (s *memberService) ListUnaffiliatedMembers() ([]dto.MemberRes, error) {
+	var result []dto.MemberRes
+	members, err := s.Repository.ListUnaffiliatedMembers()
+	if err != nil {
+		return nil, err
+	}
+	for _, member := range members {
+		dtoMember := dto.MemberRes{Member: member}
+		result = append(result, dtoMember)
+	}
+	return result, nil
 }

@@ -33,7 +33,9 @@ func (r *feedRepository) Create(feed *model.Feed) (any, error) {
 
 func (r *feedRepository) GetAll() ([]model.Feed, error) {
 	var feeds []model.Feed
-	opts := options.Find()
+	opts := options.Find().
+		SetSort(bson.D{{Key: "created_at", Value: -1}}).
+		SetLimit(50)
 	if err := r.DB.FindMany(r.DB.FeedCollection, bson.M{"status": utils.Published}, opts, &feeds); err != nil {
 		return nil, err
 	}

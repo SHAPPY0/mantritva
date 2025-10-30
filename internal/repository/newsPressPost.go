@@ -116,7 +116,7 @@ func (r *newsPressPostRepository) SaveReaction(reaction *model.PostReaction, isN
 
 func (r *newsPressPostRepository) ConsoleGetNewsPressList() ([]model.NewsPressPost, error) {
 	var newsPressPosts []model.NewsPressPost
-	opts := options.Find()
+	opts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
 	if err := r.DB.FindMany(r.DB.NewsPressPostCollection, bson.M{}, opts, &newsPressPosts); err != nil {
 		return newsPressPosts, err
 	}
@@ -129,7 +129,6 @@ func (r *newsPressPostRepository) GetPostsByPartyID(pagination dto.Pagination, p
 	opts := options.Find().
 		SetLimit(int64(pagination.Limit)).
 		SetSkip(int64(pagination.Offset))
-	log.Println(pagination.Limit, pagination.Offset)
 	if err := r.DB.FindMany(r.DB.NewsPressPostCollection, filter, opts, &newsPressPosts); err != nil {
 		return nil, err
 	}

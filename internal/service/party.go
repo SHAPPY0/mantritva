@@ -92,7 +92,7 @@ func (s *partyService) AddMember(req dto.AddMemberReq) (bool, error) {
 		MemberID:    req.MemberId,
 		Position:    req.Position,
 		JoiningDate: req.JoiningDate,
-		ExitDate:    &req.ExitDate,
+		ExitDate:    req.ExitDate,
 	}
 	if err := s.Repository.AddMember(partyMember); err != nil {
 		return false, err
@@ -108,20 +108,21 @@ func (s *partyService) GetPartyMembers(partyId string) ([]dto.PartyMemberRes, er
 	}
 
 	for _, partyMember := range partyMembers {
-		partyMember := dto.PartyMemberRes{
-			ID:       partyMember.ID,
-			MemberID: partyMember.MemberID,
-			Position: partyMember.Position,
+		partyMemberDto := dto.PartyMemberRes{
+			ID:          partyMember.ID,
+			MemberID:    partyMember.MemberID,
+			Position:    partyMember.Position,
+			JoiningDate: partyMember.JoiningDate,
+			ExitDate:    partyMember.ExitDate,
 		}
-
 		member, err := s.MemberRepository.GetByID(partyMember.MemberID)
 		if err != nil {
 			fmt.Printf("Failed to get member by ID %d\n", partyMember.MemberID)
 		} else {
-			partyMember.Name = member.Name
-			partyMember.Photo = member.Photo
+			partyMemberDto.Name = member.Name
+			partyMemberDto.Photo = member.Photo
 		}
-		res = append(res, partyMember)
+		res = append(res, partyMemberDto)
 	}
 	//Sort By Name
 	sort.Slice(res, func(i, j int) bool {
