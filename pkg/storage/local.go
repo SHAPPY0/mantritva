@@ -39,6 +39,7 @@ func (l *LocalStorage) Save(c *gin.Context, file *multipart.FileHeader) (*FileMe
 		SavedName:    newName,
 		FullPath:     fullPath,
 		AbsolutePath: filepath.Join("/", l.AbsoluteDestPath, newName),
+		Extenstion:   extension,
 	}
 	log.Printf("File uploaded successfully: " + fileMeta.AbsolutePath)
 	return fileMeta, nil

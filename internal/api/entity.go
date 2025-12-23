@@ -15,6 +15,8 @@ func entityRouter(rg *gin.RouterGroup, repos *repository.Repos) *gin.RouterGroup
 	{
 		entity.GET("/", handler.ListEntity)
 		entity.POST("/", handler.CreateEntity)
+		entity.GET("/:name", handler.GetEntityByName)
+		entity.GET("/id/:entityID/news-press", handler.GetPostsByEntityID)
 	}
 	return rg
 }

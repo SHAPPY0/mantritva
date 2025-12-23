@@ -1,11 +1,13 @@
 package service
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
+	"github.com/shappy0/mantritva/pkg/utils"
 )
 
 type ConsoleService interface {
@@ -18,6 +20,9 @@ type ConsoleService interface {
 	GetRulersList() (*[]dto.RulerRes, error)
 	GetLeadershipByRulerID(int) (*[]dto.LeadershipRes, error)
 	GetNewsPressList() (*[]dto.NewsPressPostRes, error)
+	GetGrievancesList() (*[]model.Grievance, error)
+	GetGrievanceByID(string) (*dto.GrievanceRes, error)
+	GrievanceUpdateStatus(string, dto.GrievanceStatus) (bool, error)
 }
 
 type consoleService struct {
@@ -30,6 +35,8 @@ type consoleService struct {
 	LeadershipRepository repository.LeadershipRepository
 	NewsPressRepository  repository.NewsPressPostRepository
 	EntityRepository     repository.EntityRepository
+	GrievanceRepository  repository.GrievanceRepository
+	DistrictRepository   repository.DistrictRepository
 }
 
 func NewConsoleService(repos *repository.Repos) ConsoleService {
@@ -43,6 +50,8 @@ func NewConsoleService(repos *repository.Repos) ConsoleService {
 		LeadershipRepository: repos.Leadership,
 		NewsPressRepository:  repos.NewsPressPost,
 		EntityRepository:     repos.Entity,
+		GrievanceRepository:  repos.Grievance,
+		DistrictRepository:   repos.District,
 	}
 }
 
@@ -220,10 +229,10 @@ func (s *consoleService) GetNewsPressList() (*[]dto.NewsPressPostRes, error) {
 			}
 		}
 		if post.EntityId > 0 {
-			entity, err := s.EntityRepository.GetEntityByID(int(post.EntityId))
+			ok, entity, err := s.EntityRepository.GetEntityByID(int(post.EntityId))
 			if err != nil {
 				log.Printf("Error: While getting Entity Detail %d, %v", post.EntityId, err)
-			} else if entity != nil {
+			} else if ok {
 				newsPostRes.Entity = dto.Entity{
 					Name:         entity.Name,
 					Abbrv:        entity.Abbrv,
@@ -236,4 +245,98 @@ func (s *consoleService) GetNewsPressList() (*[]dto.NewsPressPostRes, error) {
 		results = append(results, newsPostRes)
 	}
 	return &results, nil
+}
+
+func (s *consoleService) GetGrievancesList() (*[]model.Grievance, error) {
+	var err error
+	grievances, err := s.GrievanceRepository.ConsoleGetGrievancesList()
+	if err != nil {
+		return nil, err
+	}
+	return &grievances, nil
+}
+
+func (s *consoleService) GetGrievanceByID(grievanceID string) (*dto.GrievanceRes, error) {
+	var err error
+	var grievanceRes dto.GrievanceRes
+	grievance, err := s.GrievanceRepository.ConsoleGetGrievanceByID(grievanceID)
+	if err != nil {
+		return nil, err
+	}
+	grievanceRes.Grievance = *grievance
+	if grievance.CabinetMinisterID != 0 {
+		member, err := s.MemberRepository.GetMemberById(grievance.CabinetMinisterID)
+		if err != nil {
+			fmt.Printf("Error: Error fetching member details by ID")
+		}
+		var memberDto dto.Member
+		if err := utils.MapToStruct(member, &memberDto); err != nil {
+			fmt.Printf("Error: Error converting member map to dto.member")
+		}
+		grievanceRes.CabinetMinister = &memberDto
+	}
+	if grievance.MemberOfParliamentID != 0 {
+		member, err := s.MemberRepository.GetMemberById(grievance.MemberOfParliamentID)
+		if err != nil {
+			fmt.Printf("Error: Error fetching member details by ID")
+		}
+		var memberDto dto.Member
+		if err := utils.MapToStruct(member, &memberDto); err != nil {
+			fmt.Printf("Error: Error converting member map to dto.member")
+		}
+		grievanceRes.MemberOfParliament = &memberDto
+	}
+	if grievance.StateLeaderID != 0 {
+		member, err := s.MemberRepository.GetMemberById(grievance.StateLeaderID)
+		if err != nil {
+			fmt.Printf("Error: Error fetching member details by ID")
+		}
+		var memberDto dto.Member
+		if err := utils.MapToStruct(member, &memberDto); err != nil {
+			fmt.Printf("Error: Error converting member map to dto.member")
+		}
+		grievanceRes.StateLeader = &memberDto
+	}
+	if grievance.StateID != 0 {
+		state, err := s.StateRepository.GetByID(int(grievance.StateID))
+		if err != nil {
+			fmt.Printf("Error: Error fetching state details by ID")
+		} else {
+			grievanceRes.State = &model.State{Name: state.Name}
+		}
+	}
+	if grievance.DistrictID != 0 {
+		district, err := s.DistrictRepository.GetByID(grievance.DistrictID)
+		if err != nil {
+			fmt.Printf("Error: Error fetching district details by ID")
+		} else {
+			grievanceRes.District = district.Name
+		}
+	}
+	if !grievance.HideIdentity && grievance.CreatedBy != "" {
+		id, err := utils.StrToInt(grievance.CreatedBy)
+		if err != nil {
+			fmt.Printf("Error: Error converting CreatedBy to int")
+		}
+		user, err := s.UserRepository.GetByID(id)
+		if err != nil {
+			fmt.Printf("Error: Error fetching user details by ID")
+		} else {
+			grievanceRes.User = dto.UserClaim{
+				UserID: user.UserID,
+				Name:   user.Name,
+				Email:  user.Email,
+			}
+		}
+	}
+	return &grievanceRes, nil
+}
+
+func (s *consoleService) GrievanceUpdateStatus(grievanceID string, status dto.GrievanceStatus) (bool, error) {
+	var err error
+	err = s.GrievanceRepository.ConsoleUpdateGrievanceStatus(grievanceID, status)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }

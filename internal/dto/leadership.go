@@ -23,6 +23,7 @@ type LeadershipReq struct {
 }
 
 type Leader struct {
+	ID          uint           `json:"id"`
 	Name        string         `json:"name"`
 	Designation Position       `json:"designation"`
 	Photo       string         `json:"photo"`

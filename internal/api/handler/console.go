@@ -1,20 +1,25 @@
 package handler
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/service"
 	"github.com/shappy0/mantritva/pkg/utils"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ConsoleHandler struct {
-	Service service.ConsoleService
+	Service     service.ConsoleService
+	FeedService service.FeedService
 }
 
 func NewConsoleHandler(services *service.Services) *ConsoleHandler {
 	return &ConsoleHandler{
-		Service: services.ConsoleService,
+		Service:     services.ConsoleService,
+		FeedService: services.FeedService,
 	}
 }
 
@@ -95,4 +100,56 @@ func (h *ConsoleHandler) GetNewsPressList(c *gin.Context) {
 		return
 	}
 	utils.Success(c, "", resp)
+}
+
+func (h *ConsoleHandler) GetGrievancesList(c *gin.Context) {
+	resp, err := h.Service.GetGrievancesList()
+	if err != nil {
+		utils.Error(c, 500, "Failed to get grievances list", err)
+		return
+	}
+	utils.Success(c, "", resp)
+}
+
+func (h *ConsoleHandler) GetGrievanceByID(c *gin.Context) {
+	grievanceID := c.Param("grievanceID")
+	resp, err := h.Service.GetGrievanceByID(grievanceID)
+	if err != nil {
+		utils.Error(c, 500, "Failed to get grievance", err)
+		return
+	}
+	utils.Success(c, "", resp)
+}
+
+func (h *ConsoleHandler) GrievanceUpdateStatus(c *gin.Context) {
+	grievanceID := c.Param("grievanceID")
+	var req dto.GrievanceStatus
+	if err := c.BindJSON(&req); err != nil {
+		utils.Error(c, 400, "Invalid request data", err)
+		return
+	}
+	resp, err := h.Service.GrievanceUpdateStatus(grievanceID, req)
+	if err != nil {
+		utils.Error(c, 500, "Failed to update grievance status", err)
+		return
+	}
+	if req.Status == utils.OPEN {
+		postID, err := primitive.ObjectIDFromHex(req.ID)
+		if err != nil {
+			utils.Error(c, 500, "Invalid grievance ID", err)
+			return
+		}
+		_, err = h.FeedService.Create(dto.FeedReq{
+			Type:   utils.GRIEVANCE,
+			PostID: postID,
+			Status: utils.Published,
+		})
+		if err != nil {
+			utils.Error(c, 500, "Failed to create grievance feed", err)
+			return
+		} else {
+			fmt.Printf("Grievance feed created successfully for grievance ID: %s\n", req.ID)
+		}
+	}
+	utils.Success(c, "Grievance status updated successfully", resp)
 }

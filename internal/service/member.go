@@ -17,6 +17,7 @@ import (
 	"github.com/shappy0/mantritva/internal/repository"
 	"github.com/shappy0/mantritva/pkg/config"
 	"github.com/shappy0/mantritva/pkg/storage"
+	"github.com/shappy0/mantritva/pkg/utils"
 )
 
 type MemberService interface {
@@ -24,14 +25,19 @@ type MemberService interface {
 	Create(c *gin.Context, req dto.MemberReq, photo *multipart.FileHeader) (*model.Member, error)
 	BulkMemberUpload(c *gin.Context, filePath string) (bool, error)
 	GetByName(name string) (*dto.MemberRes, error)
-	GetCareerByMemberID(memberID int) ([]map[string]interface{}, error)
 	ListUnaffiliatedMembers() ([]dto.MemberRes, error)
+	GetCareerByMemberID(int) ([]map[string]interface{}, error)
+	GetPostsByMemberID(dto.Pagination, int) (*[]dto.NewsPressPostRes, error)
+	GetGrievancesByMemberID(dto.Pagination, int, string) (*[]dto.GrievanceShort, error)
+	// GetByID(id uint) (*dto.Member, error)
 }
 
 type memberService struct {
 	Repository           repository.MemberRepository
 	LeadershipRepository repository.LeadershipRepository
 	PartyRepository      repository.PartyRepository
+	NewsPressRepository  repository.NewsPressPostRepository
+	GrievanceRepository  repository.GrievanceRepository
 }
 
 func NewMemberService(repos *repository.Repos) MemberService {
@@ -39,6 +45,8 @@ func NewMemberService(repos *repository.Repos) MemberService {
 		Repository:           repos.Member,
 		LeadershipRepository: repos.Leadership,
 		PartyRepository:      repos.Party,
+		NewsPressRepository:  repos.NewsPressPost,
+		GrievanceRepository:  repos.Grievance,
 	}
 }
 
@@ -168,4 +176,49 @@ func (s *memberService) ListUnaffiliatedMembers() ([]dto.MemberRes, error) {
 		result = append(result, dtoMember)
 	}
 	return result, nil
+}
+
+func (s *memberService) GetPostsByMemberID(pagination dto.Pagination, memberID int) (*[]dto.NewsPressPostRes, error) {
+	var newsPressPostRes []dto.NewsPressPostRes
+	posts, err := s.NewsPressRepository.GetPostsByMemberID(pagination, memberID)
+	if err != nil {
+		return nil, err
+	}
+	for _, post := range *posts {
+		dtoPost := dto.NewsPressPostRes{NewsPressPost: post}
+		memberAndParty, err := s.Repository.GetMemberAndPartyDetails(memberID, int(post.PartyId))
+		if err != nil {
+			return nil, err
+		}
+		if err := utils.MapToStruct(memberAndParty, &dtoPost); err != nil {
+			return nil, err
+		}
+		newsPressPostRes = append(newsPressPostRes, dtoPost)
+	}
+	return &newsPressPostRes, nil
+}
+
+func (s *memberService) GetGrievancesByMemberID(pagination dto.Pagination, memberID int, position string) (*[]dto.GrievanceShort, error) {
+	var grievancesRes []dto.GrievanceShort
+	grievances, err := s.GrievanceRepository.GetGrievancesByMemberID(pagination, memberID, position)
+	if err != nil {
+		return nil, err
+	}
+	for _, grievance := range *grievances {
+		dtoGrievance := dto.GrievanceShort{
+			GrievanceID:    grievance.GrievanceID,
+			Title:          grievance.Title,
+			Type:           grievance.Type,
+			SubType:        grievance.SubType,
+			Level:          grievance.Level,
+			CenterSubLevel: grievance.CenterSubLevel,
+			DateOfIncident: utils.DateOnly{Time: &grievance.DateOfIncident},
+			Location:       grievance.Location,
+			Impact:         grievance.Impact,
+			FinalStatus:    grievance.FinalStatus,
+			CreatedAt:      grievance.CreatedAt,
+		}
+		grievancesRes = append(grievancesRes, dtoGrievance)
+	}
+	return &grievancesRes, nil
 }

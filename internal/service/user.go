@@ -9,6 +9,7 @@ import (
 
 type UserService interface {
 	Create(dto.UserReq) (*model.User, error)
+	GetByID(int) (*model.User, error)
 	GetByUserID(string) (*model.User, error)
 }
 
@@ -42,6 +43,14 @@ func (s *userService) Create(req dto.UserReq) (*model.User, error) {
 		return nil, err
 	}
 	user.Password = ""
+	return user, nil
+}
+
+func (s *userService) GetByID(id int) (*model.User, error) {
+	user, err := s.Repository.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
 	return user, nil
 }
 

@@ -25,6 +25,8 @@ type NewsPressPostRepository interface {
 	// UpdateVote(postID string, upvoteChange int, downvoteChange int) error
 	ConsoleGetNewsPressList() ([]model.NewsPressPost, error)
 	GetPostsByPartyID(pagination dto.Pagination, partyID int) (*[]model.NewsPressPost, error)
+	GetPostsByMemberID(pagination dto.Pagination, memberID int) (*[]model.NewsPressPost, error)
+	GetPostsByEntityID(pagination dto.Pagination, entityID int) (*[]model.NewsPressPost, error)
 }
 
 type newsPressPostRepository struct {
@@ -127,6 +129,33 @@ func (r *newsPressPostRepository) GetPostsByPartyID(pagination dto.Pagination, p
 	var newsPressPosts []model.NewsPressPost
 	filter := bson.M{"party_id": partyID, "status": "Published"}
 	opts := options.Find().
+		SetSort(bson.D{{Key: "created_at", Value: -1}}).
+		SetLimit(int64(pagination.Limit)).
+		SetSkip(int64(pagination.Offset))
+	if err := r.DB.FindMany(r.DB.NewsPressPostCollection, filter, opts, &newsPressPosts); err != nil {
+		return nil, err
+	}
+	return &newsPressPosts, nil
+}
+
+func (r *newsPressPostRepository) GetPostsByMemberID(pagination dto.Pagination, memberID int) (*[]model.NewsPressPost, error) {
+	var newsPressPosts []model.NewsPressPost
+	filter := bson.M{"member_id": memberID, "status": "Published"}
+	opts := options.Find().
+		SetSort(bson.D{{Key: "created_at", Value: -1}}).
+		SetLimit(int64(pagination.Limit)).
+		SetSkip(int64(pagination.Offset))
+	if err := r.DB.FindMany(r.DB.NewsPressPostCollection, filter, opts, &newsPressPosts); err != nil {
+		return nil, err
+	}
+	return &newsPressPosts, nil
+}
+
+func (r *newsPressPostRepository) GetPostsByEntityID(pagination dto.Pagination, entityID int) (*[]model.NewsPressPost, error) {
+	var newsPressPosts []model.NewsPressPost
+	filter := bson.M{"entity_id": entityID, "status": "Published"}
+	opts := options.Find().
+		SetSort(bson.D{{Key: "created_at", Value: -1}}).
 		SetLimit(int64(pagination.Limit)).
 		SetSkip(int64(pagination.Offset))
 	if err := r.DB.FindMany(r.DB.NewsPressPostCollection, filter, opts, &newsPressPosts); err != nil {

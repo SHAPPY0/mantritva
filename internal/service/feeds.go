@@ -2,11 +2,11 @@ package service
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
+	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -25,6 +25,7 @@ type feedService struct {
 	LeadershipRepository    repository.LeadershipRepository
 	StateRepository         repository.StateRepository
 	EntityRepository        repository.EntityRepository
+	GrievanceRepository     repository.GrievanceRepository
 }
 
 func NewFeedService(repos *repository.Repos) FeedService {
@@ -36,6 +37,7 @@ func NewFeedService(repos *repository.Repos) FeedService {
 		LeadershipRepository:    repos.Leadership,
 		StateRepository:         repos.State,
 		EntityRepository:        repos.Entity,
+		GrievanceRepository:     repos.Grievance,
 	}
 }
 
@@ -57,7 +59,8 @@ func (s *feedService) GetLatestFeed(userID int) ([]dto.FeedRes, error) {
 	var results []dto.FeedRes
 	feeds, err := s.FeedRepository.GetAll()
 	if err != nil {
-
+		log.Errorf("Error while fetching feeds: %v", err)
+		return results, err
 	}
 	for _, feed := range feeds {
 		preparedFeed := dto.FeedRes{ID: feed.ID, Type: feed.Type}
@@ -65,13 +68,20 @@ func (s *feedService) GetLatestFeed(userID int) ([]dto.FeedRes, error) {
 		case string(utils.NEWSPRESS):
 			np, err := s.GetNewsPressFeed(userID, feed.PostID)
 			if err != nil {
-				fmt.Errorf("error while getting newsPress feed by %s", feed.PostID)
+				log.Errorf("Error while getting newsPress feed by %s: %v", feed.PostID, err)
 			} else {
 				preparedFeed.Feed = np
 			}
+		case string(utils.GRIEVANCE):
+			g, err := s.GetGrievanceFeed(userID, feed.PostID)
+			if err != nil {
+				log.Errorf("Error while getting grievance feed by %s: %v", feed.PostID, err)
+			} else {
+				preparedFeed.Feed = g
+			}
 
 		default:
-			log.Println("Ss")
+			log.Info("No Valid Feed Type Found")
 		}
 		results = append(results, preparedFeed)
 	}
@@ -142,7 +152,7 @@ func (s *feedService) SaveReaction(req dto.ReactionReq, userIP string) (bool, er
 
 func (s *feedService) updatePostVotes(newsPress *model.NewsPressPost) {
 	if err := s.NewsPressPostRepository.UpdatePostVoteCountsByID(newsPress.ID, newsPress.UpvoteCount, newsPress.DownvoteCount); err != nil {
-		log.Printf("Error: " + err.Error())
+		log.Error("Error: " + err.Error())
 	}
 }
 
@@ -187,12 +197,11 @@ func (s *feedService) GetNewsPressFeed(userID int, postID primitive.ObjectID) (d
 		newsPressPostRes.Party = dto.Party{Name: party.Name, Abbrv: party.Abbrv, Symbol: party.Symbol}
 	}
 	if np.EntityId > 0 {
-		entity, err := s.EntityRepository.GetEntityByID(int(np.EntityId))
-		log.Print(entity)
+		ok, entity, err := s.EntityRepository.GetEntityByID(int(np.EntityId))
 		if err != nil {
 			return newsPressPostRes, err
 		}
-		if entity != nil {
+		if ok {
 			newsPressPostRes.Entity = dto.Entity{
 				Name:         entity.Name,
 				Abbrv:        entity.Abbrv,
@@ -213,4 +222,15 @@ func (s *feedService) GetNewsPressFeed(userID int, postID primitive.ObjectID) (d
 		}
 	}
 	return newsPressPostRes, nil
+}
+
+func (s *feedService) GetGrievanceFeed(userID int, postID primitive.ObjectID) (*dto.GrievanceRes, error) {
+	var grievanceRes dto.GrievanceRes
+	grievance, err := s.GrievanceRepository.GetByID(postID)
+	if err != nil {
+		return &grievanceRes, err
+	}
+
+	grievanceRes.Grievance = *grievance
+	return &grievanceRes, nil
 }

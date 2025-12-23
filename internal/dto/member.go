@@ -56,7 +56,8 @@ type MemberRes struct {
 }
 
 type Member struct {
-	Name     string `json:"name"`
-	Position string `json:"position"`
-	Photo    string `json:"photo"`
+	Name     string      `json:"name"`
+	Position string      `json:"position"`
+	Photo    string      `json:"photo"`
+	Party    MemberParty `json:"party,omitempty"`
 }

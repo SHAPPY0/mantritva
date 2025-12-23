@@ -101,6 +101,23 @@ func (h *MemberHandler) GetMemberCareer(c *gin.Context) {
 	utils.Success(c, "Member career fetched successfully", careersDto)
 }
 
+func (h *MemberHandler) GetGrievancesByMemberID(c *gin.Context) {
+	memberID := c.Param("memberID")
+	memberIdInt, err := utils.StrToInt(memberID)
+	position := c.Query("position")
+	if err != nil {
+		utils.Error(c, 400, "Invalid member ID", nil)
+		return
+	}
+	pagination := dto.NewPagination(c)
+	grievances, err := h.Service.GetGrievancesByMemberID(pagination, memberIdInt, position)
+	if err != nil {
+		utils.Error(c, 500, "Failed to fetch grievances", err)
+		return
+	}
+	utils.Success(c, "Grievances fetched successfully", grievances)
+}
+
 func (h *MemberHandler) ListUnaffiliatedMembers(c *gin.Context) {
 	val, err := h.Service.ListUnaffiliatedMembers()
 	if err != nil {
@@ -108,4 +125,20 @@ func (h *MemberHandler) ListUnaffiliatedMembers(c *gin.Context) {
 		return
 	}
 	utils.Success(c, "Unaffiliated members fetched successfully", val)
+}
+
+func (h *MemberHandler) GetPostsByMemberID(c *gin.Context) {
+	memberID := c.Param("memberID")
+	memberIdInt, err := utils.StrToInt(memberID)
+	if err != nil {
+		utils.Error(c, 400, "Invalid member ID", nil)
+		return
+	}
+	pagination := dto.NewPagination(c)
+	posts, err := h.Service.GetPostsByMemberID(pagination, memberIdInt)
+	if err != nil {
+		utils.Error(c, 500, "Failed to fetch news press posts", err)
+		return
+	}
+	utils.Success(c, "News press posts fetched successfully", posts)
 }

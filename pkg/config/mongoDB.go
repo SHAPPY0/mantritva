@@ -19,6 +19,7 @@ type MongoDB struct {
 	FeedCollection          *mongo.Collection
 	NewsPressPostCollection *mongo.Collection
 	PostReactionCollection  *mongo.Collection
+	GrievanceCollection     *mongo.Collection
 	Filter                  bson.M
 }
 
@@ -78,6 +79,11 @@ func (m *MongoDB) SetupCollections() error {
 		return err
 	} else {
 		m.PostReactionCollection = db.Collection("post_reactions")
+	}
+	if err := createCollection(db, "grievances"); err != nil {
+		return err
+	} else {
+		m.GrievanceCollection = db.Collection("grievances")
 	}
 	return nil
 }

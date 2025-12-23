@@ -16,7 +16,9 @@ type MemberRepository interface {
 	GetByID(id uint) (*model.Member, error)
 	ConsoleGetMembersList() (*[]model.Member, error)
 	ListUnaffiliatedMembers() ([]model.Member, error)
+	GetMemberAndPartyDetails(int, int) (map[string]interface{}, error)
 	// GetCareerByMemberID(memberID uint) (*[]model.CareerRes, error)
+	GetMemberById(memberID uint) (map[string]interface{}, error)
 }
 
 type memberRepository struct {
@@ -96,4 +98,63 @@ func (r *memberRepository) ListUnaffiliatedMembers() ([]model.Member, error) {
 		return nil, err
 	}
 	return members, nil
+}
+
+func (r *memberRepository) GetMemberAndPartyDetails(memberID, partyID int) (map[string]interface{}, error) {
+	var results map[string]interface{}
+	query := `
+		SELECT
+			json_build_object(
+				'name', m.name,
+				'photo', m.photo,
+				'position', CASE WHEN l.role IS NOT NULL THEN l.role ELSE l.position || CASE WHEN s.name IS NOT NULL THEN ', ' || s.name || '' ELSE '' END END
+			) AS member,
+			json_build_object(
+				'name', p.name,
+				'abbrv', p.abbrv,
+				'symbol', p.symbol
+			) AS party
+		FROM
+			members m
+		LEFT JOIN leaderships l ON
+			l.member_id = m.id
+		LEFT JOIN states s ON
+			s.id = l.state_id
+		LEFT JOIN parties p ON p.id = ?
+		WHERE m.id = ?
+	`
+	if err := r.DB.Raw(query, partyID, memberID).Scan(&results).Error; err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+func (r *memberRepository) GetMemberById(memberID uint) (map[string]interface{}, error) {
+	var member map[string]interface{}
+	query := `
+		SELECT
+			m.name,
+			m.photo,
+			pm."position",
+			json_build_object(
+				'name', p.name,
+				'abbrv', p.abbrv,
+				'symbol', p.symbol,
+				'position', case when l.role is not null then l.role else l.position || case when s.name is not null then ', ' || s.name || '' else '' end end
+			) AS party
+		FROM members m
+		INNER JOIN party_members pm ON
+			pm.member_id = m.id
+		INNER JOIN parties p ON
+			p.id = pm.party_id
+		INNER JOIN leaderships l ON
+			l.member_id = m.id and l.is_active = true and l.term_start < now() and l.term_end is null
+		LEFT JOIN states s ON
+			s.id = l.state_id
+		WHERE m.id = ? AND pm.exit_date IS NULL
+	`
+	if err := r.DB.Raw(query, memberID).Scan(&member).Error; err != nil {
+		return nil, err
+	}
+	return member, nil
 }

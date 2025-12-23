@@ -219,6 +219,7 @@ func (s *rulerService) GetCenterLeadership() (map[string][]dto.Leader, error) {
 					log.Printf("Failed to get member details by memberID %d", leader.MemberID)
 				} else {
 					item := dto.Leader{
+						ID:          member.ID,
 						Name:        member.Name,
 						Designation: dto.Position{Position: leader.Position, Role: leader.Role, Departments: leader.Departments},
 						Photo:       member.Photo,
@@ -257,6 +258,7 @@ func (s *rulerService) GetCenterLeadership() (map[string][]dto.Leader, error) {
 					log.Printf("Failed to get member details by memberID %d", leader.MemberID)
 				} else {
 					item := dto.Leader{
+						ID:          member.ID,
 						Name:        member.Name,
 						Designation: dto.Position{Position: leader.Position, Role: leader.Role, Departments: leader.Departments},
 						Photo:       member.Photo,

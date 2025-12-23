@@ -1,0 +1,157 @@
+package repository
+
+import (
+	"github.com/shappy0/mantritva/internal/dto"
+	"github.com/shappy0/mantritva/internal/model"
+	"github.com/shappy0/mantritva/pkg/config"
+	"github.com/shappy0/mantritva/pkg/utils"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"gorm.io/gorm"
+)
+
+type GrievanceRepository interface {
+	Create(*model.Grievance) error
+	ListByUser(string) ([]model.Grievance, error)
+	GetByID(primitive.ObjectID) (*model.Grievance, error)
+	GetByGrievanceID(string) (*model.Grievance, error)
+	ConsoleGetGrievancesList() ([]model.Grievance, error)
+	ConsoleGetGrievanceByID(string) (*model.Grievance, error)
+	ConsoleUpdateGrievanceStatus(string, dto.GrievanceStatus) error
+	GetGrievancesByMemberID(dto.Pagination, int, string) (*[]model.Grievance, error)
+}
+
+type grievanceRepository struct {
+	DB *config.MongoDB
+}
+
+func NewGrievanceRepository(db *gorm.DB, mongoDB *config.MongoDB) GrievanceRepository {
+	return &grievanceRepository{
+		DB: mongoDB,
+	}
+}
+
+func (r *grievanceRepository) Create(g *model.Grievance) error {
+	_, err := r.DB.Insert(r.DB.GrievanceCollection, g)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *grievanceRepository) ListByUser(userID string) ([]model.Grievance, error) {
+	filter := map[string]interface{}{
+		"created_by": userID,
+	}
+	opts := options.Find().SetSort(map[string]interface{}{
+		"created_at": -1,
+	})
+	var grievances []model.Grievance
+	err := r.DB.FindMany(r.DB.GrievanceCollection, filter, opts, &grievances)
+	if err != nil {
+		return nil, err
+	}
+	return grievances, nil
+}
+
+func (r *grievanceRepository) GetByID(id primitive.ObjectID) (*model.Grievance, error) {
+	filter := map[string]interface{}{
+		"_id": id,
+	}
+	var grievance model.Grievance
+	_, err := r.DB.FindOne(r.DB.GrievanceCollection, filter, &grievance)
+	if err != nil {
+		return nil, err
+	}
+	return &grievance, nil
+}
+
+func (r *grievanceRepository) GetByGrievanceID(grievanceID string) (*model.Grievance, error) {
+	filter := map[string]interface{}{
+		"grievance_id": grievanceID,
+	}
+	var grievance model.Grievance
+	_, err := r.DB.FindOne(r.DB.GrievanceCollection, filter, &grievance)
+	if err != nil {
+		return nil, err
+	}
+	return &grievance, nil
+}
+
+func (r *grievanceRepository) ConsoleGetGrievancesList() ([]model.Grievance, error) {
+	var grievances []model.Grievance
+	opts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
+	if err := r.DB.FindMany(r.DB.GrievanceCollection, bson.M{}, opts, &grievances); err != nil {
+		return grievances, err
+	}
+	return grievances, nil
+}
+
+func (r *grievanceRepository) ConsoleGetGrievanceByID(grievanceID string) (*model.Grievance, error) {
+	filter := map[string]interface{}{
+		"grievance_id": grievanceID,
+	}
+	var grievance model.Grievance
+	_, err := r.DB.FindOne(r.DB.GrievanceCollection, filter, &grievance)
+	if err != nil {
+		return nil, err
+	}
+	return &grievance, nil
+}
+
+func (r *grievanceRepository) ConsoleUpdateGrievanceStatus(grievanceID string, status dto.GrievanceStatus) error {
+	filter := map[string]interface{}{
+		"grievance_id": grievanceID,
+	}
+	update := bson.M{
+		"$push": bson.M{
+			"updates": bson.M{
+				"date":   status.Date.Time,
+				"status": status.Status,
+				"remark": status.Remark,
+				"link":   status.Link,
+			},
+		},
+		"$set": bson.M{
+			"final_status": status.Status,
+		},
+	}
+	_, err := r.DB.UpdateOne(r.DB.GrievanceCollection, filter, update)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *grievanceRepository) GetGrievancesByMemberID(pagination dto.Pagination, memberID int, position string) (*[]model.Grievance, error) {
+	skip := (pagination.Offset - 1) * pagination.Offset
+	limit := pagination.Limit
+	filter := map[string]interface{}{
+		"final_status": bson.M{
+			"$ne": utils.UNDERREVIEW,
+		},
+		"is_deleted": false,
+	}
+	switch position {
+	case "Cabinet Minister":
+		filter["cabinet_minister_id"] = memberID
+	case "State Minister":
+		filter["state_leader_id"] = memberID
+	case "Member Of Parliament":
+		filter["member_of_parliament_id"] = memberID
+	default:
+		filter["member_id"] = memberID
+	}
+	opts := options.Find().
+		SetSort(bson.D{{Key: "created_at", Value: -1}}).
+		SetSkip(int64(skip)).
+		SetLimit(int64(limit))
+
+	var grievances []model.Grievance
+	err := r.DB.FindMany(r.DB.GrievanceCollection, filter, opts, &grievances)
+	if err != nil {
+		return nil, err
+	}
+	return &grievances, nil
+}

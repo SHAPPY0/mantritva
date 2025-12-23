@@ -21,6 +21,7 @@ type UserRole string
 type FeedType string
 type PostReactionType string
 type Position string
+type GrievanceStatus string
 
 const (
 	ADMIN     UserRole = "ADMIN"
@@ -65,6 +66,7 @@ const (
 const (
 	NEWSPRESS   FeedType = "NEWSPRESS"
 	DEVELOPMENT FeedType = "DEVELOPMENT"
+	GRIEVANCE   FeedType = "GRIEVANCE"
 )
 
 const (
@@ -84,6 +86,18 @@ const (
 	MOS                 Position = "Member Of State"
 	MLA                 Position = "Member Of Legislative Assembly"
 	RAJYASABHAMEMEBER   Position = "Rajyasabha Member"
+)
+
+const (
+	UNDERREVIEW GrievanceStatus = "UNDER_REVIEW"
+	OPEN        GrievanceStatus = "OPEN"
+	REJECTED    GrievanceStatus = "REJECTED"
+	INPROGRESS  GrievanceStatus = "IN_PROGRESS"
+	CLOSED      GrievanceStatus = "CLOSED"
+	FIXED       GrievanceStatus = "FIXED"
+	COMPLETED   GrievanceStatus = "COMPLETED"
+	STAYED      GrievanceStatus = "STAYED"
+	NOUPDATE    GrievanceStatus = "NO_UPDATE"
 )
 
 func (d *DateOnly) UnmarshalJSON(b []byte) error {

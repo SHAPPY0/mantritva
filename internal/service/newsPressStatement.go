@@ -13,16 +13,20 @@ type NewsPressService interface {
 }
 
 type newsPressService struct {
-	Repository repository.NewsPressPostRepository
-	MemberRepo repository.MemberRepository
-	PartyRepo  repository.PartyRepository
+	Repository     repository.NewsPressPostRepository
+	MemberRepo     repository.MemberRepository
+	PartyRepo      repository.PartyRepository
+	LeadershipRepo repository.LeadershipRepository
+	StateRepo      repository.StateRepository
 }
 
 func NewNewsPressService(repos *repository.Repos) NewsPressService {
 	return &newsPressService{
-		Repository: repos.NewsPressPost,
-		MemberRepo: repos.Member,
-		PartyRepo:  repos.Party,
+		Repository:     repos.NewsPressPost,
+		MemberRepo:     repos.Member,
+		PartyRepo:      repos.Party,
+		LeadershipRepo: repos.Leadership,
+		StateRepo:      repos.State,
 	}
 }
 
@@ -58,6 +62,21 @@ func (s *newsPressService) GetPostsByPartyID(pagination dto.Pagination, partyID 
 			member, err := s.MemberRepo.GetByID(post.MemberId)
 			if err == nil && member != nil {
 				newsPresPost.Member = dto.Member{Name: member.Name, Photo: member.Photo}
+				leader, err := s.LeadershipRepo.GetByMemberID(member.ID)
+				if err == nil {
+					if leader.Role != "" {
+						newsPresPost.Member.Position = leader.Role
+					} else {
+						position := leader.Position
+						newsPresPost.Member.Position = position
+						if leader.StateID > 0 {
+							state, err := s.StateRepo.GetByID(int(leader.StateID))
+							if err == nil {
+								newsPresPost.Member.Position = position + ", " + state.Name
+							}
+						}
+					}
+				}
 			}
 		}
 		if post.PartyId > 0 {

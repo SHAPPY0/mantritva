@@ -1,8 +1,6 @@
 package dto
 
 import (
-	"log"
-
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/pkg/utils"
 )
@@ -23,7 +21,6 @@ func NewPagination(c *gin.Context) Pagination {
 	if limit = c.Query("limit"); limit == "" {
 		limit = "20"
 	}
-	log.Println("Limit:", limit, "Offset:", offset)
 	limitInt, err := utils.StrToInt(limit)
 
 	if err != nil {

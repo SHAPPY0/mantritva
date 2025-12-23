@@ -6,6 +6,7 @@ type Services struct {
 	NewsPressService NewsPressService
 	FeedService      FeedService
 	ConsoleService   ConsoleService
+	GrievanceService GrievanceSerivce
 }
 
 func NewServices(repos *repository.Repos) *Services {
@@ -13,5 +14,6 @@ func NewServices(repos *repository.Repos) *Services {
 		NewsPressService: NewNewsPressService(repos),
 		FeedService:      NewFeedService(repos),
 		ConsoleService:   NewConsoleService(repos),
+		GrievanceService: NewGrievanceService(repos),
 	}
 }

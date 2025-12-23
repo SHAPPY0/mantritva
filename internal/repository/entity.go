@@ -9,7 +9,8 @@ import (
 type EntityRepository interface {
 	Create(*model.Entity) error
 	List() ([]dto.EntityRes, error)
-	GetEntityByID(int) (*dto.EntityRes, error)
+	GetEntityByID(int) (bool, *dto.EntityRes, error)
+	GetEntityByName(string) (bool, *dto.EntityRes, error)
 }
 
 type entityRepository struct {
@@ -43,7 +44,7 @@ func (r *entityRepository) List() ([]dto.EntityRes, error) {
 	return results, nil
 }
 
-func (r *entityRepository) GetEntityByID(id int) (*dto.EntityRes, error) {
+func (r *entityRepository) GetEntityByID(id int) (bool, *dto.EntityRes, error) {
 	var result dto.EntityRes
 	query := `SELECT e.*, s.name as state_name, d.name as district_name
 				FROM entities e
@@ -51,8 +52,30 @@ func (r *entityRepository) GetEntityByID(id int) (*dto.EntityRes, error) {
 				LEFT JOIN districts d ON d.id = e.district_id AND e.is_central = false
 				WHERE e.id = ?`
 
-	if err := r.DB.Raw(query, id).Scan(&result).Error; err != nil {
-		return nil, err
+	tx := r.DB.Raw(query, id).Scan(&result)
+	if tx.Error != nil {
+		return false, nil, tx.Error
 	}
-	return &result, nil
+	if tx.RowsAffected == 0 {
+		return false, nil, nil
+	}
+	return true, &result, nil
+}
+
+func (r *entityRepository) GetEntityByName(name string) (bool, *dto.EntityRes, error) {
+	var result dto.EntityRes
+	query := `SELECT e.*, s.name as state_name, d.name as district_name
+				FROM entities e
+				LEFT JOIN states s ON s.id = e.state_id AND e.is_central = false
+				LEFT JOIN districts d ON d.id = e.district_id AND e.is_central = false
+				WHERE e.name = ?`
+
+	tx := r.DB.Raw(query, name).Scan(&result)
+	if tx.Error != nil {
+		return false, nil, tx.Error
+	}
+	if tx.RowsAffected == 0 {
+		return false, nil, nil
+	}
+	return true, &result, nil
 }

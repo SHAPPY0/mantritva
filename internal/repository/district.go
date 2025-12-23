@@ -9,6 +9,7 @@ type DistrictRepository interface {
 	Create(*model.District) error
 	List() ([]model.District, error)
 	GetByState(stateId string) ([]model.District, error)
+	GetByID(id uint) (*model.District, error)
 }
 
 type districtRepository struct {
@@ -45,4 +46,12 @@ func (r *districtRepository) GetByState(stateId string) ([]model.District, error
 		return nil, nil
 	}
 	return districts, nil
+}
+
+func (r *districtRepository) GetByID(id uint) (*model.District, error) {
+	var district model.District
+	if err := r.DB.Where("id = ?", id).Find(&district).Error; err != nil {
+		return nil, err
+	}
+	return &district, nil
 }

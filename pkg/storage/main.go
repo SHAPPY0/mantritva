@@ -5,6 +5,7 @@ type FileMeta struct {
 	SavedName    string
 	FullPath     string
 	AbsolutePath string
+	Extenstion   string
 }
 
 type Storage interface {

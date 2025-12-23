@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/service"
@@ -38,4 +40,31 @@ func (h *EntityHandler) ListEntity(c *gin.Context) {
 		return
 	}
 	utils.Success(c, "Entity fetched successfully", val)
+}
+
+func (h *EntityHandler) GetEntityByName(c *gin.Context) {
+	name := c.Param("name")
+	entityName := strings.Replace(name, "_", " ", -1)
+	val, err := h.Service.GetEntityByName(entityName)
+	if err != nil {
+		utils.Error(c, 500, "Failed to fetch entity", nil)
+		return
+	}
+	utils.Success(c, "", val)
+}
+
+func (h *EntityHandler) GetPostsByEntityID(c *gin.Context) {
+	pagination := dto.NewPagination(c)
+	entityID := c.Param("entityID")
+	entityIdInt, err := utils.StrToInt(entityID)
+	if err != nil {
+		utils.Error(c, 400, "Invalid entity ID", nil)
+		return
+	}
+	posts, err := h.Service.GetPostsByEntityID(pagination, entityIdInt)
+	if err != nil {
+		utils.Error(c, 500, "Failed to fetch posts", err)
+		return
+	}
+	utils.Success(c, "Posts fetched successfully", posts)
 }
