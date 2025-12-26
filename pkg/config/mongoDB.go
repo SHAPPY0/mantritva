@@ -40,6 +40,7 @@ func SetupMongoDB() (*MongoDB, error) {
 	mongoDB := &MongoDB{}
 	mongoOnce.Do(func() {
 		uri := fmt.Sprintf("mongodb://%s:%s@%s:%d/%s?authSource=%s", username, url.QueryEscape(password), host, port, dbName, dbName)
+		log.Print("MongoDB Connect URI: " + uri)
 		clientOptions := options.Client().ApplyURI(uri)
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
