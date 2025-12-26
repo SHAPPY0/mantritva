@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/shappy0/mantritva/internal/api"
 	"github.com/shappy0/mantritva/pkg/config"
 )
@@ -9,6 +11,8 @@ func main() {
 
 	//Load environment variables
 	config.Load()
+	log.Println("Starting Service...")
+	log.Println(config.GetConfig().GetString("DB_HOST"))
 	//DB Connection
 	db := config.SetupDatabase()
 	if db == nil {
