@@ -15,16 +15,9 @@ func main() {
 		panic("Failed to connect to postgresDB")
 	}
 
-	// cassandra, err := config.SetupCassandra()
-	// if err != nil {
-	// 	panic("Failed to connect to Cassandra")
-	// }
-	// defer cassandra.Close()
-	// cassandra.Ping()
-
 	mongoDB, err := config.SetupMongoDB()
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	r := api.SetupRouter(db, mongoDB)

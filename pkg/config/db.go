@@ -42,6 +42,7 @@ func SetupDatabase() *gorm.DB {
 	db.AutoMigrate(&model.Leadership{})
 	db.AutoMigrate(&model.User{})
 	db.AutoMigrate(&model.Entity{})
+	db.AutoMigrate(&model.KSA{})
 
 	return db
 }

@@ -22,6 +22,7 @@ type FeedType string
 type PostReactionType string
 type Position string
 type GrievanceStatus string
+type KSA string
 
 const (
 	ADMIN     UserRole = "ADMIN"
@@ -98,6 +99,13 @@ const (
 	COMPLETED   GrievanceStatus = "COMPLETED"
 	STAYED      GrievanceStatus = "STAYED"
 	NOUPDATE    GrievanceStatus = "NO_UPDATE"
+)
+
+const (
+	KSA_DEVELOPMENTS KSA = "developments"
+	KSA_GRIEVANCES   KSA = "grievances"
+	KSA_FIRS         KSA = "FIRs"
+	KSA_NEWSPRESSES  KSA = "news_and_presses"
 )
 
 func (d *DateOnly) UnmarshalJSON(b []byte) error {

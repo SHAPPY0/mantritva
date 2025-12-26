@@ -59,7 +59,8 @@ func (r *newsPressPostRepository) List() ([]model.NewsPressPost, error) {
 func (r *newsPressPostRepository) GetPostByID(postID primitive.ObjectID) (*model.NewsPressPost, error) {
 	var newsPressPost model.NewsPressPost
 	filter := bson.M{"_id": postID, "status": "Published"}
-	rowFound, err := r.DB.FindOne(r.DB.NewsPressPostCollection, filter, &newsPressPost)
+	opts := options.FindOne()
+	rowFound, err := r.DB.FindOne(r.DB.NewsPressPostCollection, filter, opts, &newsPressPost)
 	if err != nil {
 		log.Printf("Error fetching newpresspost by postID %s", postID)
 		return nil, err
@@ -85,7 +86,8 @@ func (r *newsPressPostRepository) UpdatePostVoteCountsByID(postID primitive.Obje
 func (r *newsPressPostRepository) GetReactionByUserIDAndPostID(userID int, postID primitive.ObjectID) (*model.PostReaction, error) {
 	var reaction model.PostReaction
 	filter := bson.M{"user_id": userID, "post_id": postID, "is_deleted": false}
-	rowFound, err := r.DB.FindOne(r.DB.PostReactionCollection, filter, &reaction)
+	opts := options.FindOne()
+	rowFound, err := r.DB.FindOne(r.DB.PostReactionCollection, filter, opts, &reaction)
 	if err != nil {
 		log.Printf("Error fetching reaction: %v", err)
 		return nil, err

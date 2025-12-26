@@ -60,7 +60,8 @@ func (r *grievanceRepository) GetByID(id primitive.ObjectID) (*model.Grievance, 
 		"_id": id,
 	}
 	var grievance model.Grievance
-	_, err := r.DB.FindOne(r.DB.GrievanceCollection, filter, &grievance)
+	opts := options.FindOne()
+	_, err := r.DB.FindOne(r.DB.GrievanceCollection, filter, opts, &grievance)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +73,8 @@ func (r *grievanceRepository) GetByGrievanceID(grievanceID string) (*model.Griev
 		"grievance_id": grievanceID,
 	}
 	var grievance model.Grievance
-	_, err := r.DB.FindOne(r.DB.GrievanceCollection, filter, &grievance)
+	opts := options.FindOne()
+	_, err := r.DB.FindOne(r.DB.GrievanceCollection, filter, opts, &grievance)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +95,8 @@ func (r *grievanceRepository) ConsoleGetGrievanceByID(grievanceID string) (*mode
 		"grievance_id": grievanceID,
 	}
 	var grievance model.Grievance
-	_, err := r.DB.FindOne(r.DB.GrievanceCollection, filter, &grievance)
+	opts := options.FindOne()
+	_, err := r.DB.FindOne(r.DB.GrievanceCollection, filter, opts, &grievance)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +144,11 @@ func (r *grievanceRepository) GetGrievancesByMemberID(pagination dto.Pagination,
 	case "Member Of Parliament":
 		filter["member_of_parliament_id"] = memberID
 	default:
-		filter["member_id"] = memberID
+		filter["$or"] = []bson.M{
+			{"cabinet_minister_id": memberID},
+			{"state_leader_id": memberID},
+			{"member_of_parliament_id": memberID},
+		}
 	}
 	opts := options.Find().
 		SetSort(bson.D{{Key: "created_at", Value: -1}}).

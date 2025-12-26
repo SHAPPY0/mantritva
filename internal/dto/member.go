@@ -50,9 +50,10 @@ type MemberParty struct {
 
 type MemberRes struct {
 	model.Member
-	Position    string      `json:"position,omitempty"`
-	Departments string      `json:"departments,omitempty"`
-	Party       MemberParty `json:"party,omitempty"`
+	Position    string       `json:"position,omitempty"`
+	Departments string       `json:"departments,omitempty"`
+	Party       MemberParty  `json:"party,omitempty"`
+	Score       *MemberScore `json:"score,omitempty"`
 }
 
 type Member struct {

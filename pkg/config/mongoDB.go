@@ -20,6 +20,7 @@ type MongoDB struct {
 	NewsPressPostCollection *mongo.Collection
 	PostReactionCollection  *mongo.Collection
 	GrievanceCollection     *mongo.Collection
+	MemberReportsCollection *mongo.Collection
 	Filter                  bson.M
 }
 
@@ -28,15 +29,14 @@ var (
 	mongoOnce sync.Once
 )
 
-const (
-	username = "mantritva024"
-	password = "Mantritva#399!"
-	host     = "localhost"
-	port     = 27017
-	dbName   = "mantritva"
-)
-
 func SetupMongoDB() (*MongoDB, error) {
+	var (
+		username = GetConfig().GetString("MongoDB_USER")
+		password = GetConfig().GetString("MongoDB_PASSWORD")
+		host     = GetConfig().GetString("MongoDB_HOST")
+		port     = GetConfig().GetInt("MongoDB_PORT")
+		dbName   = GetConfig().GetString("MongoDB_DB_NAME")
+	)
 	mongoDB := &MongoDB{}
 	mongoOnce.Do(func() {
 		uri := fmt.Sprintf("mongodb://%s:%s@%s:%d/%s?authSource=%s", username, url.QueryEscape(password), host, port, dbName, dbName)
@@ -55,7 +55,7 @@ func SetupMongoDB() (*MongoDB, error) {
 		}
 		mongoDB.Client = client
 
-		if err := mongoDB.SetupCollections(); err != nil {
+		if err := mongoDB.SetupCollections(dbName); err != nil {
 			connErr = err
 			return
 		}
@@ -63,7 +63,7 @@ func SetupMongoDB() (*MongoDB, error) {
 	return mongoDB, connErr
 }
 
-func (m *MongoDB) SetupCollections() error {
+func (m *MongoDB) SetupCollections(dbName string) error {
 	db := m.Client.Database(dbName)
 	if err := createCollection(db, "feeds"); err != nil {
 		return err
@@ -84,6 +84,11 @@ func (m *MongoDB) SetupCollections() error {
 		return err
 	} else {
 		m.GrievanceCollection = db.Collection("grievances")
+	}
+	if err := createCollection(db, "member_reports"); err != nil {
+		return err
+	} else {
+		m.MemberReportsCollection = db.Collection("member_reports")
 	}
 	return nil
 }
@@ -135,10 +140,10 @@ func (m *MongoDB) InsertMany(collection *mongo.Collection, data []any) (*mongo.I
 	return res, nil
 }
 
-func (m *MongoDB) FindOne(collection *mongo.Collection, filter bson.M, row interface{}) (bool, error) {
+func (m *MongoDB) FindOne(collection *mongo.Collection, filter bson.M, opts *options.FindOneOptions, row interface{}) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if err := collection.FindOne(ctx, filter).Decode(row); err != nil {
+	if err := collection.FindOne(ctx, filter, opts).Decode(row); err != nil {
 		if err == mongo.ErrNoDocuments {
 			return false, nil
 		}

@@ -4,10 +4,10 @@ import (
 
 	// "path/filepath"
 	"encoding/json"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"mime/multipart"
 
@@ -16,6 +16,7 @@ import (
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
 	"github.com/shappy0/mantritva/pkg/config"
+	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/storage"
 	"github.com/shappy0/mantritva/pkg/utils"
 )
@@ -38,6 +39,7 @@ type memberService struct {
 	PartyRepository      repository.PartyRepository
 	NewsPressRepository  repository.NewsPressPostRepository
 	GrievanceRepository  repository.GrievanceRepository
+	ReportRepository     repository.ReportRepository
 }
 
 func NewMemberService(repos *repository.Repos) MemberService {
@@ -47,6 +49,7 @@ func NewMemberService(repos *repository.Repos) MemberService {
 		PartyRepository:      repos.Party,
 		NewsPressRepository:  repos.NewsPressPost,
 		GrievanceRepository:  repos.Grievance,
+		ReportRepository:     repos.Report,
 	}
 }
 
@@ -101,7 +104,7 @@ func (s *memberService) List() ([]dto.MemberRes, error) {
 		//Get Party
 		party, err := s.PartyRepository.GetByMemberID(member.ID)
 		if err != nil {
-			log.Printf("Failed to get party details by memberID %d", member.ID)
+			log.Errorf("Failed to get party details by memberID %d", member.ID)
 		} else {
 			dtoMember.Party = dto.MemberParty{
 				Name:        party.Name,
@@ -154,6 +157,19 @@ func (s *memberService) GetByName(name string) (*dto.MemberRes, error) {
 	}
 	data.Position = leadership.Position
 	data.Departments = leadership.Departments
+
+	score, err := s.ReportRepository.GetMemberScore(member.ID, time.Now().Format("2006"))
+	if err != nil {
+		log.Warnf("No score found for memberID %d", member.ID)
+	} else {
+		data.Score = &dto.MemberScore{
+			Score:     score.TotalScore,
+			MaxScore:  score.MaxScore,
+			Year:      score.Year,
+			UpdatedAt: score.CreatedAt.String(),
+		}
+	}
+
 	return &data, nil
 }
 

@@ -60,15 +60,15 @@ type GrievanceStatus struct {
 }
 
 type GrievanceShort struct {
-	GrievanceID    string                `json:"grievance_id"`
-	Type           string                `json:"type"`
-	SubType        string                `json:"subtype"`
-	Level          string                `json:"level"`
-	CenterSubLevel string                `json:"center_sublevel"`
-	Title          string                `json:"title"`
-	DateOfIncident utils.DateOnly        `json:"date_of_incident"`
-	Location       string                `json:"location"`
-	Impact         string                `json:"impact"`
-	FinalStatus    utils.GrievanceStatus `json:"final_status"`
-	CreatedAt      time.Time             `json:"created_at"`
+	GrievanceID    string                `json:"grievance_id,omitempty"`
+	Type           string                `json:"type,omitempty"`
+	SubType        string                `json:"subtype,omitempty"`
+	Level          string                `json:"level,omitempty"`
+	CenterSubLevel string                `json:"center_sublevel,omitempty"`
+	Title          string                `json:"title,omitempty"`
+	DateOfIncident utils.DateOnly        `json:"date_of_incident,omitempty"`
+	Location       string                `json:"location,omitempty"`
+	Impact         string                `json:"impact,omitempty"`
+	FinalStatus    utils.GrievanceStatus `json:"final_status,omitempty"`
+	CreatedAt      time.Time             `json:"created_at,omitempty"`
 }

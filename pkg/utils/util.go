@@ -43,3 +43,11 @@ func MapToStruct(m map[string]interface{}, result interface{}) error {
 	// Convert JSON to struct
 	return json.Unmarshal(jsonData, result)
 }
+
+func StructToStr(data any) string {
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return ""
+	}
+	return string(bytes)
+}

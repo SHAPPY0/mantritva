@@ -1,8 +1,11 @@
 package dto
 
 import (
+	"time"
+
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/pkg/utils"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type NewsPressReq struct {
@@ -23,4 +26,12 @@ type NewsPressPostRes struct {
 	Entity   Entity                 `json:"entity,omitempty"`
 	Party    Party                  `json:"party,omitempty"`
 	Reaction utils.PostReactionType `json:"reaction"`
+}
+
+type NewsPressShort struct {
+	ID            primitive.ObjectID `json:"id"`
+	Statement     string             `json:"statement"`
+	StatementDate time.Time          `json:"statement_date"`
+	UpvoteCount   uint               `json:"upvote_count"`
+	DownvoteCount uint               `json:"downvote_count"`
 }

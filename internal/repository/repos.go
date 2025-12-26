@@ -24,6 +24,7 @@ type Repos struct {
 	Feed          FeedRepository
 	Entity        EntityRepository
 	Grievance     GrievanceRepository
+	Report        ReportRepository
 }
 
 func NewRepos(db *gorm.DB, mongoDB *config.MongoDB) *Repos {
@@ -46,5 +47,6 @@ func NewRepos(db *gorm.DB, mongoDB *config.MongoDB) *Repos {
 		Feed:          NewFeedRepository(mongoDB),
 		Entity:        NewEntityRepository(db),
 		Grievance:     NewGrievanceRepository(db, mongoDB),
+		Report:        NewReportRepository(db, mongoDB),
 	}
 }
