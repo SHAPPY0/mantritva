@@ -17,11 +17,13 @@ func consoleRouter(rg *gin.RouterGroup, services *service.Services) *gin.RouterG
 		console.GET("/alliances", handler.GetAlliancesList)
 		console.GET("/members", handler.GetMembersList)
 		console.GET("/rulers", handler.GetRulersList)
+		console.GET("/rulers/current", handler.GetCurrentRulersList)
 		console.GET("/ruler/:rulerID/leadership", handler.GetLeadershipByRulerID)
 		console.GET("/news-press", handler.GetNewsPressList)
 		console.GET("/grievances", handler.GetGrievancesList)
 		console.GET("/grievance/:grievanceID", handler.GetGrievanceByID)
 		console.PUT("/grievance/:grievanceID/updateStatus", handler.GrievanceUpdateStatus)
+		console.POST("/leadership/exit/:id", handler.ExitLeadership)
 	}
 	return console
 }

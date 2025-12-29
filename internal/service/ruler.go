@@ -10,7 +10,7 @@ import (
 )
 
 type RulerService interface {
-	List() ([]model.Ruler, error)
+	List() ([]map[string]interface{}, error)
 	Create(dto.RulerReq) (*model.Ruler, error)
 	GetCentralRuler() (*dto.RulerRes, error)
 	GetCenterLeadership() (map[string][]dto.Leader, error)
@@ -59,7 +59,7 @@ func (s *rulerService) Create(req dto.RulerReq) (*model.Ruler, error) {
 	return ruler, nil
 }
 
-func (s *rulerService) List() ([]model.Ruler, error) {
+func (s *rulerService) List() ([]map[string]interface{}, error) {
 	rulers, err := s.Repository.List()
 	if err != nil {
 		return nil, err
@@ -100,20 +100,23 @@ func (s *rulerService) GetCentralRuler() (*dto.RulerRes, error) {
 			}
 		}
 		if ruler.ID > 0 {
-			leadership, err := s.LeadershipRepository.GetByRulerID(ruler.ID, true)
+			positions := []string{string(utils.PRIMEMINISTER), string(utils.PRESIDENT), string(utils.VICEPRESIDENT)}
+			leadership, err := s.LeadershipRepository.GetByRulerIDAndPositions(ruler.ID, "0", positions, true)
 			if err != nil {
 				log.Printf("Failed to get leadership details by rulerID")
 			} else {
 				for _, leader := range leadership {
-					member, err := s.MemberRepository.GetByID(leader.MemberID)
+					var leadership dto.LeadershipRes
+					err := utils.MapToStruct(leader, &leadership)
 					if err != nil {
-						log.Printf("Failed to get member details by memberID %s", leader.MemberID)
+						log.Printf("Failed to parse member data from leadership")
+						continue
 					} else {
 						rulerDetail.Leaders = append(rulerDetail.Leaders, dto.Leader{
-							Name:        member.Name,
-							Designation: dto.Position{Position: leader.Position, Role: leader.Role},
-							Photo:       member.Photo,
-							TermStart:   leader.TermStart,
+							Name:        leadership.Member.Name,
+							Designation: dto.Position{Position: leadership.Position.Position, Role: leadership.Position.Role, Departments: leadership.Position.Departments},
+							Photo:       leadership.Member.Photo,
+							TermStart:   leadership.TermStart,
 							// TermEnd:   *leader.TermEnd,
 						})
 					}

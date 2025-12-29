@@ -20,7 +20,7 @@ func SetupDatabase() *gorm.DB {
 	dsnBuilder.WriteString(" sslmode=disable password=")
 	dsnBuilder.WriteString(GetConfig().GetString("DB_PASSWORD"))
 	var dns = dsnBuilder.String()
-	log.Println("Postgres DNS: " + dns)
+	log.Printf("Postgres DSN: %s", dns)
 	db, err := gorm.Open(postgres.Open(dns), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Failed to connect to DB:", err)

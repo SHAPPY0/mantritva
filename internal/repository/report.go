@@ -56,8 +56,6 @@ func (r *reportRepository) GetMemberScore(memberID uint, year string) (*model.Me
 	}
 	if !rowFound {
 		log.Infof("No report found for memberID %d for year %s", memberID, year)
-		return &result, nil
 	}
-	log.Infof("Member Score: %+v", result)
 	return &result, nil
 }

@@ -1,12 +1,10 @@
 package service
 
 import (
-	"fmt"
-	"log"
-
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
+	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/utils"
 )
 
@@ -18,11 +16,13 @@ type ConsoleService interface {
 	GetAlliancesList() (*[]model.Alliance, error)
 	GetMembersList() (*[]dto.MemberRes, error)
 	GetRulersList() (*[]dto.RulerRes, error)
-	GetLeadershipByRulerID(int) (*[]dto.LeadershipRes, error)
+	GetCurrentRulersList() ([]map[string]interface{}, error)
+	GetLeadershipByRulerID(int, bool) ([]map[string]interface{}, error)
 	GetNewsPressList() (*[]dto.NewsPressPostRes, error)
 	GetGrievancesList() (*[]model.Grievance, error)
 	GetGrievanceByID(string) (*dto.GrievanceRes, error)
 	GrievanceUpdateStatus(string, dto.GrievanceStatus) (bool, error)
+	ExitLeadership(dto.LeadershipExitReq) (bool, error)
 }
 
 type consoleService struct {
@@ -106,7 +106,7 @@ func (s *consoleService) GetMembersList() (*[]dto.MemberRes, error) {
 		//Get Party
 		party, err := s.PartyRepository.GetByMemberID(member.ID)
 		if err != nil {
-			log.Printf("Failed to get party details by memberID %d", member.ID)
+			log.Errorf("Failed to get party details by memberID %d", member.ID)
 		} else {
 			dtoMember.Party = dto.MemberParty{
 				Name:        party.Name,
@@ -135,7 +135,7 @@ func (s *consoleService) GetRulersList() (*[]dto.RulerRes, error) {
 		if ruler.StateID > 0 {
 			state, err := s.StateRepository.GetByID(ruler.StateID)
 			if err != nil {
-				log.Printf("Error: While getting State detail %d, %v", ruler.StateID, err)
+				log.Errorf("Error while getting State detail %d, %v", ruler.StateID, err)
 			} else {
 				rulerItem.State = &model.StateDetail{State: *state}
 			}
@@ -144,7 +144,7 @@ func (s *consoleService) GetRulersList() (*[]dto.RulerRes, error) {
 		if ruler.PartyID > 0 {
 			party, err := s.PartyRepository.GetByID(ruler.PartyID)
 			if err != nil {
-				log.Printf("Error: While getting Party detail %d, %v", ruler.PartyID, err)
+				log.Errorf("Error while getting Party detail %d, %v", ruler.PartyID, err)
 			} else {
 				rulerItem.Party = dto.Party{Name: party.Name, Abbrv: party.Abbrv, Symbol: party.Symbol}
 			}
@@ -153,7 +153,7 @@ func (s *consoleService) GetRulersList() (*[]dto.RulerRes, error) {
 		if ruler.IsAlliance {
 			alliance, err := s.AllianceRepository.GetByID(ruler.AllianceID)
 			if err != nil {
-				log.Printf("Error: While getting Alliance detail %d, %v", ruler.AllianceID, err)
+				log.Errorf("Error while getting Alliance detail %d, %v", ruler.AllianceID, err)
 			} else {
 				rulerItem.Alliance = dto.AllianceName{Name: alliance.Name, Abbrv: alliance.Abbrv}
 			}
@@ -163,44 +163,15 @@ func (s *consoleService) GetRulersList() (*[]dto.RulerRes, error) {
 	return &rulersList, nil
 }
 
-func (s *consoleService) GetLeadershipByRulerID(rulerID int) (*[]dto.LeadershipRes, error) {
-	var results []dto.LeadershipRes
-	var leaderships []model.Leadership
-	var err error
-	leaderships, err = s.LeadershipRepository.GetByRulerID(uint(rulerID), true)
+func (s *consoleService) GetLeadershipByRulerID(rulerID int, isCentral bool) ([]map[string]interface{}, error) {
+	// var results []dto.LeadershipRes
+	// var leaderships []model.Leadership
+	leaderships, err := s.LeadershipRepository.GetByRulerID(uint(rulerID), isCentral)
 	if err != nil {
 		return nil, err
 	}
-	for _, leadership := range leaderships {
-		leader := dto.LeadershipRes{Leadership: leadership}
-		if leader.MemberID > 0 {
-			member, err := s.MemberRepository.GetByID(leader.MemberID)
-			if err != nil {
-				log.Printf("Error: While getting Member Detail %d, %v", leader.MemberID, err)
-			} else {
-				leader.Member = dto.Member{Name: member.Name, Photo: member.Photo}
-			}
-		}
-		if leader.PartyID > 0 {
-			party, err := s.PartyRepository.GetByID(int(leader.PartyID))
-			if err != nil {
-				log.Printf("Error: While getting Party Detail %d, %v", leader.PartyID, err)
-			} else {
-				leader.Party = dto.Party{Name: party.Name, Abbrv: party.Abbrv, Symbol: party.Symbol}
-			}
-		}
-		if leader.StateID > 0 {
-			state, err := s.StateRepository.GetByID(int(leader.StateID))
-			if err != nil {
-				log.Printf("Error: While getting State Detail %d, %v", leader.StateID, err)
-			} else {
-				leader.State = dto.State{Name: state.Name, Abbrv: state.Abbrv}
-			}
-		}
-		results = append(results, leader)
-	}
 
-	return &results, nil
+	return leaderships, nil
 }
 
 func (s *consoleService) GetNewsPressList() (*[]dto.NewsPressPostRes, error) {
@@ -215,7 +186,7 @@ func (s *consoleService) GetNewsPressList() (*[]dto.NewsPressPostRes, error) {
 		if post.MemberId > 0 {
 			member, err := s.MemberRepository.GetByID(post.MemberId)
 			if err != nil {
-				log.Printf("Error: While getting Member Detail %d, %v", post.MemberId, err)
+				log.Errorf("Error: While getting Member Detail %d, %v", post.MemberId, err)
 			} else {
 				newsPostRes.Member = dto.Member{Name: member.Name, Photo: member.Photo}
 			}
@@ -223,7 +194,7 @@ func (s *consoleService) GetNewsPressList() (*[]dto.NewsPressPostRes, error) {
 		if post.PartyId > 0 {
 			party, err := s.PartyRepository.GetByID(int(post.PartyId))
 			if err != nil {
-				log.Printf("Error: While getting Party Detail %d, %v", post.PartyId, err)
+				log.Errorf("Error: While getting Party Detail %d, %v", post.PartyId, err)
 			} else {
 				newsPostRes.Party = dto.Party{Name: party.Name, Abbrv: party.Abbrv, Symbol: party.Symbol}
 			}
@@ -231,7 +202,7 @@ func (s *consoleService) GetNewsPressList() (*[]dto.NewsPressPostRes, error) {
 		if post.EntityId > 0 {
 			ok, entity, err := s.EntityRepository.GetEntityByID(int(post.EntityId))
 			if err != nil {
-				log.Printf("Error: While getting Entity Detail %d, %v", post.EntityId, err)
+				log.Errorf("Error: While getting Entity Detail %d, %v", post.EntityId, err)
 			} else if ok {
 				newsPostRes.Entity = dto.Entity{
 					Name:         entity.Name,
@@ -267,40 +238,40 @@ func (s *consoleService) GetGrievanceByID(grievanceID string) (*dto.GrievanceRes
 	if grievance.CabinetMinisterID != 0 {
 		member, err := s.MemberRepository.GetMemberById(grievance.CabinetMinisterID)
 		if err != nil {
-			fmt.Printf("Error: Error fetching member details by ID")
+			log.Errorf("Error: Error fetching member details by ID")
 		}
 		var memberDto dto.Member
 		if err := utils.MapToStruct(member, &memberDto); err != nil {
-			fmt.Printf("Error: Error converting member map to dto.member")
+			log.Errorf("Error: Error converting member map to dto.member")
 		}
 		grievanceRes.CabinetMinister = &memberDto
 	}
 	if grievance.MemberOfParliamentID != 0 {
 		member, err := s.MemberRepository.GetMemberById(grievance.MemberOfParliamentID)
 		if err != nil {
-			fmt.Printf("Error: Error fetching member details by ID")
+			log.Errorf("Error: Error fetching member details by ID %d", grievance.MemberOfParliamentID)
 		}
 		var memberDto dto.Member
 		if err := utils.MapToStruct(member, &memberDto); err != nil {
-			fmt.Printf("Error: Error converting member map to dto.member")
+			log.Errorf("Error: Error converting member map to dto.member")
 		}
 		grievanceRes.MemberOfParliament = &memberDto
 	}
 	if grievance.StateLeaderID != 0 {
 		member, err := s.MemberRepository.GetMemberById(grievance.StateLeaderID)
 		if err != nil {
-			fmt.Printf("Error: Error fetching member details by ID")
+			log.Errorf("Error: Error fetching member details by ID")
 		}
 		var memberDto dto.Member
 		if err := utils.MapToStruct(member, &memberDto); err != nil {
-			fmt.Printf("Error: Error converting member map to dto.member")
+			log.Errorf("Error: Error converting member map to dto.member %+v", err)
 		}
 		grievanceRes.StateLeader = &memberDto
 	}
 	if grievance.StateID != 0 {
 		state, err := s.StateRepository.GetByID(int(grievance.StateID))
 		if err != nil {
-			fmt.Printf("Error: Error fetching state details by ID")
+			log.Errorf("Error: Error fetching state details by ID %d", grievance.StateID)
 		} else {
 			grievanceRes.State = &model.State{Name: state.Name}
 		}
@@ -308,7 +279,7 @@ func (s *consoleService) GetGrievanceByID(grievanceID string) (*dto.GrievanceRes
 	if grievance.DistrictID != 0 {
 		district, err := s.DistrictRepository.GetByID(grievance.DistrictID)
 		if err != nil {
-			fmt.Printf("Error: Error fetching district details by ID")
+			log.Errorf("Error: Error fetching district details by ID %d", grievance.DistrictID)
 		} else {
 			grievanceRes.District = district.Name
 		}
@@ -316,11 +287,11 @@ func (s *consoleService) GetGrievanceByID(grievanceID string) (*dto.GrievanceRes
 	if !grievance.HideIdentity && grievance.CreatedBy != "" {
 		id, err := utils.StrToInt(grievance.CreatedBy)
 		if err != nil {
-			fmt.Printf("Error: Error converting CreatedBy to int")
+			log.Errorf("Error: Error converting CreatedBy to int")
 		}
 		user, err := s.UserRepository.GetByID(id)
 		if err != nil {
-			fmt.Printf("Error: Error fetching user details by ID")
+			log.Errorf("Error: Error fetching user details by ID %+v", err)
 		} else {
 			grievanceRes.User = dto.UserClaim{
 				UserID: user.UserID,
@@ -335,6 +306,22 @@ func (s *consoleService) GetGrievanceByID(grievanceID string) (*dto.GrievanceRes
 func (s *consoleService) GrievanceUpdateStatus(grievanceID string, status dto.GrievanceStatus) (bool, error) {
 	var err error
 	err = s.GrievanceRepository.ConsoleUpdateGrievanceStatus(grievanceID, status)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (s *consoleService) GetCurrentRulersList() ([]map[string]interface{}, error) {
+	rulers, err := s.RulerRepository.List()
+	if err != nil {
+		return nil, err
+	}
+	return rulers, nil
+}
+
+func (s *consoleService) ExitLeadership(req dto.LeadershipExitReq) (bool, error) {
+	err := s.LeadershipRepository.ExitLeadership(req)
 	if err != nil {
 		return false, err
 	}

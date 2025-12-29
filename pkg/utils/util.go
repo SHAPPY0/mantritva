@@ -51,3 +51,7 @@ func StructToStr(data any) string {
 	}
 	return string(bytes)
 }
+
+func StrToBool(s string) bool {
+	return s == "true" || s == "1"
+}

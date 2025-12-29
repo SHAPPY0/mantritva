@@ -57,3 +57,8 @@ type Region struct {
 	Vidhansabha string `json:"vidhansabha,omitempty"`
 	Rajyasabha  string `json:"rajyasabha,omitempty"`
 }
+
+type LeadershipExitReq struct {
+	LeadershipID uint           `json:"leadership_id"`
+	TermEnd      utils.DateOnly `json:"term_end"`
+}

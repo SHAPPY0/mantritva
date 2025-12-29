@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/url"
-	"os"
 	"reflect"
 	"sync"
 	"time"
@@ -40,9 +39,11 @@ func SetupMongoDB() (*MongoDB, error) {
 	)
 	mongoDB := &MongoDB{}
 	mongoOnce.Do(func() {
-		uri := fmt.Sprintf("mongodb://%s:%s@%s:%d/%s?authSource=admin&authMechanism=SCRAM-SHA-256", username, url.QueryEscape(password), host, port, dbName)
+		uri := fmt.Sprintf("mongodb://%s:%s@%s:%d/%s?authSource=%s", username, url.QueryEscape(password), host, port, dbName, dbName)
+		if GetConfig().GetString("ENV") == "PROD" {
+			uri = fmt.Sprintf("mongodb://%s:%s@%s:%d/%s?authSource=admin&authMechanism=SCRAM-SHA-256", username, url.QueryEscape(password), host, port, dbName)
+		}
 		log.Print("MongoDB Connect URI: " + uri)
-		log.Println(os.Getenv("MONGODB_URI"))
 		clientOptions := options.Client().ApplyURI(uri)
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()

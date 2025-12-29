@@ -77,20 +77,40 @@ func (h *ConsoleHandler) GetRulersList(c *gin.Context) {
 	utils.Success(c, "", resp)
 }
 
+func (h *ConsoleHandler) GetCurrentRulersList(c *gin.Context) {
+	resp, err := h.Service.GetCurrentRulersList()
+	if err != nil {
+		utils.Error(c, 500, "Failed to get current rulers list", err)
+		return
+	}
+	utils.Success(c, "", resp)
+}
+
 func (h *ConsoleHandler) GetLeadershipByRulerID(c *gin.Context) {
 	rulerIDStr := c.Param("rulerID")
+	isCentralStr := c.Query("isCentral")
 	// Convert string to int
 	rulerID, err := strconv.Atoi(rulerIDStr)
 	if err != nil {
 		utils.Error(c, 400, "Invalid rulerID", err)
 		return
 	}
-	resp, err := h.Service.GetLeadershipByRulerID(rulerID)
+	resp, err := h.Service.GetLeadershipByRulerID(rulerID, utils.StrToBool(isCentralStr))
 	if err != nil {
 		utils.Error(c, 500, "Failed to get rulers list", err)
 		return
 	}
-	utils.Success(c, "", resp)
+	var results []dto.LeadershipRes
+	for _, r := range resp {
+		res := dto.LeadershipRes{}
+		err = utils.MapToStruct(r, &res)
+		if err != nil {
+			utils.Error(c, 500, "Failed to parse leadership data", err)
+			return
+		}
+		results = append(results, res)
+	}
+	utils.Success(c, "", results)
 }
 
 func (h *ConsoleHandler) GetNewsPressList(c *gin.Context) {
@@ -152,4 +172,25 @@ func (h *ConsoleHandler) GrievanceUpdateStatus(c *gin.Context) {
 		}
 	}
 	utils.Success(c, "Grievance status updated successfully", resp)
+}
+
+func (h *ConsoleHandler) ExitLeadership(c *gin.Context) {
+	leadershipIDStr := c.Param("id")
+	var req dto.LeadershipExitReq
+	if err := c.BindJSON(&req); err != nil {
+		utils.Error(c, 400, "Invalid request data", err)
+		return
+	}
+	leadershipID, err := strconv.Atoi(leadershipIDStr)
+	if err != nil {
+		utils.Error(c, 400, "Invalid leadership ID", err)
+		return
+	}
+	req.LeadershipID = uint(leadershipID)
+	resp, err := h.Service.ExitLeadership(req)
+	if err != nil {
+		utils.Error(c, 500, "Failed to exit leadership", err)
+		return
+	}
+	utils.Success(c, "Leadership exited successfully", resp)
 }

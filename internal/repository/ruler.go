@@ -9,7 +9,7 @@ import (
 
 type RulerRepository interface {
 	Create(*model.Ruler) error
-	List() ([]model.Ruler, error)
+	List() ([]map[string]interface{}, error)
 	GetCentralRuler() (*model.Ruler, error)
 	GetStateRuler(stateId string) (*model.Ruler, error)
 	ConsoleGetRulersList() (*[]model.Ruler, error)
@@ -32,12 +32,31 @@ func (r *rulerRepository) Create(ruler *model.Ruler) error {
 	return nil
 }
 
-func (r *rulerRepository) List() ([]model.Ruler, error) {
-	var rulers []model.Ruler
-	if err := r.DB.Find(&rulers).Error; err != nil {
+func (r *rulerRepository) List() ([]map[string]interface{}, error) {
+	var results []map[string]interface{}
+	query := `SELECT
+				r.id,
+				r.state_id,
+				CASE
+					WHEN s.name IS null and r.state_id = 0 and r.is_central = true THEN 'Central'
+					ELSE s.name
+				END AS name,
+				r.is_central,
+				r.party_id,
+				r.is_alliance,
+				r.alliance_id
+			FROM rulers r
+			LEFT JOIN states s on
+				s.id = r.state_id
+			WHERE
+				r.start_date < now()
+				and r.end_date > now()
+				and r.is_active = true
+				and r.is_deleted = false`
+	if err := r.DB.Raw(query).Scan(&results).Error; err != nil {
 		return nil, err
 	}
-	return rulers, nil
+	return results, nil
 }
 
 func (r *rulerRepository) GetCentralRuler() (*model.Ruler, error) {

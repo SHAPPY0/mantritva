@@ -156,7 +156,7 @@ func (d *DateOnly) Scan(value interface{}) error {
 		d.Time = &t
 		return nil
 	}
-	return fmt.Errorf("cannot convert %v to DateOnly", value)
+	return fmt.Errorf("Cannot convert %v to DateOnly", value)
 }
 
 func (d *DateOnly) IsNull() bool {

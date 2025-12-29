@@ -164,5 +164,8 @@ func (s *reportService) GetReport(memberID int) (*model.MemberReport, error) {
 	if err != nil {
 		return nil, err
 	}
+	if report == nil {
+		return nil, nil
+	}
 	return report, nil
 }
