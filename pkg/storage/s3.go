@@ -90,7 +90,7 @@ func (r *S3Storage) Save(c *gin.Context, fileObj *multipart.FileHeader) (*FileMe
 		FullPath:     fullPath,
 		AbsolutePath: objectKey,
 		Extenstion:   extension,
-		DownloadURL:  filepath.Join(conf.GetConfig().GetString("S3_ENDPOINT"), objectKey),
+		DownloadURL:  conf.GetConfig().GetString("S3_ENDPOINT") + "/" + objectKey,
 	}
 	log.Info("File uploaded successfully: " + fileMeta.DownloadURL)
 	return fileMeta, nil

@@ -41,7 +41,7 @@ func (l *LocalStorage) Save(c *gin.Context, file *multipart.FileHeader) (*FileMe
 		FullPath:     fullPath,
 		AbsolutePath: filepath.Join("/", l.AbsoluteDestPath, newName),
 		Extenstion:   extension,
-		DownloadURL:  filepath.Join("http://localhost:"+config.GetConfig().GetString("PORT")+"/static", l.AbsoluteDestPath, newName),
+		DownloadURL:  "http://localhost:" + config.GetConfig().GetString("PORT") + "/static/" + l.AbsoluteDestPath + "/" + newName,
 	}
 	log.Printf("File uploaded successfully: " + fileMeta.AbsolutePath)
 	return fileMeta, nil
