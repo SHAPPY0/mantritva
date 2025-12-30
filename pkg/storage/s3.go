@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -58,7 +59,7 @@ func NewS3Storage(basePath string, absoluteDestPath string) (*S3Storage, error) 
 
 	return &S3Storage{
 		BasePath:         basePath,
-		AbsoluteDestPath: filepath.Join(bucket, absoluteDestPath),
+		AbsoluteDestPath: absoluteDestPath,
 		Client:           client,
 		Bucket:           bucket,
 	}, nil
@@ -68,10 +69,10 @@ func (r *S3Storage) Save(c *gin.Context, fileObj *multipart.FileHeader) (*FileMe
 	originalFileName := filepath.Base(fileObj.Filename)
 	extension := strings.Split(originalFileName, ".")[1]
 	newName := fmt.Sprintf("%s.%s", uuid.New().String(), extension)
-	fullPath := filepath.Join(r.BasePath, r.AbsoluteDestPath, newName)
+	fullPath := path.Join(r.Bucket, r.AbsoluteDestPath, newName)
 	log.Info("Uploading file to S3 at path: " + fullPath)
 	context := c.Request.Context()
-	objectKey := filepath.Join(r.AbsoluteDestPath, newName)
+	objectKey := path.Join(r.AbsoluteDestPath, newName)
 
 	file, err := fileObj.Open()
 	if err != nil {
@@ -90,7 +91,7 @@ func (r *S3Storage) Save(c *gin.Context, fileObj *multipart.FileHeader) (*FileMe
 		FullPath:     fullPath,
 		AbsolutePath: objectKey,
 		Extenstion:   extension,
-		DownloadURL:  conf.GetConfig().GetString("S3_ENDPOINT") + "/" + objectKey,
+		DownloadURL:  conf.GetConfig().GetString("S3_ENDPOINT") + "/" + r.Bucket + "/" + objectKey,
 	}
 	log.Info("File uploaded successfully: " + fileMeta.DownloadURL)
 	return fileMeta, nil
