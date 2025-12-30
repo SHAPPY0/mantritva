@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/shappy0/mantritva/pkg/config"
 )
 
 type LocalStorage struct {
@@ -17,12 +18,12 @@ type LocalStorage struct {
 	AbsoluteDestPath string
 }
 
-func NewLocalStorage(basePath string, absoluteDestPath string) *LocalStorage {
+func NewLocalStorage(basePath string, absoluteDestPath string) (*LocalStorage, error) {
 	_ = os.MkdirAll(basePath+absoluteDestPath, os.ModePerm)
 	return &LocalStorage{
 		BasePath:         basePath,
 		AbsoluteDestPath: absoluteDestPath,
-	}
+	}, nil
 }
 
 func (l *LocalStorage) Save(c *gin.Context, file *multipart.FileHeader) (*FileMeta, error) {
@@ -40,6 +41,7 @@ func (l *LocalStorage) Save(c *gin.Context, file *multipart.FileHeader) (*FileMe
 		FullPath:     fullPath,
 		AbsolutePath: filepath.Join("/", l.AbsoluteDestPath, newName),
 		Extenstion:   extension,
+		DownloadURL:  filepath.Join("http://localhost:"+config.GetConfig().GetString("PORT")+"/static", l.AbsoluteDestPath, newName),
 	}
 	log.Printf("File uploaded successfully: " + fileMeta.AbsolutePath)
 	return fileMeta, nil

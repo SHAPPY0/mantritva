@@ -55,7 +55,10 @@ func NewMemberService(repos *repository.Repos) MemberService {
 
 func (s *memberService) Create(ctx *gin.Context, req dto.MemberReq, photo *multipart.FileHeader) (*model.Member, error) {
 	destinationPath := filepath.Join("members")
-	storage := storage.NewLocalStorage(config.Env.GetString("FILE_BASE_PATH"), destinationPath)
+	storage, err := storage.NewS3Storage(config.Env.GetString("FILE_BASE_PATH"), destinationPath)
+	if err != nil {
+		return nil, err
+	}
 	fileMeta, err := storage.Save(ctx, photo)
 	if err != nil {
 		return nil, err
@@ -69,10 +72,10 @@ func (s *memberService) Create(ctx *gin.Context, req dto.MemberReq, photo *multi
 		MaritalStatus:    req.MaritalStatus,
 		FinancialAssets:  req.FinancialAssets,
 		SocialMediaLinks: req.SocialMediaLinks,
-		Photo:            fileMeta.AbsolutePath,
+		Photo:            fileMeta.DownloadURL,
 	}
 	if err := s.Repository.Create(member); err != nil {
-		storage.Delete(fileMeta.FullPath)
+		storage.Delete(fileMeta.AbsolutePath)
 		return nil, err
 	}
 	if len(req.CriminalRecords) > 0 {

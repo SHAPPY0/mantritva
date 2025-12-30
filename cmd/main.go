@@ -29,7 +29,7 @@ func main() {
 	// Enable CORS middleware
 	// r.Use(corsMiddleware())
 
-	if err := r.Run(":8080"); err != nil {
+	if err := r.Run(":" + config.GetConfig().GetString("PORT")); err != nil {
 		panic(err)
 	}
 }

@@ -72,13 +72,16 @@ func (s *grievanceSerivce) Create(ctx *gin.Context, req dto.Grievance) (*model.G
 	}
 	for _, evidenceReq := range req.Evidences {
 		destinationPath := filepath.Join("grievances", g.GrievanceID)
-		storage := storage.NewLocalStorage(config.Env.GetString("FILE_BASE_PATH"), destinationPath)
+		storage, err := storage.NewS3Storage(config.Env.GetString("FILE_BASE_PATH"), destinationPath)
+		if err != nil {
+			return nil, err
+		}
 		fileMeta, err := storage.Save(ctx, evidenceReq.File)
 		if err != nil {
 			fmt.Println(err)
 		}
 		g.Evidences = append(g.Evidences, model.Evidence{
-			Url:      fileMeta.AbsolutePath,
+			Url:      fileMeta.DownloadURL,
 			FileName: fileMeta.FullPath,
 			FileType: fileMeta.Extenstion,
 			Remark:   evidenceReq.Comment,

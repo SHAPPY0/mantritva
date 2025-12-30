@@ -6,6 +6,7 @@ type FileMeta struct {
 	FullPath     string
 	AbsolutePath string
 	Extenstion   string
+	DownloadURL  string
 }
 
 type Storage interface {

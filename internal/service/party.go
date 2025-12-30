@@ -73,13 +73,16 @@ func (s *partyService) GetByAbbrv(abbrv string) (*model.Party, error) {
 
 func (s *partyService) UploadSymbol(ctx *gin.Context, partyId string, file *multipart.FileHeader) (bool, error) {
 	absoluteDestPath := filepath.Join("parties", partyId)
-	storage := storage.NewLocalStorage(config.Env.GetString("FILE_BASE_PATH"), absoluteDestPath)
+	storage, err := storage.NewS3Storage(config.Env.GetString("FILE_BASE_PATH"), absoluteDestPath)
+	if err != nil {
+		return false, err
+	}
 	fileMeta, err := storage.Save(ctx, file)
 	if err != nil {
 		return false, err
 	} else {
-		if err := s.Repository.UploadSymbol(partyId, filepath.Join("parties", partyId, fileMeta.SavedName)); err != nil {
-			_ = storage.Delete(fileMeta.FullPath)
+		if err := s.Repository.UploadSymbol(partyId, fileMeta.DownloadURL); err != nil {
+			_ = storage.Delete(fileMeta.AbsolutePath)
 			return false, err
 		}
 	}

@@ -40,4 +40,11 @@ func bindEnvVariables(env *viper.Viper) {
 	env.BindEnv("MongoDB_DB_NAME", "MONGODBNAME")
 
 	env.BindEnv("FILE_BASE_PATH", "FILEBASEPATH")
+
+	// Bind S3 env variables
+	env.BindEnv("S3_ENDPOINT", "AWS_ENDPOINT_URL")
+	env.BindEnv("S3_ACCESS_KEY", "AWS_ACCESS_KEY_ID")
+	env.BindEnv("S3_SECRET_KEY", "AWS_SECRET_ACCESS_KEY")
+	env.BindEnv("S3_BUCKET_NAME", "AWS_S3_BUCKET_NAME")
+	env.BindEnv("S3_REGION", "AWS_DEFAULT_REGION")
 }
