@@ -8,6 +8,7 @@ type Services struct {
 	ConsoleService   ConsoleService
 	GrievanceService GrievanceSerivce
 	ReportService    ReportService
+	EventService     EventService
 }
 
 func NewServices(repos *repository.Repos) *Services {
@@ -17,5 +18,6 @@ func NewServices(repos *repository.Repos) *Services {
 		ConsoleService:   NewConsoleService(repos),
 		GrievanceService: NewGrievanceService(repos),
 		ReportService:    NewReportService(repos),
+		EventService:     NewEventService(repos),
 	}
 }

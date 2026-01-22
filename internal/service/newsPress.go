@@ -33,6 +33,7 @@ func NewNewsPressService(repos *repository.Repos) NewsPressService {
 func (s *newsPressService) Create(req dto.NewsPressReq) (*model.NewsPressPost, error) {
 	np := &model.NewsPressPost{
 		ID:              primitive.NewObjectID(),
+		Event:           &req.Event,
 		MemberId:        req.MemberID,
 		PartyId:         req.PartyID,
 		Subject:         string(req.Subject),

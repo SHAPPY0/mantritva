@@ -13,7 +13,8 @@ import (
 
 type FeedService interface {
 	Create(dto.FeedReq) (bool, error)
-	GetLatestFeed(int) ([]dto.FeedRes, error)
+	UpdateStatus(string, dto.FeedReq) (bool, error)
+	GetLatestFeed(int) (*[]dto.FeedRes, error)
 	SaveReaction(dto.ReactionReq, string) (bool, error)
 }
 
@@ -55,12 +56,12 @@ func (s *feedService) Create(feed dto.FeedReq) (bool, error) {
 	return true, nil
 }
 
-func (s *feedService) GetLatestFeed(userID int) ([]dto.FeedRes, error) {
-	var results []dto.FeedRes
+func (s *feedService) GetLatestFeed(userID int) (*[]dto.FeedRes, error) {
+	results := make([]dto.FeedRes, 0)
 	feeds, err := s.FeedRepository.GetAll()
 	if err != nil {
 		log.Errorf("Error while fetching feeds: %v", err)
-		return results, err
+		return &results, err
 	}
 	for _, feed := range feeds {
 		preparedFeed := dto.FeedRes{ID: feed.ID, Type: feed.Type}
@@ -85,7 +86,7 @@ func (s *feedService) GetLatestFeed(userID int) ([]dto.FeedRes, error) {
 		}
 		results = append(results, preparedFeed)
 	}
-	return results, nil
+	return &results, nil
 }
 
 func (s *feedService) SaveReaction(req dto.ReactionReq, userIP string) (bool, error) {
@@ -233,4 +234,12 @@ func (s *feedService) GetGrievanceFeed(userID int, postID primitive.ObjectID) (*
 
 	grievanceRes.Grievance = *grievance
 	return &grievanceRes, nil
+}
+
+func (s *feedService) UpdateStatus(updatedBy string, feed dto.FeedReq) (bool, error) {
+	ok, err := s.FeedRepository.UpdateStatus(updatedBy, feed)
+	if err != nil {
+		return false, err
+	}
+	return ok, nil
 }

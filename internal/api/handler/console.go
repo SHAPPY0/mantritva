@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
@@ -120,6 +121,62 @@ func (h *ConsoleHandler) GetNewsPressList(c *gin.Context) {
 		return
 	}
 	utils.Success(c, "", resp)
+}
+
+func (h *ConsoleHandler) GetNewsPressPostByID(c *gin.Context) {
+	id := c.Param("id")
+	resp, err := h.Service.GetNewsPressPostByID(id)
+	if err != nil {
+		utils.Error(c, 500, "Failed to get news press post", err)
+		return
+	}
+	utils.Success(c, "", resp)
+}
+
+func (h *ConsoleHandler) UpdateNewsPressPost(c *gin.Context) {
+	updatedBy, err := utils.GetKeyInCtx[string](c, "name")
+	if err != nil {
+		utils.Error(c, 401, "Unauthorized Access", nil)
+		return
+	}
+	id := c.Param("id")
+	if id == "" {
+		utils.Error(c, 400, "Invalid newsPressPost ID", nil)
+		return
+	}
+
+	var req map[string]interface{}
+	if err := c.BindJSON(&req); err != nil {
+		utils.Error(c, 400, "Invalid request data", err)
+		return
+	}
+	req["updated_by"] = updatedBy
+	req["updated_at"] = time.Now()
+	ok, err := h.Service.UpdateNewsPressPost(id, req)
+	if err != nil {
+		utils.Error(c, 400, "Failed to update NewsPress post", err)
+		return
+	}
+	if status, ok := req["status"].(string); ok {
+		if status == string(utils.Published) {
+			postId, err := primitive.ObjectIDFromHex(id)
+			if err != nil {
+				utils.Error(c, 500, "Failed to create newsPress feed record", err)
+				return
+			}
+			feed := dto.FeedReq{
+				Type:   utils.NEWSPRESS,
+				PostID: postId,
+				Status: utils.PostStatus(status),
+			}
+			_, err = h.FeedService.UpdateStatus(updatedBy, feed)
+			if err != nil {
+				utils.Error(c, 500, "Failed to create newsPress feed record", err)
+				return
+			}
+		}
+	}
+	utils.Success(c, "NewsPress Post Updated!", ok)
 }
 
 func (h *ConsoleHandler) GetGrievancesList(c *gin.Context) {

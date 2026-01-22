@@ -1,6 +1,9 @@
 package repository
 
 import (
+	"time"
+
+	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/pkg/config"
 	"github.com/shappy0/mantritva/pkg/utils"
@@ -10,6 +13,7 @@ import (
 
 type FeedRepository interface {
 	Create(*model.Feed) (any, error)
+	UpdateStatus(string, dto.FeedReq) (bool, error)
 	GetAll() ([]model.Feed, error)
 }
 
@@ -40,4 +44,14 @@ func (r *feedRepository) GetAll() ([]model.Feed, error) {
 		return nil, err
 	}
 	return feeds, nil
+}
+
+func (r *feedRepository) UpdateStatus(updatedBy string, feed dto.FeedReq) (bool, error) {
+	filter := bson.M{"post_id": feed.PostID, "type": feed.Type}
+	update := bson.M{"$set": bson.M{"status": feed.Status, "updated_by": updatedBy, "updated_at": time.Now()}}
+	_, err := r.DB.UpdateOne(r.DB.FeedCollection, filter, update)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }

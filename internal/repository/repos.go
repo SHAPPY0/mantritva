@@ -25,6 +25,7 @@ type Repos struct {
 	Entity        EntityRepository
 	Grievance     GrievanceRepository
 	Report        ReportRepository
+	Event         EventRepository
 }
 
 func NewRepos(db *gorm.DB, mongoDB *config.MongoDB) *Repos {
@@ -48,5 +49,6 @@ func NewRepos(db *gorm.DB, mongoDB *config.MongoDB) *Repos {
 		Entity:        NewEntityRepository(db),
 		Grievance:     NewGrievanceRepository(db, mongoDB),
 		Report:        NewReportRepository(db, mongoDB),
+		Event:         NewEventRepository(mongoDB),
 	}
 }

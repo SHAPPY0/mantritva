@@ -9,6 +9,7 @@ import (
 )
 
 type NewsPressReq struct {
+	Event         string              `json:"event,omitempty"`
 	MemberID      uint                `json:"member_id"`
 	PartyID       uint                `json:"party_id"`
 	EntityID      uint                `json:"entity_id"`

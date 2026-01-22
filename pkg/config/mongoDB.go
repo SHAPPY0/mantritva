@@ -21,6 +21,7 @@ type MongoDB struct {
 	PostReactionCollection  *mongo.Collection
 	GrievanceCollection     *mongo.Collection
 	MemberReportsCollection *mongo.Collection
+	EventCollection         *mongo.Collection
 	Filter                  bson.M
 }
 
@@ -93,6 +94,11 @@ func (m *MongoDB) SetupCollections(dbName string) error {
 		return err
 	} else {
 		m.MemberReportsCollection = db.Collection("member_reports")
+	}
+	if err := createCollection(db, "events"); err != nil {
+		return err
+	} else {
+		m.EventCollection = db.Collection("events")
 	}
 	return nil
 }

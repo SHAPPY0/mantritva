@@ -6,6 +6,7 @@ import (
 	"github.com/shappy0/mantritva/internal/repository"
 	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/utils"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ConsoleService interface {
@@ -19,6 +20,8 @@ type ConsoleService interface {
 	GetCurrentRulersList() ([]map[string]interface{}, error)
 	GetLeadershipByRulerID(int, bool) ([]map[string]interface{}, error)
 	GetNewsPressList() (*[]dto.NewsPressPostRes, error)
+	GetNewsPressPostByID(string) (*model.NewsPressPost, error)
+	UpdateNewsPressPost(string, map[string]interface{}) (bool, error)
 	GetGrievancesList() (*[]model.Grievance, error)
 	GetGrievanceByID(string) (*dto.GrievanceRes, error)
 	GrievanceUpdateStatus(string, dto.GrievanceStatus) (bool, error)
@@ -216,6 +219,29 @@ func (s *consoleService) GetNewsPressList() (*[]dto.NewsPressPostRes, error) {
 		results = append(results, newsPostRes)
 	}
 	return &results, nil
+}
+
+func (s *consoleService) GetNewsPressPostByID(id string) (*model.NewsPressPost, error) {
+	var err error
+	var post *model.NewsPressPost
+	postID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+	post, err = s.NewsPressRepository.ConsoleGetNewsPressPostByID(postID)
+	if err != nil {
+		return nil, err
+	}
+
+	return post, nil
+}
+
+func (s *consoleService) UpdateNewsPressPost(id string, data map[string]interface{}) (bool, error) {
+	ok, err := s.NewsPressRepository.UpdatePost(id, data)
+	if err != nil {
+		return false, err
+	}
+	return ok, nil
 }
 
 func (s *consoleService) GetGrievancesList() (*[]model.Grievance, error) {
