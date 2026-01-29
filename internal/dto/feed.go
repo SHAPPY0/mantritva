@@ -21,4 +21,11 @@ type ReactionReq struct {
 	PostID   primitive.ObjectID     `json:"post_id" binding:"required"`
 	UserID   int                    `json:"user_id"`
 	Reaction utils.PostReactionType `json:"reaction" binding:"required"`
+	FeedType utils.FeedType         `json:"feed_type" binding:"required"`
+}
+
+type PostVotes struct {
+	ID            primitive.ObjectID
+	UpvoteCount   int
+	DownvoteCount int
 }

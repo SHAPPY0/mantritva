@@ -20,6 +20,7 @@ func memberRouter(rg *gin.RouterGroup, repos *repository.Repos) *gin.RouterGroup
 		member.GET("/id/:memberID/career", handler.GetMemberCareer)
 		member.GET("/id/:memberID/news-press", handler.GetPostsByMemberID)
 		member.GET("/id/:memberID/grievances", handler.GetGrievancesByMemberID)
+		member.GET("/id/:memberID/development-welfare", handler.GetDevelopmentWelfareByMemberID)
 		member.GET("/unaffiliated", handler.ListUnaffiliatedMembers)
 	}
 	return rg

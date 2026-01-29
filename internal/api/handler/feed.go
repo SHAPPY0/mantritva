@@ -37,7 +37,7 @@ func (h *FeedHandler) SaveReaction(c *gin.Context) {
 	userID, err := utils.GetKeyInCtx[int](c, "user_id")
 	if err != nil {
 		fmt.Println("Error gettig userID from ctx " + err.Error())
-		utils.Error(c, 401, "Unauthorized access", nil)
+		utils.Error(c, 401, "Unauthorized Access", nil)
 		return
 	}
 	var req dto.ReactionReq

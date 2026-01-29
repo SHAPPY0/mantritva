@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"path"
 	"path/filepath"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/shappy0/mantritva/internal/model"
 	conf "github.com/shappy0/mantritva/pkg/config"
 	"github.com/shappy0/mantritva/pkg/log"
 )
@@ -91,7 +93,8 @@ func (r *S3Storage) Save(c *gin.Context, fileObj *multipart.FileHeader) (*FileMe
 		FullPath:     fullPath,
 		AbsolutePath: objectKey,
 		Extenstion:   extension,
-		DownloadURL:  conf.GetConfig().GetString("S3_ENDPOINT") + "/" + r.Bucket + "/" + objectKey,
+		// DownloadURL:  conf.GetConfig().GetString("S3_ENDPOINT") + "/" + r.Bucket + "/" + objectKey,
+		DownloadURL: getDownloadableUrl(objectKey),
 	}
 	log.Info("File uploaded successfully: " + fileMeta.DownloadURL)
 	return fileMeta, nil
@@ -126,4 +129,73 @@ func (r *S3Storage) Delete(filePath string) error {
 	}
 	log.Info("File deleted successfully: " + filePath)
 	return nil
+}
+
+func (r *S3Storage) DeleteAll(documents []model.Document) {
+	for _, doc := range documents {
+		err := r.Delete(doc.FileName)
+		if err != nil {
+			log.Warnf("Failed to delete file %s: %v", doc.FileName, err)
+		}
+	}
+}
+
+func getDownloadableUrl(objectKey string) string {
+	service_host := conf.GetConfig().GetString("SERVICE_HOST")
+	if service_host == "" {
+		service_host = conf.GetConfig().GetString("S3_ENDPOINT")
+	}
+	if service_host != "" {
+		url := fmt.Sprintf("%s/api/v1/cmn/serve-static/%s", service_host, objectKey)
+		return url
+	}
+	return ""
+}
+
+func (r *S3Storage) CreatePreSignedUrl(filePath string) (string, error) {
+	presignClient := s3.NewPresignClient(r.Client)
+	params := &s3.GetObjectInput{
+		Bucket: aws.String(r.Bucket),
+		Key:    aws.String(filePath),
+	}
+	presignedURL, err := presignClient.PresignGetObject(context.TODO(), params)
+	if err != nil {
+		log.Error("Failed to create presigned URL: " + err.Error())
+		return "", err
+	}
+	return presignedURL.URL, nil
+}
+
+func (r *S3Storage) DownloadFile(c *gin.Context, url string) (*[]byte, string, error) {
+	// fetch the file bytes from the presigned url
+	req, err := http.NewRequestWithContext(c.Request.Context(), http.MethodGet, url, nil)
+	if err != nil {
+		log.Errorf("Failed to create request for file: %v", err)
+		return nil, "", err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Errorf("Failed to fetch file from url: %v", err)
+		return nil, "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+		log.Errorf("Error fetching file, status: %d, body: %s", resp.StatusCode, string(body))
+		return nil, "", err
+	}
+
+	// read content
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("Failed to read file content: %v", err)
+		return nil, "", err
+	}
+	contentType := resp.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = http.DetectContentType(data)
+	}
+	return &data, contentType, nil
 }

@@ -43,7 +43,7 @@ func (h *NewsPressHandler) CreateNewsPress(c *gin.Context) {
 	if ok {
 		utils.Success(c, "NewsPress created successfully", resp)
 	} else {
-		utils.Error(c, 500, "Something went wrong creating newsPress feed record", err)
+		utils.Error(c, 500, "NewsPress created but error while feed creation", err)
 	}
 
 }

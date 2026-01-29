@@ -19,26 +19,34 @@ type FeedService interface {
 }
 
 type feedService struct {
-	FeedRepository          repository.FeedRepository
-	NewsPressPostRepository repository.NewsPressPostRepository
-	MemberRepository        repository.MemberRepository
-	PartyRepository         repository.PartyRepository
-	LeadershipRepository    repository.LeadershipRepository
-	StateRepository         repository.StateRepository
-	EntityRepository        repository.EntityRepository
-	GrievanceRepository     repository.GrievanceRepository
+	FeedRepository               repository.FeedRepository
+	NewsPressPostRepository      repository.NewsPressPostRepository
+	MemberRepository             repository.MemberRepository
+	PartyRepository              repository.PartyRepository
+	LeadershipRepository         repository.LeadershipRepository
+	StateRepository              repository.StateRepository
+	EntityRepository             repository.EntityRepository
+	GrievanceRepository          repository.GrievanceRepository
+	DevelopmentWelfareRepository repository.DevelopmentWelfareRepository
+}
+
+type postSummary struct {
+	ID            primitive.ObjectID
+	UpvoteCount   uint
+	DownvoteCount uint
 }
 
 func NewFeedService(repos *repository.Repos) FeedService {
 	return &feedService{
-		FeedRepository:          repos.Feed,
-		NewsPressPostRepository: repos.NewsPressPost,
-		MemberRepository:        repos.Member,
-		PartyRepository:         repos.Party,
-		LeadershipRepository:    repos.Leadership,
-		StateRepository:         repos.State,
-		EntityRepository:        repos.Entity,
-		GrievanceRepository:     repos.Grievance,
+		FeedRepository:               repos.Feed,
+		NewsPressPostRepository:      repos.NewsPressPost,
+		MemberRepository:             repos.Member,
+		PartyRepository:              repos.Party,
+		LeadershipRepository:         repos.Leadership,
+		StateRepository:              repos.State,
+		EntityRepository:             repos.Entity,
+		GrievanceRepository:          repos.Grievance,
+		DevelopmentWelfareRepository: repos.DevelopmentWelfare,
 	}
 }
 
@@ -47,7 +55,7 @@ func (s *feedService) Create(feed dto.FeedReq) (bool, error) {
 		Type:            string(feed.Type),
 		PostID:          feed.PostID,
 		Status:          feed.Status,
-		AuditFieldsBSON: model.InsertBSONAuditFields(),
+		AuditFieldsBSON: model.InsertBSONAuditFields(""),
 	}
 	_, err := s.FeedRepository.Create(f)
 	if err != nil {
@@ -80,7 +88,13 @@ func (s *feedService) GetLatestFeed(userID int) (*[]dto.FeedRes, error) {
 			} else {
 				preparedFeed.Feed = g
 			}
-
+		case string(utils.DEVELOPMENT):
+			dw, err := s.GetDevelopmentWelfareShort(userID, feed.PostID)
+			if err != nil {
+				log.Errorf("Error while getting development welfare feed by %s: %v", feed.PostID, err)
+			} else {
+				preparedFeed.Feed = dw
+			}
 		default:
 			log.Info("No Valid Feed Type Found")
 		}
@@ -89,16 +103,49 @@ func (s *feedService) GetLatestFeed(userID int) (*[]dto.FeedRes, error) {
 	return &results, nil
 }
 
-func (s *feedService) SaveReaction(req dto.ReactionReq, userIP string) (bool, error) {
-	// Get existing post
-	post, err := s.NewsPressPostRepository.GetPostByID(req.PostID)
-	if err != nil {
-		return false, fmt.Errorf("failed to get post: %v", err)
+func (s *feedService) getPostSummary(feedType utils.FeedType, postID primitive.ObjectID) (*postSummary, error) {
+	switch feedType {
+	case utils.NEWSPRESS:
+		np, err := s.NewsPressPostRepository.GetPostByID(postID)
+		if err != nil {
+			return nil, err
+		}
+		return &postSummary{ID: np.ID, UpvoteCount: np.UpvoteCount, DownvoteCount: np.DownvoteCount}, nil
+	case utils.DEVELOPMENT:
+		dw, err := s.DevelopmentWelfareRepository.GetPostByID(postID)
+		if err != nil {
+			return nil, err
+		}
+		return &postSummary{ID: dw.ID, UpvoteCount: dw.UpvoteCount, DownvoteCount: dw.DownvoteCount}, nil
+	default:
+		return nil, fmt.Errorf("unsupported feed type: %v", feedType)
 	}
-	// Check for existing reaction
-	reactionExist, err := s.NewsPressPostRepository.GetReactionByUserIDAndPostID(req.UserID, req.PostID)
+}
+
+func (s *feedService) persistPostCounts(feedType utils.FeedType, ps *postSummary) error {
+	switch feedType {
+	case utils.NEWSPRESS:
+		return s.NewsPressPostRepository.UpdatePostVoteCountsByID(ps.ID, ps.UpvoteCount, ps.DownvoteCount)
+	case utils.DEVELOPMENT:
+		return s.DevelopmentWelfareRepository.UpdatePostVoteCountsByID(ps.ID, ps.UpvoteCount, ps.DownvoteCount)
+	default:
+		return fmt.Errorf("unsupported feed type: %v", feedType)
+	}
+}
+
+func (s *feedService) SaveReaction(req dto.ReactionReq, userIP string) (bool, error) {
+	var postID primitive.ObjectID
+	// Get existing post
+	post, err := s.getPostSummary(req.FeedType, req.PostID)
 	if err != nil {
-		return false, fmt.Errorf("failed to check existing reaction: %v", err)
+		return false, fmt.Errorf("Failed to get post: %v", err)
+	}
+	postID = post.ID
+
+	// Check for existing reaction
+	reactionExist, err := s.FeedRepository.GetReactionByUserIDAndPostID(req.UserID, postID)
+	if err != nil {
+		return false, fmt.Errorf("Failed to check existing reaction: %v", err)
 	}
 	// Handle existing reaction
 	if reactionExist != nil {
@@ -108,7 +155,7 @@ func (s *feedService) SaveReaction(req dto.ReactionReq, userIP string) (bool, er
 		}
 
 		// Different reaction - update counts and soft delete old reaction
-		if err := s.NewsPressPostRepository.DeleteReaction(reactionExist.ID, req.UserID, req.PostID); err != nil {
+		if err := s.FeedRepository.DeleteReaction(reactionExist.ID, req.UserID, req.PostID); err != nil {
 			return false, fmt.Errorf("failed to delete old reaction: %v", err)
 		}
 
@@ -140,21 +187,17 @@ func (s *feedService) SaveReaction(req dto.ReactionReq, userIP string) (bool, er
 		UserID:          req.UserID,
 		Reaction:        string(req.Reaction),
 		UserIP:          userIP,
-		AuditFieldsBSON: model.InsertBSONAuditFields(),
+		AuditFieldsBSON: model.InsertBSONAuditFields(""),
 	}
 	// Save new reaction
-	if err := s.NewsPressPostRepository.SaveReaction(reaction, reactionExist == nil); err != nil {
+	if err := s.FeedRepository.SaveReaction(reaction, reactionExist == nil); err != nil {
 		return false, fmt.Errorf("failed to save reaction: %v", err)
 	}
 	// Update post vote counts
-	s.updatePostVotes(post)
-	return true, nil
-}
-
-func (s *feedService) updatePostVotes(newsPress *model.NewsPressPost) {
-	if err := s.NewsPressPostRepository.UpdatePostVoteCountsByID(newsPress.ID, newsPress.UpvoteCount, newsPress.DownvoteCount); err != nil {
-		log.Error("Error: " + err.Error())
+	if err := s.persistPostCounts(req.FeedType, post); err != nil {
+		return false, fmt.Errorf("failed to update post counts: %v", err)
 	}
+	return true, nil
 }
 
 func (s *feedService) GetNewsPressFeed(userID int, postID primitive.ObjectID) (dto.NewsPressPostRes, error) {
@@ -214,7 +257,7 @@ func (s *feedService) GetNewsPressFeed(userID int, postID primitive.ObjectID) (d
 	}
 
 	if userID > 0 {
-		reaction, err := s.NewsPressPostRepository.GetReactionByUserIDAndPostID(userID, np.ID)
+		reaction, err := s.FeedRepository.GetReactionByUserIDAndPostID(userID, np.ID)
 		if err != nil {
 			// fmt.Errorf("no : %v", err)
 		}
@@ -234,6 +277,71 @@ func (s *feedService) GetGrievanceFeed(userID int, postID primitive.ObjectID) (*
 
 	grievanceRes.Grievance = *grievance
 	return &grievanceRes, nil
+}
+
+func (s *feedService) GetDevelopmentWelfareShort(userID int, postID primitive.ObjectID) (*dto.DevelopmentWelfareShort, error) {
+	var devWelRes dto.DevelopmentWelfareShort
+	devWel, err := s.DevelopmentWelfareRepository.GetPostByID(postID)
+	if err != nil {
+		return &devWelRes, err
+	}
+	devWelFeed := dto.DevelopmentWelfareShort{
+		ID:               devWel.ID.Hex(),
+		Category:         devWel.Category,
+		Type:             devWel.Type,
+		Name:             devWel.Name,
+		Description:      devWel.Description,
+		AnnouncementDate: utils.DateOnly{Time: &devWel.AnnouncementDate},
+		UpvoteCount:      devWel.UpvoteCount,
+		DownvoteCount:    devWel.DownvoteCount,
+		Status:           utils.DevelopmentStatus(devWel.Status),
+		CreatedAt:        utils.DateOnly{Time: &devWel.CreatedAt},
+	}
+	member, err := s.MemberRepository.GetByID(devWel.MemberID)
+	if err == nil {
+		devWelFeed.Member = dto.Member{
+			Name:  member.Name,
+			Photo: member.Photo,
+		}
+		leader, err := s.LeadershipRepository.GetByMemberID(member.ID)
+		if err == nil {
+			if leader.Role != "" {
+				devWelFeed.Member.Position = leader.Role
+			} else {
+				position := leader.Position
+				devWelFeed.Member.Position = position
+				if leader.StateID > 0 {
+					state, err := s.StateRepository.GetByID(int(leader.StateID))
+					if err == nil {
+						devWelFeed.Member.Position = position + ", " + state.Name
+					}
+				}
+			}
+		}
+	} else {
+		log.Errorf("Error fetching member for development welfare feed: %v", err)
+	}
+
+	party, err := s.PartyRepository.GetByID(int(devWel.PartyID))
+	if err == nil {
+		devWelFeed.Party = dto.Party{
+			Name:   party.Name,
+			Abbrv:  party.Abbrv,
+			Symbol: party.Symbol,
+		}
+	} else {
+		log.Errorf("Error fetching party for development welfare feed: %v", err)
+	}
+
+	// Fetch reaction if userID is provided
+	if userID > 0 {
+		reaction, _ := s.FeedRepository.GetReactionByUserIDAndPostID(userID, postID)
+		if reaction != nil {
+			devWelFeed.Reaction = utils.PostReactionType(reaction.Reaction)
+		}
+	}
+	devWelRes = devWelFeed
+	return &devWelRes, nil
 }
 
 func (s *feedService) UpdateStatus(updatedBy string, feed dto.FeedReq) (bool, error) {

@@ -6,49 +6,51 @@ import (
 )
 
 type Repos struct {
-	DB            *gorm.DB
-	CassandraDB   *config.Cassandra
-	MongoDB       *config.MongoDB
-	Alliance      AllianceRepository
-	Country       CountryRepository
-	District      DistrictRepository
-	Loksabha      LoksabhaRepository
-	Member        MemberRepository
-	Party         PartyRepository
-	State         StateRepository
-	Ruler         RulerRepository
-	VidhanSabha   VidhansabhaRepository
-	Leadership    LeadershipRepository
-	NewsPressPost NewsPressPostRepository
-	User          UserRepository
-	Feed          FeedRepository
-	Entity        EntityRepository
-	Grievance     GrievanceRepository
-	Report        ReportRepository
-	Event         EventRepository
+	DB                 *gorm.DB
+	CassandraDB        *config.Cassandra
+	MongoDB            *config.MongoDB
+	Alliance           AllianceRepository
+	Country            CountryRepository
+	District           DistrictRepository
+	Loksabha           LoksabhaRepository
+	Member             MemberRepository
+	Party              PartyRepository
+	State              StateRepository
+	Ruler              RulerRepository
+	VidhanSabha        VidhansabhaRepository
+	Leadership         LeadershipRepository
+	NewsPressPost      NewsPressPostRepository
+	User               UserRepository
+	Feed               FeedRepository
+	Entity             EntityRepository
+	Grievance          GrievanceRepository
+	Report             ReportRepository
+	Event              EventRepository
+	DevelopmentWelfare DevelopmentWelfareRepository
 }
 
 func NewRepos(db *gorm.DB, mongoDB *config.MongoDB) *Repos {
 	return &Repos{
 		DB: db,
 		// CassandraDB:   cassandra,
-		MongoDB:       mongoDB,
-		Alliance:      NewAllianceRepository(db),
-		Country:       NewCountryRepository(db),
-		District:      NewDistrictRepository(db),
-		Loksabha:      NewLoksabhaRepository(db),
-		Member:        NewMemberRepository(db),
-		Party:         NewPartyRepository(db),
-		State:         NewStateRepository(db),
-		Ruler:         NewRulersRepository(db),
-		VidhanSabha:   NewVidhansabhaRepository(db),
-		Leadership:    NewLeadershipRepository(db),
-		NewsPressPost: NewNewsPressPostRepository(db, mongoDB),
-		User:          NewUserRepository(db),
-		Feed:          NewFeedRepository(mongoDB),
-		Entity:        NewEntityRepository(db),
-		Grievance:     NewGrievanceRepository(db, mongoDB),
-		Report:        NewReportRepository(db, mongoDB),
-		Event:         NewEventRepository(mongoDB),
+		MongoDB:            mongoDB,
+		Alliance:           NewAllianceRepository(db),
+		Country:            NewCountryRepository(db),
+		District:           NewDistrictRepository(db),
+		Loksabha:           NewLoksabhaRepository(db),
+		Member:             NewMemberRepository(db),
+		Party:              NewPartyRepository(db),
+		State:              NewStateRepository(db),
+		Ruler:              NewRulersRepository(db),
+		VidhanSabha:        NewVidhansabhaRepository(db),
+		Leadership:         NewLeadershipRepository(db),
+		NewsPressPost:      NewNewsPressPostRepository(db, mongoDB),
+		User:               NewUserRepository(db),
+		Feed:               NewFeedRepository(mongoDB),
+		Entity:             NewEntityRepository(db),
+		Grievance:          NewGrievanceRepository(db, mongoDB),
+		Report:             NewReportRepository(db, mongoDB),
+		Event:              NewEventRepository(mongoDB),
+		DevelopmentWelfare: NewDevelopmentWelfareRepository(db, mongoDB),
 	}
 }

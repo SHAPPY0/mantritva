@@ -22,6 +22,7 @@ type MongoDB struct {
 	GrievanceCollection     *mongo.Collection
 	MemberReportsCollection *mongo.Collection
 	EventCollection         *mongo.Collection
+	DevelopmentWelfare      *mongo.Collection
 	Filter                  bson.M
 }
 
@@ -42,8 +43,10 @@ func SetupMongoDB() (*MongoDB, error) {
 	mongoOnce.Do(func() {
 		uri := fmt.Sprintf("mongodb://%s:%s@%s:%d/%s?authSource=%s", username, url.QueryEscape(password), host, port, dbName, dbName)
 		if GetConfig().GetString("ENV") == "PROD" {
-			uri = fmt.Sprintf("mongodb://%s:%s@%s:%d/%s?authSource=admin&authMechanism=SCRAM-SHA-256", username, url.QueryEscape(password), host, port, dbName)
+			uri = fmt.Sprintf("mongodb+srv://%s:%s@%s/?appName=mantritva&authSource=admin", username, url.QueryEscape(password), host)
+			// uri = fmt.Sprintf("mongodb://%s:%s@%s:%d/%s?authSource=admin&authMechanism=SCRAM-SHA-256", username, url.QueryEscape(password), host, port, dbName)
 		}
+
 		log.Print("MongoDB Connect URI: " + uri)
 		clientOptions := options.Client().ApplyURI(uri)
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -99,6 +102,11 @@ func (m *MongoDB) SetupCollections(dbName string) error {
 		return err
 	} else {
 		m.EventCollection = db.Collection("events")
+	}
+	if err := createCollection(db, "development_welfares"); err != nil {
+		return err
+	} else {
+		m.DevelopmentWelfare = db.Collection("development_welfares")
 	}
 	return nil
 }

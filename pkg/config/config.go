@@ -25,6 +25,9 @@ func GetConfig() *viper.Viper {
 }
 
 func bindEnvVariables(env *viper.Viper) {
+	env.BindEnv("FILE_BASE_PATH", "FILEBASEPATH")
+	env.BindEnv("SERVICE_HOST", "SERVICEHOST")
+
 	//Bind Postgres env variables
 	env.BindEnv("DB_HOST", "DBHOST")
 	env.BindEnv("DB_PORT", "DBPORT")
@@ -38,8 +41,6 @@ func bindEnvVariables(env *viper.Viper) {
 	env.BindEnv("MongoDB_HOST", "MONGOHOST")
 	env.BindEnv("MongoDB_PORT", "MONGOPORT")
 	env.BindEnv("MongoDB_DB_NAME", "MONGODBNAME")
-
-	env.BindEnv("FILE_BASE_PATH", "FILEBASEPATH")
 
 	// Bind S3 env variables
 	env.BindEnv("S3_ENDPOINT", "AWS_ENDPOINT_URL")

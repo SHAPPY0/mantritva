@@ -8,6 +8,7 @@ type VidhanReq struct {
 }
 
 type VidhanSabhaRes struct {
+	ID       uint   `json:"id"`
 	Name     string `json:"name"`
 	District string `json:"district"`
 	State    string `json:"state"`

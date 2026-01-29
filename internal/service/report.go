@@ -36,7 +36,7 @@ func (s *reportService) GenerateReport(memberID int) (*model.MemberReport, error
 		MemberID:        uint(memberID),
 		MaxScore:        100,
 		Year:            time.Now().Format("2006"),
-		AuditFieldsBSON: model.InsertBSONAuditFields(),
+		AuditFieldsBSON: model.InsertBSONAuditFields(""),
 	}
 	var ksaWeights dto.KSAWeights
 	ksas, err := s.ReportRepo.GetReportKSA()

@@ -28,7 +28,7 @@ func (s *eventService) Create(req dto.EventReq) (*model.Event, error) {
 		Name:            req.Name,
 		Description:     req.Description,
 		Date:            *req.Date.Time,
-		AuditFieldsBSON: model.InsertBSONAuditFields(),
+		AuditFieldsBSON: model.InsertBSONAuditFields(""),
 	}
 	if err := s.Repository.Create(e); err != nil {
 		return nil, err

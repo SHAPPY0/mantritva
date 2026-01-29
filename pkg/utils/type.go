@@ -23,6 +23,7 @@ type PostReactionType string
 type Position string
 type GrievanceStatus string
 type KSA string
+type DevelopmentStatus string
 
 const (
 	ADMIN     UserRole = "ADMIN"
@@ -66,7 +67,7 @@ const (
 
 const (
 	NEWSPRESS   FeedType = "NEWSPRESS"
-	DEVELOPMENT FeedType = "DEVELOPMENT"
+	DEVELOPMENT FeedType = "DEVELOPMENT & WELFARE"
 	GRIEVANCE   FeedType = "GRIEVANCE"
 )
 
@@ -99,6 +100,17 @@ const (
 	COMPLETED   GrievanceStatus = "COMPLETED"
 	STAYED      GrievanceStatus = "STAYED"
 	NOUPDATE    GrievanceStatus = "NO_UPDATE"
+)
+
+const (
+	ANNOUNCED      DevelopmentStatus = "ANNOUNCED"
+	APPROVED       DevelopmentStatus = "APPROVED"
+	ENROLLMENTOPEN DevelopmentStatus = "ENROLLMENTOPEN"
+	ONGOING        DevelopmentStatus = "ONGOING"
+	ONHOLD         DevelopmentStatus = "ONHOLD"
+	POSTPONED      DevelopmentStatus = "POSTPONED"
+	// COMPLETED DevelopmentStatus = "COMPLETED"
+	CANCELLED DevelopmentStatus = "CANCELLED"
 )
 
 const (

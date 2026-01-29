@@ -22,18 +22,18 @@ func NewGrievanceHandler(services *service.Services) *GrievanceHandler {
 func (h *GrievanceHandler) Create(c *gin.Context) {
 	userID, err := utils.GetKeyInCtx[int](c, "user_id")
 	if err != nil {
-		utils.Error(c, 401, "Unauthorized access", nil)
+		utils.Error(c, 401, "Unauthorized Access", nil)
+		return
+	}
+	form, err := c.MultipartForm()
+	if err != nil {
+		utils.Error(c, 500, "Failed to process request", err)
 		return
 	}
 	var req dto.GrievanceReq
 	var grievance dto.Grievance
 	if err := c.ShouldBind(&req); err != nil {
 		utils.Error(c, 400, "Invalid request data", err)
-		return
-	}
-	form, err := c.MultipartForm()
-	if err != nil {
-		utils.Error(c, 500, "Failed to process request", err)
 		return
 	}
 	req.CreatedBy = fmt.Sprintf("%d", userID)
@@ -46,8 +46,8 @@ func (h *GrievanceHandler) Create(c *gin.Context) {
 			break
 		}
 		evidence.File = files[0]
-		evidence.FileName = c.PostForm(fmt.Sprintf("evidences[%d][filename]", i))
-		evidence.Comment = c.PostForm(fmt.Sprintf("evidences[%d][comment]", i))
+		evidence.FileName = c.PostForm(fmt.Sprintf("evidences[%d].filename", i))
+		evidence.Comment = c.PostForm(fmt.Sprintf("evidences[%d].comment", i))
 		grievance.Evidences = append(grievance.Evidences, evidence)
 	}
 

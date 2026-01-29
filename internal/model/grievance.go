@@ -25,20 +25,20 @@ type Grievance struct {
 	DateOfIncident       time.Time             `json:"date_of_incident" bson:"date_of_incident"`
 	Location             string                `json:"location" bson:"location"`
 	Impact               string                `json:"impact" bson:"impact"`
-	Evidences            []Evidence            `json:"evidences" bson:"evidences"`
+	Evidences            []Document            `json:"evidences" bson:"evidences"`
 	FinalStatus          utils.GrievanceStatus `json:"final_status" bson:"final_status"`
-	Updates              []GrievanceUpdates    `json:"updates" bson:"updates"`
+	Updates              []StatusUpdates       `json:"updates" bson:"updates"`
 	AuditFieldsBSON      `bson:",inline"`
 }
 
-type Evidence struct {
+type Document struct {
 	Url      string `json:"url" bson:"url"`
 	FileName string `json:"filename" bson:"filename"`
 	FileType string `json:"filetype" bson:"filetype"`
 	Remark   string `json:"remark" bson:"remark"`
 }
 
-type GrievanceUpdates struct {
+type StatusUpdates struct {
 	Date   time.Time `json:"date" bson:"date"`
 	Status string    `json:"status" bson:"status"`
 	Remark string    `json:"remark" bson:"remark"`

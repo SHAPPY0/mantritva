@@ -2,7 +2,6 @@ package storage
 
 import (
 	"fmt"
-	"log"
 	"mime/multipart"
 	"os"
 	"path/filepath"
@@ -10,7 +9,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/pkg/config"
+	"github.com/shappy0/mantritva/pkg/log"
 )
 
 type LocalStorage struct {
@@ -32,7 +33,7 @@ func (l *LocalStorage) Save(c *gin.Context, file *multipart.FileHeader) (*FileMe
 	newName := fmt.Sprintf("%s.%s", uuid.New().String(), extension)
 	fullPath := filepath.Join(l.BasePath, l.AbsoluteDestPath, newName)
 	if err := c.SaveUploadedFile(file, fullPath); err != nil {
-		log.Printf("Failed to save file: %v", err)
+		log.Errorf("Failed to save file: %v", err)
 		return nil, err
 	}
 	fileMeta := &FileMeta{
@@ -43,15 +44,25 @@ func (l *LocalStorage) Save(c *gin.Context, file *multipart.FileHeader) (*FileMe
 		Extenstion:   extension,
 		DownloadURL:  "http://localhost:" + config.GetConfig().GetString("PORT") + "/static/" + l.AbsoluteDestPath + "/" + newName,
 	}
-	log.Printf("File uploaded successfully: " + fileMeta.AbsolutePath)
+	log.Infof("File uploaded successfully: " + fileMeta.AbsolutePath)
 	return fileMeta, nil
 }
 
 func (l *LocalStorage) Delete(filePath string) error {
 	if err := os.Remove(filePath); err != nil {
-		log.Printf("Failed to delete file: %v", err)
+		log.Errorf("Failed to delete file: %v", err)
 		return err
 	}
-	log.Printf("File deleted successfully: " + filePath)
+	log.Infof("File deleted successfully: " + filePath)
+	return nil
+}
+
+func (l *LocalStorage) DeleteAll(documents []model.Document) error {
+	for _, doc := range documents {
+		if err := l.Delete(doc.FileName); err != nil {
+			log.Errorf("Failed to delete file: %v", err)
+			continue
+		}
+	}
 	return nil
 }

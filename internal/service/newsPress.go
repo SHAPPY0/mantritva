@@ -42,7 +42,7 @@ func (s *newsPressService) Create(req dto.NewsPressReq) (*model.NewsPressPost, e
 		Statement:       req.Statement,
 		StatementDate:   *req.StatementDate.Time,
 		Status:          string(req.Status),
-		AuditFieldsBSON: model.InsertBSONAuditFields(),
+		AuditFieldsBSON: model.InsertBSONAuditFields(""),
 	}
 	if err := s.Repository.Create(np); err != nil {
 		return nil, err

@@ -142,3 +142,19 @@ func (h *MemberHandler) GetPostsByMemberID(c *gin.Context) {
 	}
 	utils.Success(c, "News press posts fetched successfully", posts)
 }
+
+func (h *MemberHandler) GetDevelopmentWelfareByMemberID(c *gin.Context) {
+	memberID := c.Param("memberID")
+	memberIdInt, err := utils.StrToInt(memberID)
+	if err != nil {
+		utils.Error(c, 400, "Invalid member ID", nil)
+		return
+	}
+	pagination := dto.NewPagination(c)
+	posts, err := h.Service.GetDevelopmentWelfareByMemberID(pagination, memberIdInt)
+	if err != nil {
+		utils.Error(c, 500, "Failed to fetch development welfare posts", err)
+		return
+	}
+	utils.Success(c, "", posts)
+}

@@ -24,10 +24,14 @@ type AuditFieldsBSON struct {
 	DeletedAt time.Time `json:"deleted_at" bson:"deleted_at,omitempty"`
 }
 
-func InsertBSONAuditFields() AuditFieldsBSON {
-	return AuditFieldsBSON{
+func InsertBSONAuditFields(createdBy string) AuditFieldsBSON {
+	a := AuditFieldsBSON{
 		CreatedAt: time.Now(),
 		CreatedBy: "SYSTEM",
 		IsDeleted: false,
 	}
+	if createdBy != "" {
+		a.CreatedBy = createdBy
+	}
+	return a
 }

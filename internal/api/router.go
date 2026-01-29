@@ -51,6 +51,8 @@ func SetupRouter(db *gorm.DB, mongoDB *config.MongoDB) *gin.Engine {
 		grievanceRouter(v1, services)
 		reportRouter(v1, services)
 		eventRouter(v1, services)
+		developmentWelfareRouter(v1, services)
+		commonRouter(v1, services)
 	}
 	return r
 }

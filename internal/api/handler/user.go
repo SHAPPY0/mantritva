@@ -56,10 +56,11 @@ func (h *UserHandler) LoginUser(c *gin.Context) {
 
 	user.Password = ""
 	token, err := utils.CreateJWTToken(map[string]interface{}{
-		"name":    user.Name,
-		"user_id": user.ID,
-		"email":   user.Email,
-		"role":    user.Role,
+		"name":      user.Name,
+		"user_id":   user.ID,
+		"email":     user.Email,
+		"role":      user.Role,
+		"user_name": user.UserID,
 	})
 	if err != nil {
 		utils.Error(c, 500, "Failed to generate token", err)

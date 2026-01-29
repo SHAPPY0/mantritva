@@ -30,26 +30,29 @@ type MemberService interface {
 	GetCareerByMemberID(int) ([]map[string]interface{}, error)
 	GetPostsByMemberID(dto.Pagination, int) (*[]dto.NewsPressPostRes, error)
 	GetGrievancesByMemberID(dto.Pagination, int, string) (*[]dto.GrievanceShort, error)
+	GetDevelopmentWelfareByMemberID(dto.Pagination, int) (*[]dto.DevelopmentWelfareShort, error)
 	// GetByID(id uint) (*dto.Member, error)
 }
 
 type memberService struct {
-	Repository           repository.MemberRepository
-	LeadershipRepository repository.LeadershipRepository
-	PartyRepository      repository.PartyRepository
-	NewsPressRepository  repository.NewsPressPostRepository
-	GrievanceRepository  repository.GrievanceRepository
-	ReportRepository     repository.ReportRepository
+	Repository                   repository.MemberRepository
+	LeadershipRepository         repository.LeadershipRepository
+	PartyRepository              repository.PartyRepository
+	NewsPressRepository          repository.NewsPressPostRepository
+	GrievanceRepository          repository.GrievanceRepository
+	ReportRepository             repository.ReportRepository
+	DevelopmentWelfareRepository repository.DevelopmentWelfareRepository
 }
 
 func NewMemberService(repos *repository.Repos) MemberService {
 	return &memberService{
-		Repository:           repos.Member,
-		LeadershipRepository: repos.Leadership,
-		PartyRepository:      repos.Party,
-		NewsPressRepository:  repos.NewsPressPost,
-		GrievanceRepository:  repos.Grievance,
-		ReportRepository:     repos.Report,
+		Repository:                   repos.Member,
+		LeadershipRepository:         repos.Leadership,
+		PartyRepository:              repos.Party,
+		NewsPressRepository:          repos.NewsPressPost,
+		GrievanceRepository:          repos.Grievance,
+		ReportRepository:             repos.Report,
+		DevelopmentWelfareRepository: repos.DevelopmentWelfare,
 	}
 }
 
@@ -240,4 +243,28 @@ func (s *memberService) GetGrievancesByMemberID(pagination dto.Pagination, membe
 		grievancesRes = append(grievancesRes, dtoGrievance)
 	}
 	return &grievancesRes, nil
+}
+
+func (s *memberService) GetDevelopmentWelfareByMemberID(pagination dto.Pagination, memberID int) (*[]dto.DevelopmentWelfareShort, error) {
+	var DevelopmentWelfareShort []dto.DevelopmentWelfareShort
+	developments, err := s.DevelopmentWelfareRepository.GetByMemberID(memberID)
+	if err != nil {
+		return nil, err
+	}
+	for _, dev := range developments {
+		dtoDev := dto.DevelopmentWelfareShort{
+			ID:               dev.ID.Hex(),
+			Category:         dev.Category,
+			Type:             dev.Type,
+			Name:             dev.Name,
+			Description:      dev.Description,
+			AnnouncementDate: utils.DateOnly{Time: &dev.AnnouncementDate},
+			CreatedAt:        utils.DateOnly{Time: &dev.CreatedAt},
+			UpvoteCount:      dev.UpvoteCount,
+			DownvoteCount:    dev.DownvoteCount,
+			Status:           utils.DevelopmentStatus(dev.Status),
+		}
+		DevelopmentWelfareShort = append(DevelopmentWelfareShort, dtoDev)
+	}
+	return &DevelopmentWelfareShort, nil
 }

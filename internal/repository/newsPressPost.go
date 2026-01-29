@@ -8,7 +8,6 @@ import (
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/pkg/config"
-	"github.com/shappy0/mantritva/pkg/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -21,9 +20,6 @@ type NewsPressPostRepository interface {
 	GetPostByID(primitive.ObjectID) (*model.NewsPressPost, error)
 	ConsoleGetNewsPressPostByID(primitive.ObjectID) (*model.NewsPressPost, error)
 	UpdatePostVoteCountsByID(primitive.ObjectID, uint, uint) error
-	GetReactionByUserIDAndPostID(int, primitive.ObjectID) (*model.PostReaction, error)
-	SaveReaction(*model.PostReaction, bool) error
-	DeleteReaction(primitive.ObjectID, int, primitive.ObjectID) error
 	// UpdateVote(postID string, upvoteChange int, downvoteChange int) error
 	ConsoleGetNewsPressList() ([]model.NewsPressPost, error)
 	GetPostsByPartyID(pagination dto.Pagination, partyID int) (*[]model.NewsPressPost, error)
@@ -96,41 +92,6 @@ func (r *newsPressPostRepository) UpdatePostVoteCountsByID(postID primitive.Obje
 	_, err := r.DB.UpdateOne(r.DB.NewsPressPostCollection, filter, update)
 	if err != nil {
 		log.Printf("Error updating vote counts in newsPressPost: %v", err)
-		return err
-	}
-	return nil
-}
-
-func (r *newsPressPostRepository) GetReactionByUserIDAndPostID(userID int, postID primitive.ObjectID) (*model.PostReaction, error) {
-	var reaction model.PostReaction
-	filter := bson.M{"user_id": userID, "post_id": postID, "is_deleted": false}
-	opts := options.FindOne()
-	rowFound, err := r.DB.FindOne(r.DB.PostReactionCollection, filter, opts, &reaction)
-	if err != nil {
-		log.Printf("Error fetching reaction: %v", err)
-		return nil, err
-	}
-	if !rowFound {
-		return nil, nil
-	}
-	return &reaction, nil
-}
-
-func (r *newsPressPostRepository) DeleteReaction(id primitive.ObjectID, userID int, postID primitive.ObjectID) error {
-	filter := bson.M{"user_id": userID, "post_id": postID}
-	update := bson.M{"$set": bson.M{"is_deleted": true, "deleted_at": utils.CreateCurrentDateTime()}}
-	_, err := r.DB.UpdateOne(r.DB.PostReactionCollection, filter, update)
-	if err != nil {
-		log.Printf("Error deleting reaction: %v", err)
-		return err
-	}
-
-	return nil
-}
-
-func (r *newsPressPostRepository) SaveReaction(reaction *model.PostReaction, isNewReaction bool) error {
-	_, err := r.DB.Insert(r.DB.PostReactionCollection, reaction)
-	if err != nil {
 		return err
 	}
 	return nil

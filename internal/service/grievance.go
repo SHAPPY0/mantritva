@@ -2,7 +2,6 @@ package service
 
 import (
 	"crypto/rand"
-	"fmt"
 	"math/big"
 	"path/filepath"
 	"strings"
@@ -63,31 +62,33 @@ func (s *grievanceSerivce) Create(ctx *gin.Context, req dto.Grievance) (*model.G
 		Location:             req.Location,
 		Impact:               req.Impact,
 		FinalStatus:          utils.UNDERREVIEW,
-		Evidences:            make([]model.Evidence, 0),
-		Updates:              make([]model.GrievanceUpdates, 0),
-		AuditFieldsBSON: model.AuditFieldsBSON{
-			CreatedAt: time.Now(),
-			CreatedBy: req.CreatedBy,
-		},
+		Evidences:            make([]model.Document, 0),
+		Updates:              make([]model.StatusUpdates, 0),
+		AuditFieldsBSON:      model.InsertBSONAuditFields(req.CreatedBy),
 	}
+
+	destinationPath := filepath.Join("grievances", g.GrievanceID)
+	storage, err := storage.NewS3Storage(config.Env.GetString("FILE_BASE_PATH"), destinationPath)
+	if err != nil {
+		log.Infof("Error initiating storage connection %v", err)
+		return nil, err
+	}
+
 	for _, evidenceReq := range req.Evidences {
-		destinationPath := filepath.Join("grievances", g.GrievanceID)
-		storage, err := storage.NewS3Storage(config.Env.GetString("FILE_BASE_PATH"), destinationPath)
-		if err != nil {
-			return nil, err
-		}
 		fileMeta, err := storage.Save(ctx, evidenceReq.File)
 		if err != nil {
-			fmt.Println(err)
+			log.Warnf("Error while storing file %v", err)
+		} else {
+			g.Evidences = append(g.Evidences, model.Document{
+				Url:      fileMeta.DownloadURL,
+				FileName: fileMeta.FullPath,
+				FileType: fileMeta.Extenstion,
+				Remark:   evidenceReq.Comment,
+			})
 		}
-		g.Evidences = append(g.Evidences, model.Evidence{
-			Url:      fileMeta.DownloadURL,
-			FileName: fileMeta.FullPath,
-			FileType: fileMeta.Extenstion,
-			Remark:   evidenceReq.Comment,
-		})
 	}
 	if err := s.Repository.Create(g); err != nil {
+		storage.DeleteAll(g.Evidences)
 		return nil, err
 	}
 	return g, nil
