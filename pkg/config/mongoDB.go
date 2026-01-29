@@ -44,7 +44,7 @@ func SetupMongoDB() (*MongoDB, error) {
 		uri := fmt.Sprintf("mongodb://%s:%s@%s:%d/%s?authSource=%s", username, url.QueryEscape(password), host, port, dbName, dbName)
 		if GetConfig().GetString("ENV") == "PROD" {
 			// uri = fmt.Sprintf("mongodb+srv://%s:%s@%s/?appName=mantritva&authSource=admin", username, url.QueryEscape(password), host)
-			uri = fmt.Sprintf("mongodb://%s:%s@%s:%d/%s?authSource=admin&authMechanism=SCRAM-SHA-1", username, url.QueryEscape(password), host, port, dbName)
+			uri = fmt.Sprintf("mongodb://%s:%s@%s:%d/%s?authSource=admin", username, url.QueryEscape(password), host, port, dbName)
 		}
 
 		log.Print("MongoDB Connect URI: " + uri)
