@@ -3,7 +3,6 @@ package service
 import (
 	"mime/multipart"
 	"path/filepath"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
@@ -144,31 +143,31 @@ func (s *consoleService) GetByID(id uint) (*dto.MemberRes, error) {
 	}
 	data.Member = *member
 	//Get Party
-	party, err := s.PartyRepository.GetByMemberID(member.ID)
-	if err != nil {
-		return nil, err
-	}
-	data.Party = *party
+	// party, err := s.PartyRepository.GetByMemberID(member.ID)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// data.Party = *party
 
 	//Get position from leadership table
-	leadership, err := s.LeadershipRepository.GetByMemberID(member.ID)
-	if err != nil {
-		return nil, err
-	}
-	data.Position = leadership.Position
-	data.Departments = leadership.Departments
+	// leadership, err := s.LeadershipRepository.GetByMemberID(member.ID)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// data.Position = leadership.Position
+	// data.Departments = leadership.Departments
 
-	score, err := s.ReportRepository.GetMemberScore(member.ID, time.Now().Format("2006"))
-	if err != nil {
-		log.Warnf("No score found for memberID %d", member.ID)
-	} else if score != nil {
-		data.Score = &dto.MemberScore{
-			Score:     score.TotalScore,
-			MaxScore:  score.MaxScore,
-			Year:      score.Year,
-			UpdatedAt: score.CreatedAt.String(),
-		}
-	}
+	// score, err := s.ReportRepository.GetMemberScore(member.ID, time.Now().Format("2006"))
+	// if err != nil {
+	// 	log.Warnf("No score found for memberID %d", member.ID)
+	// } else if score != nil {
+	// 	data.Score = &dto.MemberScore{
+	// 		Score:     score.TotalScore,
+	// 		MaxScore:  score.MaxScore,
+	// 		Year:      score.Year,
+	// 		UpdatedAt: score.CreatedAt.String(),
+	// 	}
+	// }
 
 	return &data, nil
 }
