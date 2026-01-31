@@ -26,6 +26,7 @@ type MemberService interface {
 	Create(c *gin.Context, req dto.MemberReq, photo *multipart.FileHeader) (*model.Member, error)
 	BulkMemberUpload(c *gin.Context, filePath string) (bool, error)
 	GetByName(name string) (*dto.MemberRes, error)
+	GetByID(id uint) (*dto.MemberRes, error)
 	ListUnaffiliatedMembers() ([]dto.MemberRes, error)
 	GetCareerByMemberID(int) ([]map[string]interface{}, error)
 	GetPostsByMemberID(dto.Pagination, int) (*[]dto.NewsPressPostRes, error)
@@ -145,6 +146,43 @@ func (s *memberService) GetByName(name string) (*dto.MemberRes, error) {
 	var data dto.MemberRes
 	memberName := strings.Replace(name, "_", " ", -1)
 	member, err := s.Repository.GetByName(memberName)
+	if err != nil {
+		return nil, err
+	}
+	data.Member = *member
+	//Get Party
+	party, err := s.PartyRepository.GetByMemberID(member.ID)
+	if err != nil {
+		return nil, err
+	}
+	data.Party = *party
+
+	//Get position from leadership table
+	leadership, err := s.LeadershipRepository.GetByMemberID(member.ID)
+	if err != nil {
+		return nil, err
+	}
+	data.Position = leadership.Position
+	data.Departments = leadership.Departments
+
+	score, err := s.ReportRepository.GetMemberScore(member.ID, time.Now().Format("2006"))
+	if err != nil {
+		log.Warnf("No score found for memberID %d", member.ID)
+	} else if score != nil {
+		data.Score = &dto.MemberScore{
+			Score:     score.TotalScore,
+			MaxScore:  score.MaxScore,
+			Year:      score.Year,
+			UpdatedAt: score.CreatedAt.String(),
+		}
+	}
+
+	return &data, nil
+}
+
+func (s *memberService) GetByID(id uint) (*dto.MemberRes, error) {
+	var data dto.MemberRes
+	member, err := s.Repository.GetByID(id)
 	if err != nil {
 		return nil, err
 	}

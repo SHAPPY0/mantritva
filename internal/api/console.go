@@ -17,6 +17,8 @@ func consoleRouter(rg *gin.RouterGroup, services *service.Services) *gin.RouterG
 		console.GET("/parties", handler.GetPartiesList)
 		console.GET("/alliances", handler.GetAlliancesList)
 		console.GET("/members", handler.GetMembersList)
+		console.GET("/member/:id", utils.AuthRequired(false), handler.GetMemberByID)
+		console.PUT("/member/:id", utils.AuthRequired(true), handler.UpdateMemberByID)
 		console.GET("/rulers", handler.GetRulersList)
 		console.GET("/rulers/current", handler.GetCurrentRulersList)
 		console.GET("/ruler/:rulerID/leadership", handler.GetLeadershipByRulerID)

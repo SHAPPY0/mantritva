@@ -19,6 +19,7 @@ type MemberRepository interface {
 	GetMemberAndPartyDetails(int, int) (map[string]interface{}, error)
 	// GetCareerByMemberID(memberID uint) (*[]model.CareerRes, error)
 	GetMemberById(memberID uint) (map[string]interface{}, error)
+	UpdateMemberByID(id uint, data map[string]interface{}) (bool, error)
 }
 
 type memberRepository struct {
@@ -75,6 +76,13 @@ func (r *memberRepository) GetByID(id uint) (*model.Member, error) {
 		return nil, err
 	}
 	return &member, nil
+}
+
+func (r *memberRepository) UpdateMemberByID(id uint, data map[string]interface{}) (bool, error) {
+	if err := r.DB.Model(&model.Member{}).Where("id = ?", id).Updates(data).Error; err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (r *memberRepository) ConsoleGetMembersList() (*[]model.Member, error) {

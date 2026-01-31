@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -67,6 +68,66 @@ func (h *ConsoleHandler) GetMembersList(c *gin.Context) {
 		return
 	}
 	utils.Success(c, "", resp)
+}
+
+func (h *ConsoleHandler) GetMemberByID(c *gin.Context) {
+	id := c.Param("id")
+	idInt, err := utils.StrToInt(id)
+	if err != nil {
+		utils.Error(c, 500, "Invalid member id", err)
+		return
+	}
+	member, err := h.Service.GetByID(uint(idInt))
+	if err != nil {
+		utils.Error(c, 500, "Failed to fetch member", err)
+		return
+	}
+	utils.Success(c, "", member)
+}
+
+func (h *ConsoleHandler) UpdateMemberByID(c *gin.Context) {
+	updatedBy, err := utils.GetKeyInCtx[string](c, "name")
+	if err != nil {
+		utils.Error(c, 401, "Unauthorized Access", nil)
+		return
+	}
+	id := c.Param("id")
+	if id == "" {
+		utils.Error(c, 400, "Invalid memberID", nil)
+		return
+	}
+	idInt, err := utils.StrToInt(id)
+	if err != nil {
+		utils.Error(c, 500, "Invalid memberID", err)
+		return
+	}
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		utils.Error(c, 400, "Invalid form data", err)
+		return
+	}
+	req := map[string]interface{}{}
+	for k, v := range form.Value {
+		if len(v) > 0 {
+			req[k] = v[0]
+		}
+	}
+	req["updated_by"] = updatedBy
+	req["updated_at"] = time.Now()
+
+	photo, err := c.FormFile("photo")
+	if err != nil && err != http.ErrMissingFile {
+		utils.Error(c, 400, "Failed to get photo from request", err)
+		return
+	}
+
+	updatedMember, err := h.Service.UpdateMemberByID(c, uint(idInt), req, photo)
+	if err != nil {
+		utils.Error(c, 500, "Failed to update member", err)
+		return
+	}
+	utils.Success(c, "Member updated successfully", updatedMember)
 }
 
 func (h *ConsoleHandler) GetRulersList(c *gin.Context) {

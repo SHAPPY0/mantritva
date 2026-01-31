@@ -1,10 +1,17 @@
 package service
 
 import (
+	"mime/multipart"
+	"path/filepath"
+	"time"
+
+	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
+	"github.com/shappy0/mantritva/pkg/config"
 	"github.com/shappy0/mantritva/pkg/log"
+	"github.com/shappy0/mantritva/pkg/storage"
 	"github.com/shappy0/mantritva/pkg/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -16,6 +23,7 @@ type ConsoleService interface {
 	GetPartiesList() (*[]model.Party, error)
 	GetAlliancesList() (*[]model.Alliance, error)
 	GetMembersList() (*[]dto.MemberRes, error)
+	GetByID(id uint) (*dto.MemberRes, error)
 	GetRulersList() (*[]dto.RulerRes, error)
 	GetCurrentRulersList() ([]map[string]interface{}, error)
 	GetLeadershipByRulerID(int, bool) ([]map[string]interface{}, error)
@@ -26,6 +34,7 @@ type ConsoleService interface {
 	GetGrievanceByID(string) (*dto.GrievanceRes, error)
 	GrievanceUpdateStatus(string, dto.GrievanceStatus) (bool, error)
 	ExitLeadership(dto.LeadershipExitReq) (bool, error)
+	UpdateMemberByID(*gin.Context, uint, map[string]interface{}, *multipart.FileHeader) (bool, error)
 }
 
 type consoleService struct {
@@ -40,6 +49,7 @@ type consoleService struct {
 	EntityRepository     repository.EntityRepository
 	GrievanceRepository  repository.GrievanceRepository
 	DistrictRepository   repository.DistrictRepository
+	ReportRepository     repository.ReportRepository
 }
 
 func NewConsoleService(repos *repository.Repos) ConsoleService {
@@ -55,6 +65,7 @@ func NewConsoleService(repos *repository.Repos) ConsoleService {
 		EntityRepository:     repos.Entity,
 		GrievanceRepository:  repos.Grievance,
 		DistrictRepository:   repos.District,
+		ReportRepository:     repos.Report,
 	}
 }
 
@@ -123,6 +134,63 @@ func (s *consoleService) GetMembersList() (*[]dto.MemberRes, error) {
 		result = append(result, dtoMember)
 	}
 	return &result, nil
+}
+
+func (s *consoleService) GetByID(id uint) (*dto.MemberRes, error) {
+	var data dto.MemberRes
+	member, err := s.MemberRepository.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+	data.Member = *member
+	//Get Party
+	party, err := s.PartyRepository.GetByMemberID(member.ID)
+	if err != nil {
+		return nil, err
+	}
+	data.Party = *party
+
+	//Get position from leadership table
+	leadership, err := s.LeadershipRepository.GetByMemberID(member.ID)
+	if err != nil {
+		return nil, err
+	}
+	data.Position = leadership.Position
+	data.Departments = leadership.Departments
+
+	score, err := s.ReportRepository.GetMemberScore(member.ID, time.Now().Format("2006"))
+	if err != nil {
+		log.Warnf("No score found for memberID %d", member.ID)
+	} else if score != nil {
+		data.Score = &dto.MemberScore{
+			Score:     score.TotalScore,
+			MaxScore:  score.MaxScore,
+			Year:      score.Year,
+			UpdatedAt: score.CreatedAt.String(),
+		}
+	}
+
+	return &data, nil
+}
+
+func (s *consoleService) UpdateMemberByID(ctx *gin.Context, id uint, data map[string]interface{}, photo *multipart.FileHeader) (bool, error) {
+	if photo != nil {
+		destinationPath := filepath.Join("members")
+		storage, err := storage.NewS3Storage(config.Env.GetString("FILE_BASE_PATH"), destinationPath)
+		if err != nil {
+			return false, err
+		}
+		fileMeta, err := storage.Save(ctx, photo)
+		if err != nil {
+			return false, err
+		}
+		data["photo"] = fileMeta.DownloadURL
+	}
+	ok, err := s.MemberRepository.UpdateMemberByID(id, data)
+	if err != nil {
+		return false, err
+	}
+	return ok, nil
 }
 
 func (s *consoleService) GetRulersList() (*[]dto.RulerRes, error) {

@@ -74,7 +74,7 @@ func (h *MemberHandler) GetMemberByName(c *gin.Context) {
 		utils.Error(c, 500, "Failed to fetch member", err)
 		return
 	}
-	utils.Success(c, "Member fetched successfully", member)
+	utils.Success(c, "", member)
 }
 
 func (h *MemberHandler) GetMemberCareer(c *gin.Context) {
