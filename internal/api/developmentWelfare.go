@@ -13,6 +13,7 @@ func developmentWelfareRouter(rg *gin.RouterGroup, services *service.Services) *
 	{
 		devWelfare.POST("/", utils.AuthRequired(true), handler.Create)
 		devWelfare.GET("/", utils.AuthRequired(false), handler.List)
+		devWelfare.GET("/:id", utils.AuthRequired(false), handler.GetByID)
 	}
 	return devWelfare
 }

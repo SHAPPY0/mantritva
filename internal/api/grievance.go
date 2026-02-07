@@ -11,7 +11,7 @@ func grievanceRouter(rg *gin.RouterGroup, services *service.Services) *gin.Route
 	handler := handler.NewGrievanceHandler(services)
 	grievance := rg.Group("/grievance")
 	{
-		grievance.POST("/", utils.AuthRequired(false), handler.Create)
+		grievance.POST("/", utils.AuthRequired(true), handler.Create)
 		grievance.GET("/", utils.AuthRequired(true), handler.ListByUser)
 		grievance.GET("/:grievanceID", utils.AuthRequired(false), handler.GetByGrievanceID)
 	}

@@ -10,11 +10,13 @@ import (
 	"github.com/shappy0/mantritva/pkg/config"
 	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/storage"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type DevelopmentWelfareService interface {
 	Create(*gin.Context, dto.DevelopmentWelfareReq) (*model.DevelopmentWelfare, error)
 	List() ([]model.DevelopmentWelfare, error)
+	GetByID(id string) (*model.DevelopmentWelfare, error)
 }
 
 type developmentWelfareService struct {
@@ -91,6 +93,19 @@ func (s *developmentWelfareService) List() ([]model.DevelopmentWelfare, error) {
 	resp, err := s.Repository.List()
 	if err != nil {
 		log.Errorf("Error fetching development welfare list: %v", err)
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (s *developmentWelfareService) GetByID(id string) (*model.DevelopmentWelfare, error) {
+	idd, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := s.Repository.GetPostByID(idd)
+	if err != nil {
+		log.Errorf("Error fetching development welfare by id: %v", err)
 		return nil, err
 	}
 	return resp, nil

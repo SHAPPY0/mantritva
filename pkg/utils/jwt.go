@@ -32,7 +32,7 @@ func VerifyToken(ctx *gin.Context, bearerToken string) error {
 		tokenStr := strings.Split(bearerToken, " ")[1]
 		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 			}
 			return []byte("asdasdasdasde234234234"), nil
 		})
@@ -50,16 +50,15 @@ func VerifyToken(ctx *gin.Context, bearerToken string) error {
 func AuthRequired(required bool) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		bearerToken := ctx.Request.Header.Get("Authorization")
+		if !required {
+			ctx.Set("anonymous", true)
+			ctx.Next()
+			return
+		}
 		if bearerToken == "" || !strings.HasPrefix(bearerToken, "Bearer ") {
-			if !required {
-				ctx.Set("anonymous", true)
-				ctx.Next()
-				return
-			} else {
-				Error(ctx, 401, "Invalid auth token", nil)
-				ctx.Abort()
-				return
-			}
+			Error(ctx, 401, "Invalid auth token", nil)
+			ctx.Abort()
+			return
 		}
 		err := VerifyToken(ctx, bearerToken)
 		if err != nil {

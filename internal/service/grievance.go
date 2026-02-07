@@ -106,8 +106,8 @@ func generateID(n int) string {
 		d, _ := rand.Int(rand.Reader, big.NewInt(10))
 		sb.WriteByte(byte('0' + d.Int64()))
 	}
-	year := time.Now().Format("2006")
-	return year + "-" + sb.String()
+	year := time.Now().Format("06")
+	return "g" + year + "-" + sb.String()
 }
 
 func (s *grievanceSerivce) ListByUser(userID string) ([]model.Grievance, error) {
