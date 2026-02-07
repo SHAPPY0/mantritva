@@ -69,6 +69,10 @@ func (h *MemberHandler) BulkMemberUpload(c *gin.Context) {
 
 func (h *MemberHandler) GetMemberByName(c *gin.Context) {
 	name := c.Param("name")
+	if name == "" {
+		utils.Error(c, 500, "Invalid memberName", nil)
+		return
+	}
 	member, err := h.Service.GetByName(name)
 	if err != nil {
 		utils.Error(c, 500, "Failed to fetch member", err)

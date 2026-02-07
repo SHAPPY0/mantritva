@@ -160,12 +160,14 @@ func (s *reportService) CalculateNewsPressesScore(weight uint, memberID int) (*m
 }
 
 func (s *reportService) GetReport(memberID int) (*model.MemberReport, error) {
-	report, err := s.ReportRepo.GetMemberScore(uint(memberID), time.Now().Format("2006"))
+	currentYear := time.Now().Format("2006")
+	report, err := s.ReportRepo.GetMemberScore(uint(memberID), currentYear)
 	if err != nil {
 		return nil, err
 	}
 	if report == nil {
 		return nil, nil
 	}
+
 	return report, nil
 }

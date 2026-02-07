@@ -67,8 +67,12 @@ func (s *memberService) Create(ctx *gin.Context, req dto.MemberReq, photo *multi
 	if err != nil {
 		return nil, err
 	}
+	memberName := req.Name
+	if memberName != "" {
+		memberName = strings.ToUpper(string(req.Name[0])) + req.Name[1:]
+	}
 	member := &model.Member{
-		Name:             req.Name,
+		Name:             memberName,
 		FullName:         req.FullName,
 		DOB:              req.DOB,
 		Gender:           req.Gender,
@@ -145,36 +149,41 @@ func (s *memberService) BulkMemberUpload(c *gin.Context, filePath string) (bool,
 func (s *memberService) GetByName(name string) (*dto.MemberRes, error) {
 	var data dto.MemberRes
 	memberName := strings.Replace(name, "_", " ", -1)
+	memberName = strings.ToUpper(string(memberName[0])) + memberName[1:]
 	member, err := s.Repository.GetByName(memberName)
 	if err != nil {
+		log.Errorf("Member not found %s", memberName)
 		return nil, err
 	}
 	data.Member = *member
 	//Get Party
 	party, err := s.PartyRepository.GetByMemberID(member.ID)
 	if err != nil {
-		return nil, err
+		log.Warnf("Party not found for member %s", memberName)
+	} else {
+		data.Party = *party
 	}
-	data.Party = *party
 
 	//Get position from leadership table
 	leadership, err := s.LeadershipRepository.GetByMemberID(member.ID)
 	if err != nil {
-		return nil, err
+		log.Warnf("Leadership not found for member %s", memberName)
+	} else {
+		data.Position = leadership.Position
+		data.Departments = leadership.Departments
 	}
-	data.Position = leadership.Position
-	data.Departments = leadership.Departments
-
-	score, err := s.ReportRepository.GetMemberScore(member.ID, time.Now().Format("2006"))
+	currentYear := time.Now().Format("2006")
+	score, err := s.ReportRepository.GetMemberScore(member.ID, currentYear)
+	data.Score = &dto.MemberScore{
+		Year: currentYear,
+	}
 	if err != nil {
-		log.Warnf("No score found for memberID %d", member.ID)
+		log.Warnf("No score found for member %s", memberName)
 	} else if score != nil {
-		data.Score = &dto.MemberScore{
-			Score:     score.TotalScore,
-			MaxScore:  score.MaxScore,
-			Year:      score.Year,
-			UpdatedAt: score.CreatedAt.String(),
-		}
+		data.Score.MaxScore = score.MaxScore
+		data.Score.Score = score.TotalScore
+		data.Score.Year = score.Year
+		data.Score.UpdatedAt = score.CreatedAt.String()
 	}
 
 	return &data, nil

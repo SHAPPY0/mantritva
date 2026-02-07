@@ -55,7 +55,15 @@ func (r *reportRepository) GetMemberScore(memberID uint, year string) (*model.Me
 		return nil, err
 	}
 	if !rowFound {
-		log.Infof("No report found for memberID %d for year %s", memberID, year)
+		log.Warnf("No report found for memberID %d for year %s", memberID, year)
+		result = model.MemberReport{
+			MemberID:     uint(memberID),
+			Year:         year,
+			Developments: model.DevelopmentReport{Weight: 40},
+			Grievances:   model.GrievanceReport{Weight: 30},
+			NewsPresses:  model.NewsPressReport{Weight: 15},
+			FIRs:         model.FIRReport{Weight: 15},
+		}
 	}
 	return &result, nil
 }
