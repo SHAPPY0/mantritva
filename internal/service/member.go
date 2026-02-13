@@ -15,7 +15,6 @@ import (
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
-	"github.com/shappy0/mantritva/pkg/config"
 	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/storage"
 	"github.com/shappy0/mantritva/pkg/utils"
@@ -59,7 +58,7 @@ func NewMemberService(repos *repository.Repos) MemberService {
 
 func (s *memberService) Create(ctx *gin.Context, req dto.MemberReq, photo *multipart.FileHeader) (*model.Member, error) {
 	destinationPath := filepath.Join("members")
-	storage, err := storage.NewS3Storage(config.Env.GetString("FILE_BASE_PATH"), destinationPath)
+	storage, err := storage.New(destinationPath)
 	if err != nil {
 		return nil, err
 	}

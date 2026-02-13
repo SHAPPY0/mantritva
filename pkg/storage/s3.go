@@ -131,13 +131,14 @@ func (r *S3Storage) Delete(filePath string) error {
 	return nil
 }
 
-func (r *S3Storage) DeleteAll(documents []model.Document) {
+func (r *S3Storage) DeleteAll(documents []model.Document) error {
 	for _, doc := range documents {
 		err := r.Delete(doc.FileName)
 		if err != nil {
 			log.Warnf("Failed to delete file %s: %v", doc.FileName, err)
 		}
 	}
+	return nil
 }
 
 func getDownloadableUrl(objectKey string) string {

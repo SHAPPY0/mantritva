@@ -271,15 +271,16 @@ func (s *feedService) GetNewsPressFeed(userID int, postID primitive.ObjectID) (d
 			} else {
 				position := leader.Position
 				newsPressPostRes.Member.Position = position
-				if leader.StateID > 0 {
-					state, err := s.StateRepository.GetByID(int(leader.StateID))
-					if err == nil {
-						newsPressPostRes.Member.Position = position + ", " + state.Name
-					}
-				}
+
 			}
 		}
-		if leader == nil && err == nil {
+		if leader != nil && leader.StateID > 0 {
+			state, err := s.StateRepository.GetByID(int(leader.StateID))
+			if err == nil {
+				newsPressPostRes.Member.Position += ", " + state.Name
+			}
+		}
+		if leader == nil {
 			memberParty, err := s.PartyRepository.GetByMemberID(member.ID)
 			if err != nil {
 				log.Errorf("No memberParty found for member %d", member.ID)

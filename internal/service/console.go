@@ -8,7 +8,6 @@ import (
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
-	"github.com/shappy0/mantritva/pkg/config"
 	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/storage"
 	"github.com/shappy0/mantritva/pkg/utils"
@@ -175,7 +174,7 @@ func (s *consoleService) GetByID(id uint) (*dto.MemberRes, error) {
 func (s *consoleService) UpdateMemberByID(ctx *gin.Context, id uint, data map[string]interface{}, photo *multipart.FileHeader) (bool, error) {
 	if photo != nil {
 		destinationPath := filepath.Join("members")
-		storage, err := storage.NewS3Storage(config.Env.GetString("FILE_BASE_PATH"), destinationPath)
+		storage, err := storage.New(destinationPath)
 		if err != nil {
 			return false, err
 		}

@@ -11,7 +11,6 @@ import (
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
-	"github.com/shappy0/mantritva/pkg/config"
 	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/storage"
 	"github.com/shappy0/mantritva/pkg/utils"
@@ -68,7 +67,7 @@ func (s *grievanceSerivce) Create(ctx *gin.Context, req dto.Grievance) (*model.G
 	}
 
 	destinationPath := filepath.Join("grievances", g.GrievanceID)
-	storage, err := storage.NewS3Storage(config.Env.GetString("FILE_BASE_PATH"), destinationPath)
+	storage, err := storage.New(destinationPath)
 	if err != nil {
 		log.Infof("Error initiating storage connection %v", err)
 		return nil, err

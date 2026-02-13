@@ -11,7 +11,6 @@ import (
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
-	"github.com/shappy0/mantritva/pkg/config"
 	"github.com/shappy0/mantritva/pkg/storage"
 )
 
@@ -73,7 +72,7 @@ func (s *partyService) GetByAbbrv(abbrv string) (*model.Party, error) {
 
 func (s *partyService) UploadSymbol(ctx *gin.Context, partyId string, file *multipart.FileHeader) (bool, error) {
 	absoluteDestPath := filepath.Join("parties", partyId)
-	storage, err := storage.NewS3Storage(config.Env.GetString("FILE_BASE_PATH"), absoluteDestPath)
+	storage, err := storage.New(absoluteDestPath)
 	if err != nil {
 		return false, err
 	}
