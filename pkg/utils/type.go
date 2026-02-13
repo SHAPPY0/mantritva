@@ -19,7 +19,7 @@ type StatementTone string
 type PostStatus string
 type UserRole string
 type FeedType string
-type PostReactionType string
+type Vote string
 type Position string
 type GrievanceStatus string
 type KSA string
@@ -72,8 +72,8 @@ const (
 )
 
 const (
-	UPVOTE   PostReactionType = "UPVOTE"
-	DOWNVOTE PostReactionType = "DOWNVOTE"
+	UPVOTE   Vote = "UPVOTE"
+	DOWNVOTE Vote = "DOWNVOTE"
 )
 
 const (

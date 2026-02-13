@@ -24,10 +24,13 @@ type NewsPressPost struct {
 }
 
 type PostReaction struct {
-	ID              primitive.ObjectID `json:"_id" bson:"_id,omitempty"`
-	PostID          primitive.ObjectID `json:"post_id" bson:"post_id"`
-	UserID          int                `json:"user_id" bson:"user_id"`
-	Reaction        string             `json:"reaction" bson:"reaction"`
-	UserIP          string             `json:"user_ip" bson:"user_ip"`
-	AuditFieldsBSON `bson:",inline"`
+	ID                  primitive.ObjectID `json:"_id" bson:"_id,omitempty"`
+	PostID              primitive.ObjectID `json:"post_id" bson:"post_id"`
+	UserID              int                `json:"user_id" bson:"user_id"`
+	Reaction            string             `json:"reaction" bson:"reaction"`
+	UserIP              string             `json:"user_ip" bson:"user_ip"`
+	SelectedOptions     []int              `json:"selected_options" bson:"selected_options"`
+	PrevNormalizedScore *int               `json:"prev_normalized_score" bson:"prev_normalized_score"`
+	NormalizedScore     int                `json:"normalized_score" bson:"normalized_score"`
+	AuditFieldsBSON     `bson:",inline"`
 }

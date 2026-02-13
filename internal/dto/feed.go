@@ -18,10 +18,11 @@ type FeedRes struct {
 }
 
 type ReactionReq struct {
-	PostID   primitive.ObjectID     `json:"post_id" binding:"required"`
-	UserID   int                    `json:"user_id"`
-	Reaction utils.PostReactionType `json:"reaction" binding:"required"`
-	FeedType utils.FeedType         `json:"feed_type" binding:"required"`
+	PostID          primitive.ObjectID `json:"post_id" binding:"required"`
+	UserID          int                `json:"user_id"`
+	Reaction        utils.Vote         `json:"reaction" binding:"required"`
+	FeedType        utils.FeedType     `json:"feed_type" binding:"required"`
+	SelectedOptions []int              `json:"selected_options"`
 }
 
 type PostVotes struct {

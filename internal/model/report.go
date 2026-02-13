@@ -1,6 +1,9 @@
 package model
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"github.com/shappy0/mantritva/pkg/utils"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type KSA struct {
 	ID          uint   `json:"id" gorm:"primaryKey"`
@@ -8,6 +11,15 @@ type KSA struct {
 	Weight      uint   `json:"weight"`
 	Description string `json:"description"`
 	IsActive    bool   `json:"is_active" gorm:"default:true"`
+	AuditFields
+}
+
+type Questionnaire struct {
+	ID       uint           `json:"id" gorm:"primaryKey"`
+	Category utils.FeedType `json:"category"`
+	Title    string         `json:"title"`
+	VoteType utils.Vote     `json:"vote_type"`
+	Weight   int            `json:"weight"`
 	AuditFields
 }
 

@@ -44,6 +44,7 @@ func SetupDatabase() *gorm.DB {
 	db.AutoMigrate(&model.User{})
 	db.AutoMigrate(&model.Entity{})
 	db.AutoMigrate(&model.KSA{})
+	db.AutoMigrate(&model.Questionnaire{})
 
 	return db
 }

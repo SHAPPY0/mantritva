@@ -45,7 +45,7 @@ type DevelopmentWelfareShort struct {
 	Party            Party                   `json:"party,omitempty"`
 	AnnouncementDate utils.DateOnly          `json:"announcement_date"`
 	Status           utils.DevelopmentStatus `json:"status"`
-	Reaction         utils.PostReactionType  `json:"reaction"`
+	Reaction         utils.Vote              `json:"reaction"`
 	UpvoteCount      uint                    `json:"upvote_count"`
 	DownvoteCount    uint                    `json:"downvote_count"`
 	CreatedAt        utils.DateOnly          `json:"created_at"`

@@ -78,7 +78,7 @@ func (r *feedRepository) GetReactionByUserIDAndPostID(userID int, postID primiti
 }
 
 func (r *feedRepository) DeleteReaction(id primitive.ObjectID, userID int, postID primitive.ObjectID) error {
-	filter := bson.M{"user_id": userID, "post_id": postID}
+	filter := bson.M{"_id": id, "user_id": userID, "post_id": postID, "is_deleted": false}
 	update := bson.M{"$set": bson.M{"is_deleted": true, "deleted_at": utils.CreateCurrentDateTime()}}
 	_, err := r.DB.UpdateOne(r.DB.PostReactionCollection, filter, update)
 	if err != nil {

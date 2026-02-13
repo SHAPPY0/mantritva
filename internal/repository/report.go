@@ -5,6 +5,7 @@ import (
 	"github.com/shappy0/mantritva/pkg/config"
 	"github.com/shappy0/mantritva/pkg/log"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"gorm.io/gorm"
 )
@@ -13,17 +14,21 @@ type ReportRepository interface {
 	GetReportKSA() ([]model.KSA, error)
 	Create(*model.MemberReport) error
 	GetMemberScore(memberID uint, year string) (*model.MemberReport, error)
+	GetQuestionnairesByCategory(string) (*[]model.Questionnaire, error)
+	GetReactionsByPostID(primitive.ObjectID) ([]model.PostReaction, error)
 }
 
 type reportRepository struct {
-	DB      *gorm.DB
-	MongoDB *config.MongoDB
+	DB                 *gorm.DB
+	MongoDB            *config.MongoDB
+	QuestionnaireCache map[string]*[]model.Questionnaire
 }
 
 func NewReportRepository(db *gorm.DB, mongoDB *config.MongoDB) ReportRepository {
 	return &reportRepository{
-		DB:      db,
-		MongoDB: mongoDB,
+		DB:                 db,
+		MongoDB:            mongoDB,
+		QuestionnaireCache: make(map[string]*[]model.Questionnaire),
 	}
 }
 
@@ -66,4 +71,31 @@ func (r *reportRepository) GetMemberScore(memberID uint, year string) (*model.Me
 		}
 	}
 	return &result, nil
+}
+
+func (r *reportRepository) GetQuestionnairesByCategory(category string) (*[]model.Questionnaire, error) {
+	var questionnaire []model.Questionnaire
+	n, ok := r.QuestionnaireCache[category]
+	if ok {
+		questionnaire = *n
+	} else {
+		if err := r.DB.Where("category = ? AND is_deleted = false", category).Find(&questionnaire).Error; err != nil {
+			return nil, err
+		}
+		r.QuestionnaireCache[category] = &questionnaire
+	}
+	return &questionnaire, nil
+}
+
+func (r *reportRepository) GetReactionsByPostID(postId primitive.ObjectID) ([]model.PostReaction, error) {
+	result := make([]model.PostReaction, 0)
+	filter := bson.M{
+		"post_id":    postId,
+		"is_deleted": false,
+	}
+	opts := options.Find()
+	if err := r.MongoDB.FindMany(r.MongoDB.PostReactionCollection, filter, opts, &result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }

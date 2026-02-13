@@ -37,49 +37,64 @@ func VerifyToken(ctx *gin.Context, bearerToken string) error {
 			return []byte("asdasdasdasde234234234"), nil
 		})
 		if err != nil || !token.Valid {
-			return fmt.Errorf("invalid token")
+			return fmt.Errorf("Invalid Token")
 		}
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
 			ctx.Set("jwtClaims", claims)
 		}
 		return nil
 	}
-	return fmt.Errorf("missing or invalid Authorization header")
+	return fmt.Errorf("Missing or Invalid Authorization header")
+}
+
+func setUserFromBearer(ctx *gin.Context, bearerToken string) error {
+	if bearerToken == "" || !strings.HasPrefix(bearerToken, "Bearer ") {
+		return fmt.Errorf("Missing or Invalid Authorization header")
+	}
+	if err := VerifyToken(ctx, bearerToken); err != nil {
+		return err
+	}
+	jwtClaim, err := GetJWTClaim(ctx)
+	if err != nil {
+		return err
+	}
+	if jwtClaim != nil {
+		claim, err := GetUserClaim(jwtClaim)
+		if err != nil {
+			return err
+		}
+		ctx.Set("user", claim)
+	}
+	return nil
+
 }
 
 func AuthRequired(required bool) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		bearerToken := ctx.Request.Header.Get("Authorization")
 		if !required {
-			ctx.Set("anonymous", true)
+			if bearerToken == "" {
+				ctx.Set("anonymous", true)
+				ctx.Next()
+				return
+			}
+			if bearerToken != "Bearer null" && strings.HasPrefix(bearerToken, "Bearer ") {
+				if err := setUserFromBearer(ctx, bearerToken); err != nil {
+					Error(ctx, 401, err.Error(), nil)
+					ctx.Abort()
+					return
+				}
+			}
 			ctx.Next()
 			return
 		}
-		if bearerToken == "" || !strings.HasPrefix(bearerToken, "Bearer ") {
-			Error(ctx, 401, "Invalid auth token", nil)
-			ctx.Abort()
-			return
-		}
-		err := VerifyToken(ctx, bearerToken)
-		if err != nil {
-			Error(ctx, 401, err.Error(), nil)
-			ctx.Abort()
-			return
-		}
-		jwtClaim, err := GetJWTClaim(ctx)
-		if err != nil {
-			Error(ctx, 401, err.Error(), nil)
-			ctx.Abort()
-			return
-		}
-		if jwtClaim != nil {
-			claim, err := GetUserClaim(jwtClaim)
-			if err != nil {
+
+		if bearerToken != "Bearer null" && strings.HasPrefix(bearerToken, "Bearer ") {
+			if err := setUserFromBearer(ctx, bearerToken); err != nil {
 				Error(ctx, 401, err.Error(), nil)
 				ctx.Abort()
 				return
 			}
-			ctx.Set("user", claim)
 		}
 		ctx.Next()
 	}

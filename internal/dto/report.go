@@ -1,5 +1,10 @@
 package dto
 
+import (
+	"github.com/shappy0/mantritva/pkg/utils"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
 type KSAWeights struct {
 	Developments uint
 	Grievances   uint
@@ -35,4 +40,19 @@ type MemberScore struct {
 	MaxScore  uint   `json:"max_score"`
 	Year      string `json:"year"`
 	UpdatedAt string `json:"updated_at"`
+}
+
+type Questionnaire struct {
+	ID       uint            `json:"id"`
+	Category *utils.FeedType `json:"category"`
+	Title    string          `json:"title"`
+	VoteType *utils.Vote     `json:"vote_type"`
+	Weight   *int            `json:"weight"`
+}
+
+type FeedReactionItem struct {
+	FeedType utils.FeedType
+	Reaction string
+	UserID   int
+	PostID   primitive.ObjectID
 }

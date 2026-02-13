@@ -2,12 +2,12 @@ package repository
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/pkg/config"
+	"github.com/shappy0/mantritva/pkg/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -61,7 +61,7 @@ func (r *newsPressPostRepository) GetPostByID(postID primitive.ObjectID) (*model
 	opts := options.FindOne()
 	rowFound, err := r.DB.FindOne(r.DB.NewsPressPostCollection, filter, opts, &newsPressPost)
 	if err != nil {
-		log.Printf("Error fetching newpresspost by postID %s", postID)
+		log.Errorf("Error fetching newpresspost by postID %s", postID)
 		return nil, err
 	}
 	if !rowFound {
@@ -76,7 +76,7 @@ func (r *newsPressPostRepository) ConsoleGetNewsPressPostByID(id primitive.Objec
 	opts := options.FindOne()
 	rowFound, err := r.DB.FindOne(r.DB.NewsPressPostCollection, filter, opts, &newsPressPost)
 	if err != nil {
-		log.Printf("Error fetching newpresspost by postID %s", id)
+		log.Errorf("Error fetching newpresspost by postID %s", id)
 		return nil, err
 	}
 	if !rowFound {
@@ -91,7 +91,7 @@ func (r *newsPressPostRepository) UpdatePostVoteCountsByID(postID primitive.Obje
 
 	_, err := r.DB.UpdateOne(r.DB.NewsPressPostCollection, filter, update)
 	if err != nil {
-		log.Printf("Error updating vote counts in newsPressPost: %v", err)
+		log.Errorf("Error updating vote counts in newsPressPost: %v", err)
 		return err
 	}
 	return nil

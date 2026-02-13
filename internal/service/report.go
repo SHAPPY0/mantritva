@@ -1,6 +1,9 @@
 package service
 
 import (
+	"math"
+	"runtime"
+	"sync"
 	"time"
 
 	"github.com/shappy0/mantritva/internal/dto"
@@ -131,10 +134,8 @@ func (s *reportService) CalculateNewsPressesScore(weight uint, memberID int) (*m
 		Weight:      weight,
 		NewsPresses: make([]string, 0),
 	}
-	notLikedPosts := 0
 	pagination := dto.Pagination{Offset: 0, Limit: 500}
 	newsPresses, err := s.NewsPressRepo.GetPostsByMemberID(pagination, memberID)
-	log.Infof("News And Presses %+v", newsPresses)
 	if err != nil {
 		return nil, err
 	}
@@ -142,20 +143,50 @@ func (s *reportService) CalculateNewsPressesScore(weight uint, memberID int) (*m
 	if report.Total == 0 {
 		return &report, nil
 	}
-	for _, ns := range *newsPresses {
-		if ns.UpvoteCount < ns.DownvoteCount {
-			notLikedPosts += 1
-			// report.NewsPresses = append(report.NewsPresses, dto.NewsPressShort{
-			// 	ID:            ns.ID,
-			// 	Statement:     ns.Statement,
-			// 	StatementDate: ns.StatementDate,
-			// 	UpvoteCount:   ns.UpvoteCount,
-			// 	DownvoteCount: ns.DownvoteCount,
-			// })
-			report.NewsPresses = append(report.NewsPresses, ns.ID.Hex())
-		}
+	maxWorkers := runtime.NumCPU()
+	sem := make(chan struct{}, maxWorkers)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var totalNewsPressScore float64
+	for _, eachNewsPress := range *newsPresses {
+		wg.Add(1)
+		sem <- struct{}{}
+		p := eachNewsPress
+		go func(post model.NewsPressPost) {
+			defer wg.Done()
+			defer func() { <-sem }()
+
+			reactions, err := s.ReportRepo.GetReactionsByPostID(post.ID)
+			if err != nil {
+				log.Errorf("Error fetching reaction of newsPress %d", post.ID)
+				return
+			}
+			if len(reactions) == 0 {
+				return
+			}
+			eachScoreSum := 0
+			for _, reaction := range reactions {
+				eachScoreSum += reaction.NormalizedScore
+			}
+			//get average of each post's reaction
+			avg := float64(eachScoreSum) / float64(len(reactions))
+			mu.Lock()
+			totalNewsPressScore += avg
+			mu.Unlock()
+		}(p)
 	}
-	report.Score = weight * (1 - uint(notLikedPosts)/uint(report.Total))
+	wg.Wait()
+	// average across all posts (including posts with zero reactions as 0)
+	rawNewsPressScore := totalNewsPressScore / float64(report.Total)
+	if rawNewsPressScore < 0 {
+		rawNewsPressScore = 0
+	}
+	if rawNewsPressScore > 100 {
+		rawNewsPressScore = 100
+	}
+	//cover to scale 0 - weight
+	scaled := (rawNewsPressScore / 100.0) * float64(weight)
+	report.Score = uint(math.Round(scaled))
 	return &report, nil
 }
 
@@ -170,4 +201,44 @@ func (s *reportService) GetReport(memberID int) (*model.MemberReport, error) {
 	}
 
 	return report, nil
+}
+
+func (svc *reportService) RunFeedScoreComputeJob(queue <-chan dto.ReactionReq) {
+	for reactionReq := range queue {
+		if reactionReq.FeedType == utils.NEWSPRESS {
+			if err := svc.ComputeReactionScore(reactionReq); err != nil {
+				log.Errorf(err.Error())
+			}
+		}
+	}
+}
+
+func (svc *reportService) ComputeReactionScore(reaction dto.ReactionReq) error {
+	var reactions []model.PostReaction
+	var questionnaire *[]model.Questionnaire
+	var err error
+	if reactions, err = svc.ReportRepo.GetReactionsByPostID(reaction.PostID); err != nil {
+		return err
+	}
+	if questionnaire, err = svc.ReportRepo.GetQuestionnairesByCategory(string(utils.NEWSPRESS)); err != nil {
+		return err
+	}
+	totalVotes := len(reactions)
+	totalWeight := 0
+	for _, reaction := range reactions {
+		weight := getWeight(questionnaire, reaction)
+		if reaction.Reaction == string(utils.UPVOTE) {
+			totalWeight += (1 + weight)
+		} else if reaction.Reaction == string(utils.DOWNVOTE) {
+			totalWeight -= (-1 - (weight))
+			if totalWeight < 0 {
+				totalWeight = 0
+			}
+		}
+	}
+	log.Infof("Total Votes %d, score;%d", totalVotes, totalWeight)
+	// MIN_POSSIBLE := -10
+	// MAX_POSSIBLE := 10
+	// normalizedScore := ((totalWeight - MIN_POSSIBLE) / (MAX_POSSIBLE - MIN_POSSIBLE)) * 100
+	return nil
 }

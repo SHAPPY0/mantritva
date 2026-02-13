@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"time"
 )
 
@@ -54,4 +55,20 @@ func StructToStr(data any) string {
 
 func StrToBool(s string) bool {
 	return s == "true" || s == "1"
+}
+
+func CompareIntSlices(a, b []int) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	ac := append([]int(nil), a...)
+	bc := append([]int(nil), b...)
+	sort.Ints(ac)
+	sort.Ints(bc)
+	for i := range ac {
+		if ac[i] != bc[i] {
+			return false
+		}
+	}
+	return true
 }
