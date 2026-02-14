@@ -19,7 +19,7 @@ type DevelopmentWelfare struct {
 	VidhanSabhaID          *uint              `json:"vidhansabha_id" bson:"vidhansabha_id"`
 	LokSabhaID             *uint              `json:"loksabha_id" bson:"loksabha_id"`
 	Location               *string            `json:"location" bson:"location"`
-	AnnouncementDate       time.Time          `json:"announcement_date" bson:"announcement_date"`
+	AnnouncementDate       *time.Time         `json:"announcement_date" bson:"announcement_date"`
 	ExpectedCompletionDate *time.Time         `json:"expected_completion_date" bson:"expected_completion_date"`
 	ActualCompletionDate   *time.Time         `json:"actual_completion_date" bson:"actual_completion_date"`
 	Criteria               *string            `json:"criteria" bson:"criteria"`

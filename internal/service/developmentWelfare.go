@@ -42,7 +42,7 @@ func (s *developmentWelfareService) Create(ctx *gin.Context, data dto.Developmen
 		LokSabhaID:             data.LokSabhaID,
 		VidhanSabhaID:          data.VidhanSabhaID,
 		Location:               data.Location,
-		AnnouncementDate:       *data.ActualCompletionDate.Time,
+		AnnouncementDate:       data.AnnouncementDate.Time,
 		ExpectedCompletionDate: data.ExpectedCompletionDate.Time,
 		ActualCompletionDate:   data.ActualCompletionDate.Time,
 		Criteria:               data.Criteria,

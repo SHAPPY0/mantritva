@@ -304,7 +304,7 @@ func (s *memberService) GetDevelopmentWelfareByMemberID(pagination dto.Paginatio
 			Type:             dev.Type,
 			Name:             dev.Name,
 			Description:      dev.Description,
-			AnnouncementDate: utils.DateOnly{Time: &dev.AnnouncementDate},
+			AnnouncementDate: utils.DateOnly{Time: dev.AnnouncementDate},
 			CreatedAt:        dev.CreatedAt,
 			UpvoteCount:      *dev.UpvoteCount,
 			DownvoteCount:    *dev.DownvoteCount,
