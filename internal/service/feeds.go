@@ -120,7 +120,7 @@ func (s *feedService) getPostSummary(feedType utils.FeedType, postID primitive.O
 		if err != nil {
 			return nil, err
 		}
-		return &postSummary{ID: dw.ID, UpvoteCount: dw.UpvoteCount, DownvoteCount: dw.DownvoteCount}, nil
+		return &postSummary{ID: dw.ID, UpvoteCount: *dw.UpvoteCount, DownvoteCount: *dw.DownvoteCount}, nil
 	default:
 		return nil, fmt.Errorf("Unsupported feed type: %v", feedType)
 	}
@@ -319,10 +319,8 @@ func (s *feedService) GetNewsPressFeed(userID int, postID primitive.ObjectID) (d
 			newsPressPostRes.Reaction = utils.Vote(reaction.Reaction)
 		}
 	}
-	log.Infof("Fetching questionnair for %s", string(utils.NEWSPRESS))
 	//Get Questionnaires for this feed
-	if ques, err := s.ReportRepository.GetQuestionnairesByCategory(string(utils.NEWSPRESS)); ques != nil {
-		log.Infof("Questionnair %v, Error: %v", ques, err)
+	if ques, _ := s.ReportRepository.GetQuestionnairesByCategory(string(utils.NEWSPRESS)); ques != nil {
 		newsPressPostRes.Questionnaire = new([]dto.Questionnaire)
 		for _, q := range *ques {
 			*newsPressPostRes.Questionnaire = append(*newsPressPostRes.Questionnaire, dto.Questionnaire{
@@ -339,7 +337,7 @@ func (s *feedService) GetGrievanceFeed(userID int, postID primitive.ObjectID) (*
 	var grievanceRes dto.GrievanceRes
 	grievance, err := s.GrievanceRepository.GetByID(postID)
 	if err != nil {
-		return &grievanceRes, err
+		return nil, err
 	}
 
 	grievanceRes.Grievance = *grievance
@@ -359,11 +357,16 @@ func (s *feedService) GetDevelopmentWelfareShort(userID int, postID primitive.Ob
 		Name:             devWel.Name,
 		Description:      devWel.Description,
 		AnnouncementDate: utils.DateOnly{Time: &devWel.AnnouncementDate},
-		UpvoteCount:      devWel.UpvoteCount,
-		DownvoteCount:    devWel.DownvoteCount,
 		Status:           utils.DevelopmentStatus(devWel.Status),
-		CreatedAt:        utils.DateOnly{Time: &devWel.CreatedAt},
+		CreatedAt:        devWel.CreatedAt,
 	}
+	if devWel.UpvoteCount != nil {
+		devWelFeed.UpvoteCount = *devWel.UpvoteCount
+	}
+	if devWel.DownvoteCount != nil {
+		devWelFeed.DownvoteCount = *devWel.DownvoteCount
+	}
+	fetchPartyInfo := true
 	member, err := s.MemberRepository.GetByID(devWel.MemberID)
 	if err == nil {
 		devWelFeed.Member = dto.Member{
@@ -377,27 +380,40 @@ func (s *feedService) GetDevelopmentWelfareShort(userID int, postID primitive.Ob
 			} else {
 				position := leader.Position
 				devWelFeed.Member.Position = position
-				if leader.StateID > 0 {
-					state, err := s.StateRepository.GetByID(int(leader.StateID))
-					if err == nil {
-						devWelFeed.Member.Position = position + ", " + state.Name
-					}
-				}
+
+			}
+		}
+		if leader != nil && leader.StateID > 0 {
+			state, err := s.StateRepository.GetByID(int(leader.StateID))
+			if err == nil {
+				devWelFeed.Member.Position += ", " + state.Name
+			}
+		}
+		if leader == nil {
+			memberParty, err := s.PartyRepository.GetByMemberID(member.ID)
+			if err != nil {
+				log.Errorf("No memberParty found for member %d", member.ID)
+			} else if memberParty != nil {
+				devWelFeed.Member.Position = memberParty.Position
+				devWelFeed.Party = dto.Party{Name: memberParty.Name, Abbrv: memberParty.Abbrv, Symbol: memberParty.Symbol}
+				fetchPartyInfo = false
 			}
 		}
 	} else {
 		log.Errorf("Error fetching member for development welfare feed: %v", err)
 	}
 
-	party, err := s.PartyRepository.GetByID(int(devWel.PartyID))
-	if err == nil {
-		devWelFeed.Party = dto.Party{
-			Name:   party.Name,
-			Abbrv:  party.Abbrv,
-			Symbol: party.Symbol,
+	if fetchPartyInfo && devWel.PartyID > 0 {
+		party, err := s.PartyRepository.GetByID(int(devWel.PartyID))
+		if err == nil {
+			devWelFeed.Party = dto.Party{
+				Name:   party.Name,
+				Abbrv:  party.Abbrv,
+				Symbol: party.Symbol,
+			}
+		} else {
+			log.Errorf("Error fetching party for development welfare feed: %v", err)
 		}
-	} else {
-		log.Errorf("Error fetching party for development welfare feed: %v", err)
 	}
 
 	// Fetch reaction if userID is provided

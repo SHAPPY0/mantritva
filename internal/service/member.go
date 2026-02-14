@@ -305,9 +305,9 @@ func (s *memberService) GetDevelopmentWelfareByMemberID(pagination dto.Paginatio
 			Name:             dev.Name,
 			Description:      dev.Description,
 			AnnouncementDate: utils.DateOnly{Time: &dev.AnnouncementDate},
-			CreatedAt:        utils.DateOnly{Time: &dev.CreatedAt},
-			UpvoteCount:      dev.UpvoteCount,
-			DownvoteCount:    dev.DownvoteCount,
+			CreatedAt:        dev.CreatedAt,
+			UpvoteCount:      *dev.UpvoteCount,
+			DownvoteCount:    *dev.DownvoteCount,
 			Status:           utils.DevelopmentStatus(dev.Status),
 		}
 		DevelopmentWelfareShort = append(DevelopmentWelfareShort, dtoDev)

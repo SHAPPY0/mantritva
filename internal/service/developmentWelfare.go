@@ -30,6 +30,7 @@ func NewDevelopmentWelfareService(repos *repository.Repos) DevelopmentWelfareSer
 
 func (s *developmentWelfareService) Create(ctx *gin.Context, data dto.DevelopmentWelfareReq) (*model.DevelopmentWelfare, error) {
 	d := &model.DevelopmentWelfare{
+		ID:                     primitive.NewObjectID(),
 		Category:               data.Category,
 		Type:                   data.Type,
 		Name:                   data.Name,
@@ -42,8 +43,8 @@ func (s *developmentWelfareService) Create(ctx *gin.Context, data dto.Developmen
 		VidhanSabhaID:          data.VidhanSabhaID,
 		Location:               data.Location,
 		AnnouncementDate:       *data.ActualCompletionDate.Time,
-		ExpectedCompletionDate: *data.ExpectedCompletionDate.Time,
-		ActualCompletionDate:   *data.ActualCompletionDate.Time,
+		ExpectedCompletionDate: data.ExpectedCompletionDate.Time,
+		ActualCompletionDate:   data.ActualCompletionDate.Time,
 		Criteria:               data.Criteria,
 		BeneficiariesNum:       data.BeneficiariesNum,
 		Scope:                  data.Scope,

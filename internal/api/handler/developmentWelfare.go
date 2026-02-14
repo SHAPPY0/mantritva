@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/service"
-	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/utils"
 )
 
@@ -34,9 +33,7 @@ func (h *DevelopmentWelfareHandler) Create(c *gin.Context) {
 		utils.Error(c, 500, "Failed to process request", err)
 		return
 	}
-
 	var req dto.DevelopmentWelfareReq
-	// var grievance dto.Grievance
 	if err := c.ShouldBind(&req); err != nil {
 		utils.Error(c, 400, "Invalid request data", err)
 		return
@@ -52,7 +49,6 @@ func (h *DevelopmentWelfareHandler) Create(c *gin.Context) {
 		document.File = files[0]
 		document.FileName = c.PostForm(fmt.Sprintf("documents[%d].filename", i))
 		document.Remark = c.PostForm(fmt.Sprintf("documents[%d].remark", i))
-		log.Infof("Document %+v", document)
 		req.Documents = append(req.Documents, document)
 	}
 
