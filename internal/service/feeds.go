@@ -319,8 +319,10 @@ func (s *feedService) GetNewsPressFeed(userID int, postID primitive.ObjectID) (d
 			newsPressPostRes.Reaction = utils.Vote(reaction.Reaction)
 		}
 	}
+	log.Infof("Fetching questionnair for %s", string(utils.NEWSPRESS))
 	//Get Questionnaires for this feed
-	if ques, _ := s.ReportRepository.GetQuestionnairesByCategory(string(utils.NEWSPRESS)); ques != nil {
+	if ques, err := s.ReportRepository.GetQuestionnairesByCategory(string(utils.NEWSPRESS)); ques != nil {
+		log.Infof("Questionnair %v, Error: %v", ques, err)
 		newsPressPostRes.Questionnaire = new([]dto.Questionnaire)
 		for _, q := range *ques {
 			*newsPressPostRes.Questionnaire = append(*newsPressPostRes.Questionnaire, dto.Questionnaire{
