@@ -73,16 +73,16 @@ func (r *reportRepository) GetMemberScore(memberID uint, year string) (*model.Me
 	return &result, nil
 }
 
-func (r *reportRepository) GetQuestionnairesByCategory(category string) (*[]model.Questionnaire, error) {
+func (r *reportRepository) GetQuestionnairesByCategory(feedType string) (*[]model.Questionnaire, error) {
 	var questionnaire []model.Questionnaire
-	n, ok := r.QuestionnaireCache[category]
+	n, ok := r.QuestionnaireCache[feedType]
 	if ok {
 		questionnaire = *n
 	} else {
-		if err := r.DB.Where("category = ? AND is_deleted = false", category).Find(&questionnaire).Error; err != nil {
+		if err := r.DB.Where("feed_type = ? AND is_deleted = false", feedType).Find(&questionnaire).Error; err != nil {
 			return nil, err
 		}
-		r.QuestionnaireCache[category] = &questionnaire
+		r.QuestionnaireCache[feedType] = &questionnaire
 	}
 	return &questionnaire, nil
 }

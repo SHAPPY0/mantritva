@@ -37,7 +37,7 @@ type Document struct {
 }
 
 type DevelopmentWelfareShort struct {
-	ID               string                  `json:"_id,omitempty"`
+	ID               string                  `json:"id,omitempty"`
 	Category         string                  `json:"category"`
 	Type             string                  `json:"type"`
 	Name             string                  `json:"name"`
@@ -49,5 +49,6 @@ type DevelopmentWelfareShort struct {
 	Reaction         utils.Vote              `json:"reaction"`
 	UpvoteCount      uint                    `json:"upvote_count"`
 	DownvoteCount    uint                    `json:"downvote_count"`
+	Questionnaire    *[]Questionnaire        `json:"questionnaire,omitempty"`
 	CreatedAt        time.Time               `json:"created_at"`
 }

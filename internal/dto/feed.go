@@ -22,7 +22,7 @@ type ReactionReq struct {
 	UserID          int                `json:"user_id"`
 	Reaction        utils.Vote         `json:"reaction" binding:"required"`
 	FeedType        utils.FeedType     `json:"feed_type" binding:"required"`
-	SelectedOptions []int              `json:"selected_options"`
+	SelectedOptions []int              `json:"selected_options,omitempty"`
 }
 
 type PostVotes struct {

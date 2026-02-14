@@ -120,7 +120,14 @@ func (s *feedService) getPostSummary(feedType utils.FeedType, postID primitive.O
 		if err != nil {
 			return nil, err
 		}
-		return &postSummary{ID: dw.ID, UpvoteCount: *dw.UpvoteCount, DownvoteCount: *dw.DownvoteCount}, nil
+		ps := &postSummary{ID: dw.ID}
+		if dw.UpvoteCount != nil {
+			ps.UpvoteCount = *dw.UpvoteCount
+		}
+		if dw.DownvoteCount != nil {
+			ps.DownvoteCount = *dw.DownvoteCount
+		}
+		return ps, nil
 	default:
 		return nil, fmt.Errorf("Unsupported feed type: %v", feedType)
 	}
@@ -197,9 +204,9 @@ func (s *feedService) SaveReaction(req dto.ReactionReq, userIP string) (bool, er
 		SelectedOptions: req.SelectedOptions,
 		AuditFieldsBSON: model.InsertBSONAuditFields(""),
 	}
-	if req.FeedType == utils.NEWSPRESS {
+	if req.FeedType == utils.NEWSPRESS || req.FeedType == utils.DEVELOPMENT {
 		reactionScore := 0
-		questionnaire, err := s.ReportRepository.GetQuestionnairesByCategory(string(utils.NEWSPRESS))
+		questionnaire, err := s.ReportRepository.GetQuestionnairesByCategory(string(req.FeedType))
 		if err != nil {
 			// return err
 		}
@@ -421,6 +428,18 @@ func (s *feedService) GetDevelopmentWelfareShort(userID int, postID primitive.Ob
 		reaction, _ := s.FeedRepository.GetReactionByUserIDAndPostID(userID, postID)
 		if reaction != nil {
 			devWelFeed.Reaction = utils.Vote(reaction.Reaction)
+		}
+	}
+
+	//Get Questionnaires for this feed
+	if ques, _ := s.ReportRepository.GetQuestionnairesByCategory(string(utils.DEVELOPMENT)); ques != nil {
+		devWelFeed.Questionnaire = new([]dto.Questionnaire)
+		for _, q := range *ques {
+			*devWelFeed.Questionnaire = append(*devWelFeed.Questionnaire, dto.Questionnaire{
+				ID:       q.ID,
+				Title:    q.Title,
+				VoteType: &q.VoteType,
+			})
 		}
 	}
 	devWelRes = devWelFeed

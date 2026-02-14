@@ -44,10 +44,11 @@ type MemberScore struct {
 
 type Questionnaire struct {
 	ID       uint            `json:"id"`
-	Category *utils.FeedType `json:"category"`
+	Category string          `json:"category,omitempty"`
+	FeedType *utils.FeedType `json:"feed_type,omitempty"`
 	Title    string          `json:"title"`
 	VoteType *utils.Vote     `json:"vote_type"`
-	Weight   *int            `json:"weight"`
+	Weight   *int            `json:"weight,omitempty"`
 }
 
 type FeedReactionItem struct {

@@ -16,7 +16,8 @@ type KSA struct {
 
 type Questionnaire struct {
 	ID       uint           `json:"id" gorm:"primaryKey"`
-	Category utils.FeedType `json:"category"`
+	FeedType utils.FeedType `json:"feed_type"`
+	Category string         `json:"category"`
 	Title    string         `json:"title"`
 	VoteType utils.Vote     `json:"vote_type"`
 	Weight   int            `json:"weight"`
