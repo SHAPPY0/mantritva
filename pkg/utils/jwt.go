@@ -73,7 +73,7 @@ func AuthRequired(required bool) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		bearerToken := ctx.Request.Header.Get("Authorization")
 		if !required {
-			if bearerToken == "" {
+			if bearerToken == "" || bearerToken == "Bearer null" {
 				ctx.Set("anonymous", true)
 				ctx.Next()
 				return
