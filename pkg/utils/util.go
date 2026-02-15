@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"sort"
 	"time"
 )
@@ -71,4 +72,8 @@ func CompareIntSlices(a, b []int) bool {
 		}
 	}
 	return true
+}
+
+func IsEmpty(s interface{}) bool {
+	return reflect.DeepEqual(s, reflect.Zero(reflect.TypeOf(s)).Interface())
 }

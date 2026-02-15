@@ -62,5 +62,20 @@ func (h *NewsPressHandler) GetPostsByPartyID(c *gin.Context) {
 		utils.Error(c, 500, "Failed to fetch newsPress posts by party ID", err)
 		return
 	}
-	utils.Success(c, "NewsPress posts fetched successfully", posts)
+	utils.Success(c, "", posts)
+}
+
+func (h *NewsPressHandler) GetDetailByID(c *gin.Context) {
+	userID, err := utils.GetKeyInCtx[int](c, "user_id")
+	if err != nil {
+		utils.Error(c, 401, "Unauthorized access", nil)
+		return
+	}
+	postID := c.Param("id")
+	post, err := h.Service.GetDetailByID(userID, postID)
+	if err != nil {
+		utils.Error(c, 500, "Failed to fetch newsPress post ID", err)
+		return
+	}
+	utils.Success(c, "", post)
 }

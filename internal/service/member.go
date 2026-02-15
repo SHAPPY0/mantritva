@@ -28,7 +28,7 @@ type MemberService interface {
 	GetByID(id uint) (*dto.MemberRes, error)
 	ListUnaffiliatedMembers() ([]dto.MemberRes, error)
 	GetCareerByMemberID(int) ([]map[string]interface{}, error)
-	GetPostsByMemberID(dto.Pagination, int) (*[]dto.NewsPressPostRes, error)
+	GetPostsByMemberID(int, dto.Pagination, int) (*[]dto.NewsPressPostRes, error)
 	GetGrievancesByMemberID(dto.Pagination, int, string) (*[]dto.GrievanceShort, error)
 	GetDevelopmentWelfareByMemberID(dto.Pagination, int) (*[]dto.DevelopmentWelfareShort, error)
 	// GetByID(id uint) (*dto.Member, error)
@@ -36,23 +36,27 @@ type MemberService interface {
 
 type memberService struct {
 	Repository                   repository.MemberRepository
+	StateRepository              repository.StateRepository
 	LeadershipRepository         repository.LeadershipRepository
 	PartyRepository              repository.PartyRepository
 	NewsPressRepository          repository.NewsPressPostRepository
 	GrievanceRepository          repository.GrievanceRepository
 	ReportRepository             repository.ReportRepository
 	DevelopmentWelfareRepository repository.DevelopmentWelfareRepository
+	FeedRepository               repository.FeedRepository
 }
 
 func NewMemberService(repos *repository.Repos) MemberService {
 	return &memberService{
 		Repository:                   repos.Member,
+		StateRepository:              repos.State,
 		LeadershipRepository:         repos.Leadership,
 		PartyRepository:              repos.Party,
 		NewsPressRepository:          repos.NewsPressPost,
 		GrievanceRepository:          repos.Grievance,
 		ReportRepository:             repos.Report,
 		DevelopmentWelfareRepository: repos.DevelopmentWelfare,
+		FeedRepository:               repos.Feed,
 	}
 }
 
@@ -246,20 +250,41 @@ func (s *memberService) ListUnaffiliatedMembers() ([]dto.MemberRes, error) {
 	return result, nil
 }
 
-func (s *memberService) GetPostsByMemberID(pagination dto.Pagination, memberID int) (*[]dto.NewsPressPostRes, error) {
+func (s *memberService) GetPostsByMemberID(userID int, pagination dto.Pagination, memberID int) (*[]dto.NewsPressPostRes, error) {
 	var newsPressPostRes []dto.NewsPressPostRes
 	posts, err := s.NewsPressRepository.GetPostsByMemberID(pagination, memberID)
 	if err != nil {
 		return nil, err
 	}
 	for _, post := range *posts {
-		dtoPost := dto.NewsPressPostRes{NewsPressPost: post}
+		dtoPost := dto.NewsPressPostRes{NewsPressPost: post, Questionnaire: make([]dto.Questionnaire, 0)}
 		memberAndParty, err := s.Repository.GetMemberAndPartyDetails(memberID, int(post.PartyId))
 		if err != nil {
 			return nil, err
 		}
 		if err := utils.MapToStruct(memberAndParty, &dtoPost); err != nil {
 			return nil, err
+		}
+		//Get Questionnairs
+		ques, err := s.ReportRepository.GetQuestionnairesByCategory(string(utils.NEWSPRESS))
+		if err != nil {
+			log.Errorf("No questionnairs found for NewsPress post %v", post.ID)
+		} else {
+			for _, q := range *ques {
+				dtoPost.Questionnaire = append(dtoPost.Questionnaire, dto.Questionnaire{
+					ID:       q.ID,
+					Title:    q.Title,
+					VoteType: &q.VoteType,
+				})
+			}
+		}
+		if userID > 0 {
+			reaction, err := s.FeedRepository.GetReactionByUserIDAndPostID(userID, post.ID)
+			if err != nil {
+
+			} else if reaction != nil {
+				dtoPost.Reaction = utils.Vote(reaction.Reaction)
+			}
 		}
 		newsPressPostRes = append(newsPressPostRes, dtoPost)
 	}
@@ -313,4 +338,43 @@ func (s *memberService) GetDevelopmentWelfareByMemberID(pagination dto.Paginatio
 		DevelopmentWelfareShort = append(DevelopmentWelfareShort, dtoDev)
 	}
 	return &DevelopmentWelfareShort, nil
+}
+
+func (s *memberService) GetMemberInfo(memberID string) (*dto.Member, error) {
+	memId, err := utils.StrToInt(memberID)
+	if err != nil {
+		return nil, err
+	}
+	member, err := s.Repository.GetByID(uint(memId))
+	if err != nil {
+		return nil, err
+	}
+	memberInfo := &dto.Member{Name: member.Name, Photo: member.Photo}
+	leader, err := s.LeadershipRepository.GetByMemberID(member.ID)
+	if err == nil {
+		if leader.Role != "" {
+			memberInfo.Position = leader.Role
+		} else {
+			memberInfo.Position = leader.Position
+		}
+	}
+	if leader != nil {
+		if leader.StateID > 0 {
+			state, err := s.StateRepository.GetByID(int(leader.StateID))
+			if err != nil {
+				log.Errorf("Error while getting state name of member %s", memberID)
+			} else {
+				memberInfo.Position += ", " + state.Name
+			}
+		}
+	}
+	memberParty, err := s.PartyRepository.GetByMemberID(member.ID)
+	if err != nil {
+		log.Errorf("No memberParty found for member %d", member.ID)
+	} else if memberParty != nil {
+		memberInfo.Position = memberParty.Position
+		memberInfo.Party = dto.MemberParty{Name: memberParty.Name, Abbrv: memberParty.Abbrv, Symbol: memberParty.Symbol}
+	}
+
+	return memberInfo, nil
 }

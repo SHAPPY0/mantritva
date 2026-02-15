@@ -4,12 +4,15 @@ import (
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
+	"github.com/shappy0/mantritva/pkg/log"
+	"github.com/shappy0/mantritva/pkg/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type NewsPressService interface {
 	Create(dto.NewsPressReq) (*model.NewsPressPost, error)
 	GetPostsByPartyID(dto.Pagination, int) (*[]dto.NewsPressPostRes, error)
+	GetDetailByID(int, string) (*dto.NewsPressPostRes, error)
 }
 
 type newsPressService struct {
@@ -18,6 +21,8 @@ type newsPressService struct {
 	PartyRepo      repository.PartyRepository
 	LeadershipRepo repository.LeadershipRepository
 	StateRepo      repository.StateRepository
+	EntityRepo     repository.EntityRepository
+	FeedRepo       repository.FeedRepository
 }
 
 func NewNewsPressService(repos *repository.Repos) NewsPressService {
@@ -27,6 +32,8 @@ func NewNewsPressService(repos *repository.Repos) NewsPressService {
 		PartyRepo:      repos.Party,
 		LeadershipRepo: repos.Leadership,
 		StateRepo:      repos.State,
+		EntityRepo:     repos.Entity,
+		FeedRepo:       repos.Feed,
 	}
 }
 
@@ -89,4 +96,58 @@ func (s *newsPressService) GetPostsByPartyID(pagination dto.Pagination, partyID 
 		newsPressPostRes = append(newsPressPostRes, newsPresPost)
 	}
 	return &newsPressPostRes, nil
+}
+
+func (s *newsPressService) GetDetailByID(userID int, id string) (*dto.NewsPressPostRes, error) {
+	postId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+	var result dto.NewsPressPostRes
+	post, err := s.Repository.GetPostByID(postId)
+	if err != nil {
+		return nil, err
+	}
+	if post.MemberId > 0 {
+		memberInfo, err := s.MemberRepo.GetMemberById(post.MemberId)
+		if err != nil {
+			log.Errorf("Error fetching member info by id %d", post.MemberId)
+			return nil, err
+		} else {
+			if err := utils.MapToStruct(memberInfo, &result.Member); err != nil {
+				log.Errorf("Error converting member map to dto.member")
+			}
+			if !utils.IsEmpty(result.Member.Party) {
+				result.Party = dto.Party{
+					Name:   result.Member.Party.Name,
+					Abbrv:  result.Member.Party.Abbrv,
+					Symbol: result.Member.Party.Symbol,
+				}
+			}
+		}
+	}
+	if post.EntityId > 0 {
+		ok, entity, err := s.EntityRepo.GetEntityByID(int(post.EntityId))
+		if err != nil {
+			log.Errorf("Error getting entity by id %d", post.EntityId)
+		}
+		if ok {
+			result.Entity = dto.Entity{
+				Name:         entity.Name,
+				Abbrv:        entity.Abbrv,
+				IsCentral:    entity.IsCentral,
+				StateName:    entity.StateName,
+				DistrictName: entity.DistrictName,
+			}
+		}
+	}
+	if userID > 0 {
+		reaction, _ := s.FeedRepo.GetReactionByUserIDAndPostID(userID, post.ID)
+		if reaction != nil {
+			result.Reaction = utils.Vote(reaction.Reaction)
+		}
+	}
+	result.NewsPressPost = *post
+	return &result, nil
+
 }

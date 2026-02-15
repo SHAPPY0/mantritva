@@ -132,6 +132,11 @@ func (h *MemberHandler) ListUnaffiliatedMembers(c *gin.Context) {
 }
 
 func (h *MemberHandler) GetPostsByMemberID(c *gin.Context) {
+	userID, err := utils.GetKeyInCtx[int](c, "user_id")
+	if err != nil {
+		utils.Error(c, 401, "Unauthorized access", nil)
+		return
+	}
 	memberID := c.Param("memberID")
 	memberIdInt, err := utils.StrToInt(memberID)
 	if err != nil {
@@ -139,7 +144,7 @@ func (h *MemberHandler) GetPostsByMemberID(c *gin.Context) {
 		return
 	}
 	pagination := dto.NewPagination(c)
-	posts, err := h.Service.GetPostsByMemberID(pagination, memberIdInt)
+	posts, err := h.Service.GetPostsByMemberID(userID, pagination, memberIdInt)
 	if err != nil {
 		utils.Error(c, 500, "Failed to fetch news press posts", err)
 		return

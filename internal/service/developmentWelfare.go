@@ -9,6 +9,7 @@ import (
 	"github.com/shappy0/mantritva/internal/repository"
 	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/storage"
+	"github.com/shappy0/mantritva/pkg/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -16,15 +17,18 @@ type DevelopmentWelfareService interface {
 	Create(*gin.Context, dto.DevelopmentWelfareReq) (*model.DevelopmentWelfare, error)
 	List() ([]model.DevelopmentWelfare, error)
 	GetByID(id string) (*model.DevelopmentWelfare, error)
+	GetDetailByID(string) (*dto.DevelopmentWelfareDetail, error)
 }
 
 type developmentWelfareService struct {
-	Repository repository.DevelopmentWelfareRepository
+	Repository       repository.DevelopmentWelfareRepository
+	MemberRepository repository.MemberRepository
 }
 
 func NewDevelopmentWelfareService(repos *repository.Repos) DevelopmentWelfareService {
 	return &developmentWelfareService{
-		Repository: repos.DevelopmentWelfare,
+		Repository:       repos.DevelopmentWelfare,
+		MemberRepository: repos.Member,
 	}
 }
 
@@ -109,4 +113,30 @@ func (s *developmentWelfareService) GetByID(id string) (*model.DevelopmentWelfar
 		return nil, err
 	}
 	return resp, nil
+}
+
+func (s *developmentWelfareService) GetDetailByID(id string) (*dto.DevelopmentWelfareDetail, error) {
+	idd, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := s.Repository.GetPostByID(idd)
+	if err != nil {
+		log.Errorf("Error fetching development welfare by id: %v", err)
+		return nil, err
+	}
+	result := dto.DevelopmentWelfareDetail{
+		DevelopmentWelfare: *resp,
+	}
+	var memberDto dto.Member
+	memberInfo, err := s.MemberRepository.GetMemberById(resp.MemberID)
+	if err != nil {
+		log.Errorf("Error fetching member info by id %d", resp.MemberID)
+	} else {
+		if err := utils.MapToStruct(memberInfo, &memberDto); err != nil {
+			log.Errorf("Error Converting member map to dto.member")
+		}
+	}
+	result.Member = memberDto
+	return &result, nil
 }

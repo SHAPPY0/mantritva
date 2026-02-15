@@ -4,6 +4,7 @@ import (
 	"mime/multipart"
 	"time"
 
+	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/pkg/utils"
 )
 
@@ -51,4 +52,9 @@ type DevelopmentWelfareShort struct {
 	DownvoteCount    uint                    `json:"downvote_count"`
 	Questionnaire    *[]Questionnaire        `json:"questionnaire,omitempty"`
 	CreatedAt        time.Time               `json:"created_at"`
+}
+
+type DevelopmentWelfareDetail struct {
+	model.DevelopmentWelfare
+	Member Member `json:"member,omitempty"`
 }

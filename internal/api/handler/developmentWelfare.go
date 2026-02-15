@@ -98,3 +98,17 @@ func (h *DevelopmentWelfareHandler) GetByID(c *gin.Context) {
 	}
 	utils.Success(c, "", resp)
 }
+
+func (h *DevelopmentWelfareHandler) GetDetailByID(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		utils.Error(c, 500, "Invalid Development Welfare ID", nil)
+		return
+	}
+	resp, err := h.Service.GetDetailByID(id)
+	if err != nil {
+		utils.Error(c, 500, "Failed to get development welfare by id", err)
+		return
+	}
+	utils.Success(c, "", resp)
+}

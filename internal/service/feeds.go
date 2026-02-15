@@ -261,49 +261,23 @@ func (s *feedService) GetNewsPressFeed(userID int, postID primitive.ObjectID) (d
 		DownvoteCount: np.DownvoteCount,
 		CreatedAt:     np.CreatedAt,
 	}
-	fetchPartyInfo := true
-
 	if np.MemberId > 0 {
-		member, err := s.MemberRepository.GetByID(np.MemberId)
+		memberInfo, err := s.MemberRepository.GetMemberById(np.MemberId)
 		if err != nil {
+			log.Errorf("Error fetching member info by id %d", np.MemberId)
 			return newsPressPostRes, err
-		}
-
-		newsPressPostRes.Member = dto.Member{Name: member.Name, Photo: member.Photo}
-
-		leader, err := s.LeadershipRepository.GetByMemberID(member.ID)
-		if err == nil {
-			if leader.Role != "" {
-				newsPressPostRes.Member.Position = leader.Role
-			} else {
-				position := leader.Position
-				newsPressPostRes.Member.Position = position
-
+		} else {
+			if err := utils.MapToStruct(memberInfo, &newsPressPostRes.Member); err != nil {
+				log.Errorf("Error converting member map to dto.member")
+			}
+			if !utils.IsEmpty(newsPressPostRes.Member.Party) {
+				newsPressPostRes.Party = dto.Party{
+					Name:   newsPressPostRes.Member.Party.Name,
+					Abbrv:  newsPressPostRes.Member.Party.Abbrv,
+					Symbol: newsPressPostRes.Member.Party.Symbol,
+				}
 			}
 		}
-		if leader != nil && leader.StateID > 0 {
-			state, err := s.StateRepository.GetByID(int(leader.StateID))
-			if err == nil {
-				newsPressPostRes.Member.Position += ", " + state.Name
-			}
-		}
-		if leader == nil {
-			memberParty, err := s.PartyRepository.GetByMemberID(member.ID)
-			if err != nil {
-				log.Errorf("No memberParty found for member %d", member.ID)
-			} else if memberParty != nil {
-				newsPressPostRes.Member.Position = memberParty.Position
-				newsPressPostRes.Party = dto.Party{Name: memberParty.Name, Abbrv: memberParty.Abbrv, Symbol: memberParty.Symbol}
-				fetchPartyInfo = false
-			}
-		}
-	}
-	if fetchPartyInfo && np.PartyId > 0 {
-		party, err := s.PartyRepository.GetByID(int(np.PartyId))
-		if err != nil {
-			return newsPressPostRes, err
-		}
-		newsPressPostRes.Party = dto.Party{Name: party.Name, Abbrv: party.Abbrv, Symbol: party.Symbol}
 	}
 	if np.EntityId > 0 {
 		ok, entity, err := s.EntityRepository.GetEntityByID(int(np.EntityId))

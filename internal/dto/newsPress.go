@@ -23,10 +23,11 @@ type NewsPressReq struct {
 
 type NewsPressPostRes struct {
 	model.NewsPressPost
-	Member   Member     `json:"member,omitempty"`
-	Entity   Entity     `json:"entity,omitempty"`
-	Party    Party      `json:"party,omitempty"`
-	Reaction utils.Vote `json:"reaction"`
+	Member        Member          `json:"member,omitempty"`
+	Entity        Entity          `json:"entity,omitempty"`
+	Party         Party           `json:"party,omitempty"`
+	Reaction      utils.Vote      `json:"reaction"`
+	Questionnaire []Questionnaire `json:"questionnaire,omitempty"`
 }
 
 type NewsPressShort struct {

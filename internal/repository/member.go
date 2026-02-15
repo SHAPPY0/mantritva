@@ -141,25 +141,41 @@ func (r *memberRepository) GetMemberById(memberID uint) (map[string]interface{},
 	var member map[string]interface{}
 	query := `
 		SELECT
-			m.name,
+			m.name,	
 			m.photo,
-			pm."position",
+			CASE
+				WHEN s.name IS NOT NULL THEN 
+					COALESCE(l.position, l.role, pm."position") || ' , ' || s.name
+				ELSE 
+					COALESCE(l.position, l.role, pm."position")
+			END AS position,
 			json_build_object(
 				'name', p.name,
 				'abbrv', p.abbrv,
 				'symbol', p.symbol,
-				'position', case when l.role is not null then l.role else l.position || case when s.name is not null then ', ' || s.name || '' else '' end end
+				'joining_date', pm.joining_date,
+				'exit_date', pm.exit_date
 			) AS party
-		FROM members m
-		INNER JOIN party_members pm ON
-			pm.member_id = m.id
-		INNER JOIN parties p ON
-			p.id = pm.party_id
-		INNER JOIN leaderships l ON
-			l.member_id = m.id and l.is_active = true and l.term_start < now() and l.term_end is null
-		LEFT JOIN states s ON
+		FROM
+			members m
+		LEFT JOIN leaderships l ON
+			l.member_id = m.id
+			and l.term_start < now()
+			and l.term_end is null
+			and l.is_active = true
+		left join states s on
 			s.id = l.state_id
-		WHERE m.id = ? AND pm.exit_date IS NULL
+			and l.state_id is not null
+		left join party_members pm on
+			pm.member_id = m.id
+			and pm.joining_date < now()
+			and pm.exit_date is null
+			and pm.is_deleted = false
+		left join parties p on
+			p.id = pm.party_id
+			and p.is_deleted = false
+		where
+			m.id = ?
 	`
 	if err := r.DB.Raw(query, memberID).Scan(&member).Error; err != nil {
 		return nil, err
