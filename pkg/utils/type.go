@@ -116,7 +116,7 @@ const (
 const (
 	KSA_DEVELOPMENTS KSA = "developments"
 	KSA_GRIEVANCES   KSA = "grievances"
-	KSA_FIRS         KSA = "FIRs"
+	KSA_CALRECORDS   KSA = "cal_records"
 	KSA_NEWSPRESSES  KSA = "news_and_presses"
 )
 

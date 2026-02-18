@@ -27,6 +27,7 @@ func GetConfig() *viper.Viper {
 func bindEnvVariables(env *viper.Viper) {
 	env.BindEnv("FILE_BASE_PATH", "FILEBASEPATH")
 	env.BindEnv("SERVICE_HOST", "SERVICEHOST")
+	env.BindEnv("JWT_SECRET", "JWT_SECRET")
 
 	//Bind Postgres env variables
 	env.BindEnv("DB_HOST", "DBHOST")

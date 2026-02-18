@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/service"
+	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/utils"
 )
 
@@ -55,15 +56,16 @@ func (h *UserHandler) LoginUser(c *gin.Context) {
 	}
 
 	user.Password = ""
-	token, err := utils.CreateJWTToken(map[string]interface{}{
-		"name":      user.Name,
-		"user_id":   user.ID,
-		"email":     user.Email,
-		"role":      user.Role,
-		"user_name": user.UserID,
+	token, err := utils.CreateToken(utils.UserClaims{
+		Name:     user.Name,
+		UserName: user.UserID,
+		UserID:   user.ID,
+		Email:    user.Email,
+		Role:     user.Role,
 	})
 	if err != nil {
-		utils.Error(c, 500, "Failed to generate token", err)
+		log.Errorf("Error while creating token %v", err)
+		utils.Error(c, 500, "Failed to login, Please try again.", err)
 		return
 	}
 

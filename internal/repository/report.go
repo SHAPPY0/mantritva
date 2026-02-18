@@ -67,7 +67,7 @@ func (r *reportRepository) GetMemberScore(memberID uint, year string) (*model.Me
 			Developments: model.DevelopmentReport{Weight: 40},
 			Grievances:   model.GrievanceReport{Weight: 30},
 			NewsPresses:  model.NewsPressReport{Weight: 15},
-			FIRs:         model.FIRReport{Weight: 15},
+			CALRecords:   model.CALRecordsReport{Weight: 15},
 		}
 	}
 	return &result, nil

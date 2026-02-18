@@ -51,8 +51,8 @@ func (s *reportService) GenerateReport(memberID int) (*model.MemberReport, error
 			ksaWeights.Developments = ksa.Weight
 		} else if ksa.KSAName == string(utils.KSA_GRIEVANCES) {
 			ksaWeights.Grievances = ksa.Weight
-		} else if ksa.KSAName == string(utils.KSA_FIRS) {
-			ksaWeights.FIRs = ksa.Weight
+		} else if ksa.KSAName == string(utils.KSA_CALRECORDS) {
+			ksaWeights.CALRecords = ksa.Weight
 		} else if ksa.KSAName == string(utils.KSA_NEWSPRESSES) {
 			ksaWeights.NewsPresses = ksa.Weight
 		}

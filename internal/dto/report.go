@@ -8,7 +8,7 @@ import (
 type KSAWeights struct {
 	Developments uint
 	Grievances   uint
-	FIRs         uint
+	CALRecords   uint
 	NewsPresses  uint
 }
 

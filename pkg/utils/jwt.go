@@ -3,48 +3,82 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	// "github.com/shappy0/mantritva/pkg/config"
+	"github.com/golang-jwt/jwt/v5"
 )
 
-func CreateJWTToken(data map[string]interface{}) (string, error) {
-	atClaims := jwt.MapClaims{}
-	atClaims["authorized"] = true
-	for k, v := range data {
-		atClaims[k] = v
+var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
+var issuerName = "mantritva"
+
+type UserClaims struct {
+	Name     string `json:"name"`
+	UserID   uint   `json:"user_id"`
+	UserName string `json:"user_name"`
+	Email    string `json:"email"`
+	Role     string `json:"role"`
+	jwt.RegisteredClaims
+}
+
+func CreateToken(claims UserClaims) (string, error) {
+	if claims.UserID == 0 || claims.Name == "" || claims.UserName == "" || claims.Role == "" {
+		return "", fmt.Errorf("Invalid userClaims to create token")
 	}
-	atClaims["exp"] = time.Now().Add(time.Minute * 60 * 24 * 15).Unix()
-	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
-	// token, err := at.SignedString([]byte(config.GetConfig().GetString("JWT_SECRET")))
-	token, err := at.SignedString([]byte("asdasdasdasde234234234"))
+
+	claims.RegisteredClaims = jwt.RegisteredClaims{
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add((7 * 24) * time.Hour)),
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
+		NotBefore: jwt.NewNumericDate(time.Now()),
+		Issuer:    issuerName,
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	signedToken, err := token.SignedString(jwtSecret)
 	if err != nil {
 		return "", err
 	}
-	return token, nil
+
+	return signedToken, nil
 }
 
 func VerifyToken(ctx *gin.Context, bearerToken string) error {
-	if bearerToken != "" && len(strings.Split(bearerToken, " ")) == 2 {
-		tokenStr := strings.Split(bearerToken, " ")[1]
-		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-			}
-			return []byte("asdasdasdasde234234234"), nil
-		})
-		if err != nil || !token.Valid {
-			return fmt.Errorf("Invalid Token")
-		}
-		if claims, ok := token.Claims.(jwt.MapClaims); ok {
-			ctx.Set("jwtClaims", claims)
-		}
-		return nil
+	if bearerToken == "" {
+		return fmt.Errorf("Missing Authorization Header")
 	}
-	return fmt.Errorf("Missing or Invalid Authorization header")
+	parts := strings.Split(bearerToken, " ")
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		return fmt.Errorf("Invalid Authorization Token")
+	}
+	tokenStr := parts[1]
+	claims := &UserClaims{}
+	token, err := jwt.ParseWithClaims(
+		tokenStr,
+		claims,
+		func(token *jwt.Token) (interface{}, error) {
+			// Enforce HMAC signing method
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Unexpected Signing Method: %v", token.Header["alg"])
+			}
+			return jwtSecret, nil
+		},
+		jwt.WithIssuer(issuerName),    // optional strict issuer validation
+		jwt.WithLeeway(5*time.Second), // small clock skew tolerance
+	)
+	if err != nil {
+		return err
+	}
+	if !token.Valid {
+		return fmt.Errorf("Invalid Token")
+	}
+
+	// Store claims in Gin context
+	ctx.Set("jwtClaims", claims)
+
+	return nil
 }
 
 func setUserFromBearer(ctx *gin.Context, bearerToken string) error {
@@ -59,11 +93,7 @@ func setUserFromBearer(ctx *gin.Context, bearerToken string) error {
 		return err
 	}
 	if jwtClaim != nil {
-		claim, err := GetUserClaim(jwtClaim)
-		if err != nil {
-			return err
-		}
-		ctx.Set("user", claim)
+		ctx.Set("user", jwtClaim)
 	}
 	return nil
 
@@ -100,16 +130,16 @@ func AuthRequired(required bool) gin.HandlerFunc {
 	}
 }
 
-func GetJWTClaim(ctx *gin.Context) (jwt.MapClaims, error) {
+func GetJWTClaim(ctx *gin.Context) (*UserClaims, error) {
 	claims, exist := ctx.Get("jwtClaims")
 	if !exist {
-		Error(ctx, 401, "Unauthorized", nil)
-		return nil, fmt.Errorf("Unauthorized")
+		Error(ctx, 401, "Unauthorized User", nil)
+		return nil, fmt.Errorf("Unauthorized User")
 	}
-	return claims.(jwt.MapClaims), nil
+	return claims.(*UserClaims), nil
 }
 
-func GetUserClaim(claims jwt.MapClaims) (map[string]any, error) {
+func GetUserClaim(claims *UserClaims) (map[string]any, error) {
 	var user map[string]any
 	bytes, err := json.Marshal(claims)
 	if err != nil {
@@ -131,12 +161,17 @@ func GetKeyInCtx[T any](ctx *gin.Context, key string) (T, error) {
 	user, exist := ctx.Get("user")
 	if !exist {
 		var zero T
-		return zero, fmt.Errorf("no user found in ctx")
+		return zero, fmt.Errorf("No user found in ctx")
 	}
-	val, ok := user.(map[string]interface{})[key]
+	claim, err := StructToMap(user.(*UserClaims))
+	if err != nil {
+		var zero T
+		return zero, fmt.Errorf("No user data found in ctx")
+	}
+	val, ok := claim[key]
 	if !ok {
 		var zero T
-		return zero, fmt.Errorf("key not exist in ctx")
+		return zero, fmt.Errorf("Key not exist in ctx")
 	}
 
 	// Special case: convert float64 to int if needed
@@ -154,4 +189,16 @@ func GetKeyInCtx[T any](ctx *gin.Context, key string) (T, error) {
 		return zero, fmt.Errorf("value for key '%s' is not of type %T", key, zero)
 	}
 	return typedVal, nil
+}
+
+func StructToMap(v interface{}) (map[string]interface{}, error) {
+	var result map[string]interface{}
+
+	bytes, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(bytes, &result)
+	return result, err
 }

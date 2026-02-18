@@ -33,7 +33,7 @@ type MemberReport struct {
 	Developments    DevelopmentReport  `json:"developments" bson:"developments"`
 	Grievances      GrievanceReport    `json:"grievances" bson:"grievances"`
 	NewsPresses     NewsPressReport    `json:"news_presses" bson:"news_presses"`
-	FIRs            FIRReport          `json:"firs" bson:"firs"`
+	CALRecords      CALRecordsReport   `json:"cal_records" bson:"cal_records"`
 	AuditFieldsBSON `bson:",inline"`
 }
 
@@ -41,7 +41,7 @@ type MemberReportKSA struct {
 	Developments DevelopmentReport `json:"developments" bson:"developments"`
 	Grievances   GrievanceReport   `json:"grievances" bson:"grievances"`
 	NewsPresses  NewsPressReport   `json:"news_presses" bson:"news_presses"`
-	FIRs         FIRReport         `json:"firs" bson:"firs"`
+	CALRecords   CALRecordsReport  `json:"cal_records" bson:"cal_records"`
 }
 
 type DevelopmentReport struct {
@@ -65,9 +65,9 @@ type NewsPressReport struct {
 	NewsPresses []string `json:"news_presses" bson:"news_presses"`
 }
 
-type FIRReport struct {
-	Score  uint     `json:"score" bson:"score"`
-	Weight uint     `json:"weight" bson:"weight"`
-	Total  uint     `json:"total" bson:"total"`
-	FIRs   []string `json:"firs" bson:"firs"`
+type CALRecordsReport struct {
+	Score      uint     `json:"score" bson:"score"`
+	Weight     uint     `json:"weight" bson:"weight"`
+	Total      uint     `json:"total" bson:"total"`
+	CALRecords []string `json:"cal_records" bson:"cal_records"`
 }
