@@ -5,6 +5,7 @@ import (
 	"github.com/shappy0/mantritva/internal/api/handler"
 	"github.com/shappy0/mantritva/internal/repository"
 	"github.com/shappy0/mantritva/internal/service"
+	"github.com/shappy0/mantritva/pkg/utils"
 )
 
 func userRouter(rg *gin.RouterGroup, repos *repository.Repos) *gin.RouterGroup {
@@ -15,6 +16,7 @@ func userRouter(rg *gin.RouterGroup, repos *repository.Repos) *gin.RouterGroup {
 	{
 		user.POST("/register", handler.CreateUser)
 		user.POST("/login", handler.LoginUser)
+		user.GET("/profile", utils.AuthRequired(true), handler.GetProfile)
 	}
 
 	return rg

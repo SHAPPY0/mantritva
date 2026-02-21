@@ -20,6 +20,7 @@ type GrievanceSerivce interface {
 	Create(*gin.Context, dto.Grievance) (*model.Grievance, error)
 	ListByUser(string) ([]model.Grievance, error)
 	GetByGrievanceID(string) (*dto.GrievanceRes, error)
+	GetByStateID(int) ([]*dto.GrievanceShort, error)
 }
 
 type grievanceSerivce struct {
@@ -194,4 +195,27 @@ func (s *grievanceSerivce) GetByGrievanceID(grievanceID string) (*dto.GrievanceR
 	}
 
 	return &grievanceRes, nil
+}
+
+func (s *grievanceSerivce) GetByStateID(stateID int) ([]*dto.GrievanceShort, error) {
+	grievancesList := make([]*dto.GrievanceShort, 0)
+	grievances, err := s.Repository.GetByStateID(stateID)
+	if err != nil {
+		return nil, err
+	}
+	for _, g := range *grievances {
+		grievancesList = append(grievancesList, &dto.GrievanceShort{
+			GrievanceID:    g.GrievanceID,
+			Type:           g.Type,
+			SubType:        g.SubType,
+			Level:          g.Level,
+			Title:          g.Title,
+			DateOfIncident: utils.DateOnly{Time: &g.DateOfIncident},
+			Location:       g.Location,
+			Impact:         g.Impact,
+			FinalStatus:    g.FinalStatus,
+			CreatedAt:      g.CreatedAt,
+		})
+	}
+	return grievancesList, nil
 }

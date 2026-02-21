@@ -19,7 +19,8 @@ type GrievanceRepository interface {
 	ConsoleGetGrievancesList() ([]model.Grievance, error)
 	ConsoleGetGrievanceByID(string) (*model.Grievance, error)
 	ConsoleUpdateGrievanceStatus(string, dto.GrievanceStatus) error
-	GetGrievancesByMemberID(dto.Pagination, int, string) (*[]model.Grievance, error)
+	GetByMemberID(dto.Pagination, int, string) (*[]model.Grievance, error)
+	GetByStateID(int) (*[]model.Grievance, error)
 }
 
 type grievanceRepository struct {
@@ -127,7 +128,7 @@ func (r *grievanceRepository) ConsoleUpdateGrievanceStatus(grievanceID string, s
 	return nil
 }
 
-func (r *grievanceRepository) GetGrievancesByMemberID(pagination dto.Pagination, memberID int, position string) (*[]model.Grievance, error) {
+func (r *grievanceRepository) GetByMemberID(pagination dto.Pagination, memberID int, position string) (*[]model.Grievance, error) {
 	skip := (pagination.Offset - 1) * pagination.Offset
 	limit := pagination.Limit
 	filter := map[string]interface{}{
@@ -156,6 +157,23 @@ func (r *grievanceRepository) GetGrievancesByMemberID(pagination dto.Pagination,
 		SetLimit(int64(limit))
 
 	var grievances []model.Grievance
+	err := r.DB.FindMany(r.DB.GrievanceCollection, filter, opts, &grievances)
+	if err != nil {
+		return nil, err
+	}
+	return &grievances, nil
+}
+
+func (r *grievanceRepository) GetByStateID(stateID int) (*[]model.Grievance, error) {
+	filter := map[string]interface{}{
+		"state_id": stateID,
+		"final_status": bson.M{
+			"$ne": utils.UNDERREVIEW,
+		},
+		"is_deleted": false,
+	}
+	opts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
+	grievances := make([]model.Grievance, 0)
 	err := r.DB.FindMany(r.DB.GrievanceCollection, filter, opts, &grievances)
 	if err != nil {
 		return nil, err

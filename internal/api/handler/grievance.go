@@ -88,3 +88,23 @@ func (h *GrievanceHandler) GetByGrievanceID(c *gin.Context) {
 	}
 	utils.Success(c, "Grievance fetched successfully", resp)
 }
+
+func (h *GrievanceHandler) GetByStateID(c *gin.Context) {
+	stateID := c.Param("stateID")
+	if stateID == "" {
+		utils.Error(c, 400, "StateID is required", nil)
+		return
+	}
+
+	stateIDx, err := utils.StrToInt(stateID)
+	if err != nil {
+		utils.Error(c, 400, "Invalid stateID", nil)
+		return
+	}
+	resp, err := h.Service.GetByStateID(stateIDx)
+	if err != nil {
+		utils.Error(c, 500, "Failed to fetch grievances by stateID", err)
+		return
+	}
+	utils.Success(c, "", resp)
+}

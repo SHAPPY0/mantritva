@@ -293,7 +293,7 @@ func (s *memberService) GetPostsByMemberID(userID int, pagination dto.Pagination
 
 func (s *memberService) GetGrievancesByMemberID(pagination dto.Pagination, memberID int, position string) (*[]dto.GrievanceShort, error) {
 	var grievancesRes []dto.GrievanceShort
-	grievances, err := s.GrievanceRepository.GetGrievancesByMemberID(pagination, memberID, position)
+	grievances, err := s.GrievanceRepository.GetByMemberID(pagination, memberID, position)
 	if err != nil {
 		return nil, err
 	}

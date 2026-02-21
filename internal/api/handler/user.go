@@ -74,3 +74,17 @@ func (h *UserHandler) LoginUser(c *gin.Context) {
 		"token": token,
 	})
 }
+
+func (h *UserHandler) GetProfile(c *gin.Context) {
+	username, err := utils.GetKeyInCtx[string](c, "user_name")
+	if err != nil {
+		utils.Error(c, 401, "No valid detail found", nil)
+		return
+	}
+	user, err := h.Service.GetByUserID(username)
+	if err != nil {
+		utils.Error(c, 500, "Failed to get user profile", err)
+		return
+	}
+	utils.Success(c, "", user)
+}

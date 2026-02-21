@@ -105,7 +105,7 @@ func (s *reportService) CalculateGrievanceScore(weight uint, memberID int) (*mod
 	}
 	stillOpen := 0
 	pagination := dto.Pagination{Offset: 0, Limit: 500}
-	grievances, err := s.GrievanceRepo.GetGrievancesByMemberID(pagination, memberID, "")
+	grievances, err := s.GrievanceRepo.GetByMemberID(pagination, memberID, "")
 	if err != nil {
 		return nil, err
 	}
