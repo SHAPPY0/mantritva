@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/service"
 	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/utils"
@@ -42,4 +43,25 @@ func (h *CommonHandler) ServeStatic(c *gin.Context) {
 		return
 	}
 	c.Data(http.StatusOK, contentType, *fileData)
+}
+
+func (h *CommonHandler) CreateEnquiry(c *gin.Context) {
+	form, err := c.MultipartForm()
+	if err != nil {
+		utils.Error(c, 400, "Invalid form data", err)
+		return
+	}
+	var req dto.Enquiry
+	if err := c.ShouldBind(&req); err != nil {
+		utils.Error(c, 400, "Invalid request data", err)
+		return
+	}
+	files, _ := form.File["files"]
+
+	ok, err := h.Service.CreateEnquiry(c, req, files)
+	if err != nil {
+		utils.Error(c, 500, "Internal Server Error", err)
+		return
+	}
+	utils.Success(c, "", ok)
 }

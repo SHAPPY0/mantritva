@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/api/handler"
 	"github.com/shappy0/mantritva/internal/service"
-	"github.com/shappy0/mantritva/pkg/utils"
+	"github.com/shappy0/mantritva/pkg/auth"
 )
 
 func newsPressRouter(rg *gin.RouterGroup, services *service.Services) *gin.RouterGroup {
@@ -15,7 +15,7 @@ func newsPressRouter(rg *gin.RouterGroup, services *service.Services) *gin.Route
 		// npStatement.GET("/", handler.ListState)
 		npStatement.POST("/", handler.CreateNewsPress)
 		npStatement.GET("/party/:partyID", handler.GetPostsByPartyID)
-		npStatement.GET("/:id/detail", utils.AuthRequired(false), handler.GetDetailByID)
+		npStatement.GET("/:id/detail", auth.AuthRequired(false), handler.GetDetailByID)
 	}
 	return npStatement
 }

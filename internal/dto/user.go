@@ -1,6 +1,10 @@
 package dto
 
-import "github.com/shappy0/mantritva/pkg/utils"
+import (
+	"time"
+
+	"github.com/shappy0/mantritva/pkg/utils"
+)
 
 type UserReq struct {
 	Name     string `json:"name" binding:"required"`
@@ -21,4 +25,15 @@ type UserClaim struct {
 	UserID string         `json:"user_id"`
 	Email  string         `json:"email"`
 	Role   utils.UserRole `json:"role"`
+}
+
+type UpdateUserReq struct {
+	ID        int `json:"id"`
+	Name      string
+	Email     string
+	Mobile    string
+	Password  string
+	Role      utils.UserRole
+	UpdatedAt time.Time
+	UpdatedBy string
 }

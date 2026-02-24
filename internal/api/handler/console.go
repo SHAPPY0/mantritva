@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/service"
+	"github.com/shappy0/mantritva/pkg/auth"
 	"github.com/shappy0/mantritva/pkg/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -86,7 +87,7 @@ func (h *ConsoleHandler) GetMemberByID(c *gin.Context) {
 }
 
 func (h *ConsoleHandler) UpdateMemberByID(c *gin.Context) {
-	updatedBy, err := utils.GetKeyInCtx[string](c, "name")
+	updatedBy, err := auth.GetKeyInCtx[string](c, "name")
 	if err != nil {
 		utils.Error(c, 401, "Unauthorized Access", nil)
 		return
@@ -195,7 +196,7 @@ func (h *ConsoleHandler) GetNewsPressPostByID(c *gin.Context) {
 }
 
 func (h *ConsoleHandler) UpdateNewsPressPost(c *gin.Context) {
-	updatedBy, err := utils.GetKeyInCtx[string](c, "name")
+	updatedBy, err := auth.GetKeyInCtx[string](c, "name")
 	if err != nil {
 		utils.Error(c, 401, "Unauthorized Access", nil)
 		return
@@ -311,4 +312,28 @@ func (h *ConsoleHandler) ExitLeadership(c *gin.Context) {
 		return
 	}
 	utils.Success(c, "Leadership exited successfully", resp)
+}
+
+func (h *ConsoleHandler) UpdateRole(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
+	var req dto.UpdateUserReq
+	if err := c.BindJSON(&req); err != nil {
+		utils.Error(c, 400, "Invalid request data", err)
+		return
+	}
+	req.UpdatedAt = time.Now()
+	req.UpdatedBy = authUser.UserName
+	ok, err := h.Service.UpdateRole(req)
+	if err != nil || !ok {
+		utils.Error(c, 500, "Failed to update user role", err)
+		return
+	}
+	if ok {
+		utils.Success(c, "Role updated successfully", nil)
+	}
+
 }

@@ -5,7 +5,7 @@ import (
 	"github.com/shappy0/mantritva/internal/api/handler"
 	"github.com/shappy0/mantritva/internal/repository"
 	"github.com/shappy0/mantritva/internal/service"
-	"github.com/shappy0/mantritva/pkg/utils"
+	"github.com/shappy0/mantritva/pkg/auth"
 )
 
 func memberRouter(rg *gin.RouterGroup, repos *repository.Repos) *gin.RouterGroup {
@@ -19,7 +19,7 @@ func memberRouter(rg *gin.RouterGroup, repos *repository.Repos) *gin.RouterGroup
 		member.POST("/bulkUpload", handler.BulkMemberUpload)
 		member.GET("/:name", handler.GetMemberByName)
 		member.GET("/id/:memberID/career", handler.GetMemberCareer)
-		member.GET("/id/:memberID/news-press", utils.AuthRequired(false), handler.GetPostsByMemberID)
+		member.GET("/id/:memberID/news-press", auth.AuthRequired(false), handler.GetPostsByMemberID)
 		member.GET("/id/:memberID/grievances", handler.GetGrievancesByMemberID)
 		member.GET("/id/:memberID/development-welfare", handler.GetDevelopmentWelfareByMemberID)
 		member.GET("/unaffiliated", handler.ListUnaffiliatedMembers)

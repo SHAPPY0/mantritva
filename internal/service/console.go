@@ -33,6 +33,7 @@ type ConsoleService interface {
 	GrievanceUpdateStatus(string, dto.GrievanceStatus) (bool, error)
 	ExitLeadership(dto.LeadershipExitReq) (bool, error)
 	UpdateMemberByID(*gin.Context, uint, map[string]interface{}, *multipart.FileHeader) (bool, error)
+	UpdateRole(dto.UpdateUserReq) (bool, error)
 }
 
 type consoleService struct {
@@ -418,4 +419,12 @@ func (s *consoleService) ExitLeadership(req dto.LeadershipExitReq) (bool, error)
 		return false, err
 	}
 	return true, nil
+}
+
+func (s *consoleService) UpdateRole(user dto.UpdateUserReq) (bool, error) {
+	ok, err := s.UserRepository.UpdateRole(user)
+	if err != nil {
+		return false, err
+	}
+	return ok, nil
 }

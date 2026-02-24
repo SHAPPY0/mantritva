@@ -1,4 +1,4 @@
-package utils
+package auth
 
 import (
 	"encoding/json"
@@ -9,17 +9,19 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/shappy0/mantritva/pkg/utils"
 )
 
 var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 var issuerName = "mantritva"
 
 type UserClaims struct {
-	Name     string `json:"name"`
-	UserID   uint   `json:"user_id"`
-	UserName string `json:"user_name"`
-	Email    string `json:"email"`
-	Role     string `json:"role"`
+	Name         string `json:"name"`
+	UserID       uint   `json:"user_id"`
+	UserName     string `json:"user_name"`
+	Email        string `json:"email"`
+	Role         string `json:"role"`
+	TokenVersion int    `json:"token_version"`
 	jwt.RegisteredClaims
 }
 
@@ -59,14 +61,13 @@ func VerifyToken(ctx *gin.Context, bearerToken string) error {
 		tokenStr,
 		claims,
 		func(token *jwt.Token) (interface{}, error) {
-			// Enforce HMAC signing method
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("Unexpected Signing Method: %v", token.Header["alg"])
 			}
 			return jwtSecret, nil
 		},
-		jwt.WithIssuer(issuerName),    // optional strict issuer validation
-		jwt.WithLeeway(5*time.Second), // small clock skew tolerance
+		jwt.WithIssuer(issuerName),
+		jwt.WithLeeway(5*time.Second),
 	)
 	if err != nil {
 		return err
@@ -74,7 +75,6 @@ func VerifyToken(ctx *gin.Context, bearerToken string) error {
 	if !token.Valid {
 		return fmt.Errorf("Invalid Token")
 	}
-
 	// Store claims in Gin context
 	ctx.Set("jwtClaims", claims)
 
@@ -110,7 +110,7 @@ func AuthRequired(required bool) gin.HandlerFunc {
 			}
 			if bearerToken != "Bearer null" && strings.HasPrefix(bearerToken, "Bearer ") {
 				if err := setUserFromBearer(ctx, bearerToken); err != nil {
-					Error(ctx, 401, err.Error(), nil)
+					utils.Error(ctx, 401, err.Error(), nil)
 					ctx.Abort()
 					return
 				}
@@ -121,7 +121,7 @@ func AuthRequired(required bool) gin.HandlerFunc {
 
 		if bearerToken != "Bearer null" && strings.HasPrefix(bearerToken, "Bearer ") {
 			if err := setUserFromBearer(ctx, bearerToken); err != nil {
-				Error(ctx, 401, err.Error(), nil)
+				utils.Error(ctx, 401, err.Error(), nil)
 				ctx.Abort()
 				return
 			}
@@ -130,10 +130,33 @@ func AuthRequired(required bool) gin.HandlerFunc {
 	}
 }
 
+func ValidateVersion(validator TokenVersionValidator) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		claim, err := GetJWTClaim(ctx)
+		if err != nil {
+			utils.Error(ctx, 401, err.Error(), nil)
+			ctx.Abort()
+			return
+		}
+		valid, err := validator.ValidateTokenVersion(int(claim.UserID), claim.TokenVersion)
+		if err != nil {
+			utils.Error(ctx, 401, "Internal server error", nil)
+			ctx.Abort()
+			return
+		}
+		if !valid {
+			utils.Error(ctx, 401, "Token expired, Please login again", nil)
+			ctx.Abort()
+			return
+		}
+		ctx.Next()
+	}
+}
+
 func GetJWTClaim(ctx *gin.Context) (*UserClaims, error) {
 	claims, exist := ctx.Get("jwtClaims")
 	if !exist {
-		Error(ctx, 401, "Unauthorized User", nil)
+		utils.Error(ctx, 401, "Unauthorized User", nil)
 		return nil, fmt.Errorf("Unauthorized User")
 	}
 	return claims.(*UserClaims), nil

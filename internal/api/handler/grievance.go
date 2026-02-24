@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/service"
+	"github.com/shappy0/mantritva/pkg/auth"
 	"github.com/shappy0/mantritva/pkg/utils"
 )
 
@@ -20,7 +21,7 @@ func NewGrievanceHandler(services *service.Services) *GrievanceHandler {
 }
 
 func (h *GrievanceHandler) Create(c *gin.Context) {
-	userID, err := utils.GetKeyInCtx[int](c, "user_id")
+	userID, err := auth.GetKeyInCtx[int](c, "user_id")
 	if err != nil {
 		utils.Error(c, 401, "Unauthorized Access", nil)
 		return
@@ -60,7 +61,7 @@ func (h *GrievanceHandler) Create(c *gin.Context) {
 }
 
 func (h *GrievanceHandler) ListByUser(c *gin.Context) {
-	userID, err := utils.GetKeyInCtx[int](c, "user_id")
+	userID, err := auth.GetKeyInCtx[int](c, "user_id")
 	if err != nil {
 		utils.Error(c, 401, "Unauthorized access", nil)
 		return

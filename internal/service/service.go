@@ -3,6 +3,7 @@ package service
 import "github.com/shappy0/mantritva/internal/repository"
 
 type Services struct {
+	UserService               UserService
 	NewsPressService          NewsPressService
 	FeedService               FeedService
 	ConsoleService            ConsoleService
@@ -15,6 +16,7 @@ type Services struct {
 
 func NewServices(repos *repository.Repos) *Services {
 	return &Services{
+		UserService:               NewUserService(repos),
 		NewsPressService:          NewNewsPressService(repos),
 		FeedService:               NewFeedService(repos),
 		ConsoleService:            NewConsoleService(repos),

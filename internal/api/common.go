@@ -11,6 +11,7 @@ func commonRouter(rg *gin.RouterGroup, service *service.Services) *gin.RouterGro
 	common := rg.Group("/cmn")
 	{
 		common.GET("/serve-static/*objectkey", handler.ServeStatic)
+		common.POST("/submit-enquiry", handler.CreateEnquiry)
 	}
 	return common
 }

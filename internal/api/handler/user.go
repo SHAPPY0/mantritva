@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/service"
+	"github.com/shappy0/mantritva/pkg/auth"
 	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/utils"
 )
@@ -56,19 +57,19 @@ func (h *UserHandler) LoginUser(c *gin.Context) {
 	}
 
 	user.Password = ""
-	token, err := utils.CreateToken(utils.UserClaims{
-		Name:     user.Name,
-		UserName: user.UserID,
-		UserID:   user.ID,
-		Email:    user.Email,
-		Role:     user.Role,
+	token, err := auth.CreateToken(auth.UserClaims{
+		Name:         user.Name,
+		UserName:     user.UserID,
+		UserID:       user.ID,
+		Email:        user.Email,
+		Role:         user.Role,
+		TokenVersion: user.TokenVersion,
 	})
 	if err != nil {
 		log.Errorf("Error while creating token %v", err)
 		utils.Error(c, 500, "Failed to login, Please try again.", err)
 		return
 	}
-
 	utils.Success(c, "Login Successful", map[string]interface{}{
 		"user":  user,
 		"token": token,
@@ -76,7 +77,7 @@ func (h *UserHandler) LoginUser(c *gin.Context) {
 }
 
 func (h *UserHandler) GetProfile(c *gin.Context) {
-	username, err := utils.GetKeyInCtx[string](c, "user_name")
+	username, err := auth.GetKeyInCtx[string](c, "user_name")
 	if err != nil {
 		utils.Error(c, 401, "No valid detail found", nil)
 		return
@@ -86,5 +87,6 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 		utils.Error(c, 500, "Failed to get user profile", err)
 		return
 	}
+	user.Password = ""
 	utils.Success(c, "", user)
 }

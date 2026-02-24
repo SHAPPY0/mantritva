@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/service"
+	"github.com/shappy0/mantritva/pkg/auth"
 	"github.com/shappy0/mantritva/pkg/utils"
 )
 
@@ -22,7 +23,7 @@ func NewDevelopmentWelfareHandler(services *service.Services) *DevelopmentWelfar
 }
 
 func (h *DevelopmentWelfareHandler) Create(c *gin.Context) {
-	userName, err := utils.GetKeyInCtx[string](c, "user_name")
+	userName, err := auth.GetKeyInCtx[string](c, "user_name")
 	if err != nil {
 		utils.Error(c, 401, "Unauthorized Access", nil)
 		return

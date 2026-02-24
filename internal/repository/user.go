@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"gorm.io/gorm"
 )
@@ -10,6 +11,9 @@ type UserRepository interface {
 	GetByID(int) (*model.User, error)
 	GetByUserID(string) (*model.User, error)
 	ConsoleGetUsersList() (*[]model.User, error)
+	UpdateTokenVersion(int, int) (bool, error)
+	GetTokenVersion(int) (int, error)
+	UpdateRole(dto.UpdateUserReq) (bool, error)
 }
 
 type userRepository struct {
@@ -60,4 +64,29 @@ func (r *userRepository) GetByID(id int) (*model.User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (r *userRepository) UpdateTokenVersion(userId, version int) (bool, error) {
+	query := `UPDATE users SET token_version = ? WHERE id = ? AND is_deleted = false`
+	if err := r.DB.Exec(query, version, userId).Error; err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *userRepository) GetTokenVersion(userId int) (int, error) {
+	version := 0
+	query := `SELECT token_version FROM users WHERE id = ? AND is_deleted = false`
+	if err := r.DB.Raw(query, userId).Scan(&version).Error; err != nil {
+		return version, err
+	}
+	return version, nil
+}
+
+func (r *userRepository) UpdateRole(user dto.UpdateUserReq) (bool, error) {
+	query := `UPDATE users SET role = ?, updated_at = ?, updated_by = ? WHERE id = ? AND is_deleted = false`
+	if err := r.DB.Exec(query, string(user.Role), user.UpdatedAt, user.UpdatedBy, user.ID).Error; err != nil {
+		return false, err
+	}
+	return true, nil
 }
