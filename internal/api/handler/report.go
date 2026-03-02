@@ -41,9 +41,6 @@ func (h *ReportHandler) GetReport(c *gin.Context) {
 		utils.Error(c, 501, "Error getting report", err)
 		return
 	}
-	if report == nil {
-		utils.Success(c, "No report found", nil)
-		return
-	}
+
 	utils.Success(c, "", report)
 }

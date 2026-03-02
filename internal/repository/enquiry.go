@@ -7,6 +7,7 @@ import (
 
 type EnquiryRepository interface {
 	Create(*model.Enquiry) error
+	GetAll() ([]*model.Enquiry, error)
 }
 
 type enquiryRepository struct {
@@ -24,4 +25,12 @@ func (r *enquiryRepository) Create(data *model.Enquiry) error {
 		return err
 	}
 	return nil
+}
+
+func (r *enquiryRepository) GetAll() ([]*model.Enquiry, error) {
+	var enquiries []*model.Enquiry
+	if err := r.DB.Find(&enquiries).Order("created_at DESC").Error; err != nil {
+		return nil, err
+	}
+	return enquiries, nil
 }

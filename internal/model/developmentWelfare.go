@@ -29,6 +29,6 @@ type DevelopmentWelfare struct {
 	UpvoteCount            *uint              `json:"upvote_count" bson:"upvote_count"`
 	DownvoteCount          *uint              `json:"downvote_count" bson:"downvote_count"`
 	Documents              []Document         `json:"documents" bson:"documents"`
-	StatusUpdates          []StatusUpdates    `json:"status_updates" bson:"status_updates"`
+	StatusRevisions        []StatusRevisions  `json:"status_revisions" bson:"status_revisions"`
 	AuditFieldsBSON        `bson:",inline"`
 }

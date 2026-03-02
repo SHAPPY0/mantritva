@@ -1,0 +1,155 @@
+You want:
+
+✅ globalAverage to evolve as platform grows
+
+✅ bayesianWeight (m) to adapt automatically
+
+✅ No manual tuning every year
+
+✅ Stable but increasingly responsive system
+
+Core Maturity Inputs:
+
+TotalReactions        // total reactions on platform
+TotalPosts            // total news posts
+MedianReactionsPerPost
+PlatformAgeInMonths
+
+These are objective and manipulation-resistant.
+
+✅ 1️⃣ Global Average Logic (Rolling + Trimmed)
+
+Phase A — Early Stage (Bootstrapping) ------
+
+Condition: if TotalReactions < 10_000
+Use: globalAverage = 50.0
+
+Reason:
+
+Prevent volatility
+Reaction distribution unstable
+
+Phase B — Growing Platform -------
+
+Condition: if TotalReactions >= 10_000 && TotalReactions < 200_000
+
+Use rolling 24-month weighted average:
+
+SELECT SUM(normalized_score) / COUNT(*)
+FROM news_press_reactions
+WHERE created_at >= NOW() - INTERVAL '24 months';
+
+Phase C — Mature Platform ---------
+
+Condition: if TotalReactions >= 200_000
+
+Use trimmed mean (remove top & bottom 2%)
+
+PostgreSQL example:
+SELECT AVG(score) FROM (
+    SELECT normalized_score AS score
+    FROM news_press_reactions
+    WHERE created_at >= NOW() - INTERVAL '24 months'
+    ORDER BY score
+    OFFSET (SELECT COUNT(*) * 0.02 FROM news_press_reactions)
+    LIMIT (
+        SELECT COUNT(*) * 0.96 FROM news_press_reactions
+    )
+) t;
+
+This prevents extreme polarization from shifting baseline.
+===============================================================================
+✅ 2️⃣ Adaptive BayesianWeight (m)
+
+Now the important part.
+
+Principle:
+
+m should roughly equal:
+
+The reaction count at which we trust a post’s own average more than baseline.
+
+We define: m = 2 × MedianReactionsPerPost
+
+Why median?
+Resistant to viral outliers
+Reflects real engagement
+
+Full Adaptive Logic:
+func CalculateBayesianWeight(totalReactions int, medianReactions float64, platformAgeMonths int) float64 {
+
+    // Early stage protection
+    if totalReactions < 10_000 {
+        return 40
+    }
+
+    // Base from engagement
+    m := 2 * medianReactions
+
+    // Age-based stabilization
+    if platformAgeMonths < 12 {
+        m *= 1.3
+    }
+
+    // Clamp limits
+    if m < 10 {
+        m = 10
+    }
+
+    if m > 50 {
+        m = 50
+    }
+
+    return m
+}
+
+📊 How This Behaves Over Time
+Stage	Median Reactions	m
+Launch	3	40 (forced protection)
+Year 1	8	16–20
+Year 2	20	40
+Year 3+	50	50 (capped)
+
+Early → strong smoothing
+Mature → engagement-driven smoothing
+
+🎯 Combined Platform Metrics Function
+
+func CalculatePlatformMetrics(stats PlatformStats) (float64, float64) {
+
+    var globalAverage float64
+
+    if stats.TotalReactions < 10_000 {
+        globalAverage = 50
+    } else if stats.TotalReactions < 200_000 {
+        globalAverage = stats.RollingMean
+    } else {
+        globalAverage = stats.TrimmedMean
+    }
+
+    bayesianWeight := CalculateBayesianWeight(
+        stats.TotalReactions,
+        stats.MedianReactionsPerPost,
+        stats.PlatformAgeMonths,
+    )
+
+    return globalAverage, bayesianWeight
+}
+
+Run this hourly via cron.
+Store result in platform_metrics.
+
+Never compute per request.
+
+🔐 Why This Is Strong:
+Early Stage
+
+Prevents fake small-group manipulation
+
+Growth Stage
+
+Reflects real sentiment shift
+
+Mature Stage
+
+Resistant to polarization extremes

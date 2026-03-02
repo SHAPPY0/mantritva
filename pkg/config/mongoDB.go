@@ -18,9 +18,10 @@ type MongoDB struct {
 	Client                  *mongo.Client
 	FeedCollection          *mongo.Collection
 	NewsPressPostCollection *mongo.Collection
-	PostReactionCollection  *mongo.Collection
+	ReactionCollection      *mongo.Collection
 	GrievanceCollection     *mongo.Collection
-	MemberReportsCollection *mongo.Collection
+	ScoreCollection         *mongo.Collection
+	ScoreSnapShotCollection *mongo.Collection
 	EventCollection         *mongo.Collection
 	DevelopmentWelfare      *mongo.Collection
 	Filter                  bson.M
@@ -78,31 +79,43 @@ func (m *MongoDB) SetupCollections(dbName string) error {
 	} else {
 		m.FeedCollection = db.Collection("feeds")
 	}
+
 	if err := createCollection(db, "news_press_posts"); err != nil {
 		return err
 	} else {
 		m.NewsPressPostCollection = db.Collection("news_press_posts")
 	}
-	if err := createCollection(db, "post_reactions"); err != nil {
+
+	if err := createCollection(db, "reactions"); err != nil {
 		return err
 	} else {
-		m.PostReactionCollection = db.Collection("post_reactions")
+		m.ReactionCollection = db.Collection("reactions")
 	}
+
 	if err := createCollection(db, "grievances"); err != nil {
 		return err
 	} else {
 		m.GrievanceCollection = db.Collection("grievances")
 	}
-	if err := createCollection(db, "member_reports"); err != nil {
+
+	if err := createCollection(db, "scores"); err != nil {
 		return err
 	} else {
-		m.MemberReportsCollection = db.Collection("member_reports")
+		m.ScoreCollection = db.Collection("scores")
 	}
+
+	if err := createCollection(db, "score_snapshots"); err != nil {
+		return err
+	} else {
+		m.ScoreSnapShotCollection = db.Collection("score_snapshots")
+	}
+
 	if err := createCollection(db, "events"); err != nil {
 		return err
 	} else {
 		m.EventCollection = db.Collection("events")
 	}
+
 	if err := createCollection(db, "development_welfares"); err != nil {
 		return err
 	} else {
@@ -196,6 +209,17 @@ func (m *MongoDB) UpdateOne(collection *mongo.Collection, filter bson.M, update 
 	defer cancel()
 
 	result, err := collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (m *MongoDB) DeleteOne(collection *mongo.Collection, filter bson.M) (*mongo.DeleteResult, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	result, err := collection.DeleteOne(ctx, filter)
 	if err != nil {
 		return nil, err
 	}

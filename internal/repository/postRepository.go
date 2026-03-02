@@ -7,8 +7,8 @@ import (
 
 type PostVoteRepository interface {
 	GetPostByID(primitive.ObjectID) (any, error)
-	GetReactionByUserIDAndPostID(int, primitive.ObjectID) (*model.PostReaction, error)
+	GetReactionByUserIDAndPostID(int, primitive.ObjectID) (*model.Reaction, error)
 	DeleteReaction(primitive.ObjectID, int, primitive.ObjectID) error
-	SaveReaction(*model.PostReaction, bool) error
+	SaveReaction(*model.Reaction, bool) error
 	UpdatePostVoteCountsByID(primitive.ObjectID, int, int) error
 }

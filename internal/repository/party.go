@@ -2,6 +2,7 @@ package repository
 
 import (
 	"strings"
+	"time"
 
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
@@ -19,6 +20,7 @@ type PartyRepository interface {
 	GetByMemberID(memberId uint) (*dto.MemberParty, error)
 	ConsoleGetPartiesList() (*[]model.Party, error)
 	GetRandomParties() (*[]model.Party, error)
+	GetPoliticalStartDate(uint) (*time.Time, error)
 }
 
 type partyRepository struct {
@@ -122,4 +124,15 @@ func (r *partyRepository) GetRandomParties() (*[]model.Party, error) {
 		return nil, err
 	}
 	return &parties, nil
+}
+
+func (r *partyRepository) GetPoliticalStartDate(memberId uint) (*time.Time, error) {
+	var startDate time.Time
+	query := `SELECT MIN(joining_date) 
+			FROM party_members
+			WHERE member_id = ?`
+	if err := r.DB.Raw(query, memberId).Scan(&startDate).Error; err != nil {
+		return nil, err
+	}
+	return &startDate, nil
 }

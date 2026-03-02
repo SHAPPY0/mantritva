@@ -44,6 +44,7 @@ type memberService struct {
 	ReportRepository             repository.ReportRepository
 	DevelopmentWelfareRepository repository.DevelopmentWelfareRepository
 	FeedRepository               repository.FeedRepository
+	ReactionRepository           repository.ReactionRepository
 }
 
 func NewMemberService(repos *repository.Repos) MemberService {
@@ -57,6 +58,7 @@ func NewMemberService(repos *repository.Repos) MemberService {
 		ReportRepository:             repos.Report,
 		DevelopmentWelfareRepository: repos.DevelopmentWelfare,
 		FeedRepository:               repos.Feed,
+		ReactionRepository:           repos.Reaction,
 	}
 }
 
@@ -279,7 +281,7 @@ func (s *memberService) GetPostsByMemberID(userID int, pagination dto.Pagination
 			}
 		}
 		if userID > 0 {
-			reaction, err := s.FeedRepository.GetReactionByUserIDAndPostID(userID, post.ID)
+			reaction, err := s.ReactionRepository.GetByUserIDAndPostID(userID, post.ID)
 			if err != nil {
 
 			} else if reaction != nil {

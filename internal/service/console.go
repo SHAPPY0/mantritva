@@ -34,6 +34,7 @@ type ConsoleService interface {
 	ExitLeadership(dto.LeadershipExitReq) (bool, error)
 	UpdateMemberByID(*gin.Context, uint, map[string]interface{}, *multipart.FileHeader) (bool, error)
 	UpdateRole(dto.UpdateUserReq) (bool, error)
+	GetEnquiriesList() ([]*model.Enquiry, error)
 }
 
 type consoleService struct {
@@ -49,6 +50,7 @@ type consoleService struct {
 	GrievanceRepository  repository.GrievanceRepository
 	DistrictRepository   repository.DistrictRepository
 	ReportRepository     repository.ReportRepository
+	EnquiryRepository    repository.EnquiryRepository
 }
 
 func NewConsoleService(repos *repository.Repos) ConsoleService {
@@ -65,6 +67,7 @@ func NewConsoleService(repos *repository.Repos) ConsoleService {
 		GrievanceRepository:  repos.Grievance,
 		DistrictRepository:   repos.District,
 		ReportRepository:     repos.Report,
+		EnquiryRepository:    repos.Enquiry,
 	}
 }
 
@@ -142,33 +145,6 @@ func (s *consoleService) GetByID(id uint) (*dto.MemberRes, error) {
 		return nil, err
 	}
 	data.Member = *member
-	//Get Party
-	// party, err := s.PartyRepository.GetByMemberID(member.ID)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// data.Party = *party
-
-	//Get position from leadership table
-	// leadership, err := s.LeadershipRepository.GetByMemberID(member.ID)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// data.Position = leadership.Position
-	// data.Departments = leadership.Departments
-
-	// score, err := s.ReportRepository.GetMemberScore(member.ID, time.Now().Format("2006"))
-	// if err != nil {
-	// 	log.Warnf("No score found for memberID %d", member.ID)
-	// } else if score != nil {
-	// 	data.Score = &dto.MemberScore{
-	// 		Score:     score.TotalScore,
-	// 		MaxScore:  score.MaxScore,
-	// 		Year:      score.Year,
-	// 		UpdatedAt: score.CreatedAt.String(),
-	// 	}
-	// }
-
 	return &data, nil
 }
 
@@ -427,4 +403,14 @@ func (s *consoleService) UpdateRole(user dto.UpdateUserReq) (bool, error) {
 		return false, err
 	}
 	return ok, nil
+}
+
+func (s *consoleService) GetEnquiriesList() ([]*model.Enquiry, error) {
+	var enquiries []*model.Enquiry
+	var err error
+	enquiries, err = s.EnquiryRepository.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	return enquiries, nil
 }

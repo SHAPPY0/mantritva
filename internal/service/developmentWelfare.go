@@ -54,7 +54,7 @@ func (s *developmentWelfareService) Create(ctx *gin.Context, data dto.Developmen
 		Scope:                  data.Scope,
 		Status:                 string(data.Status),
 		Documents:              make([]model.Document, 0),
-		StatusUpdates:          make([]model.StatusUpdates, 0),
+		StatusRevisions:        make([]model.StatusRevisions, 0),
 		AuditFieldsBSON:        model.InsertBSONAuditFields(data.CreatedBy),
 	}
 

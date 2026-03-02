@@ -23,6 +23,7 @@ type newsPressService struct {
 	StateRepo      repository.StateRepository
 	EntityRepo     repository.EntityRepository
 	FeedRepo       repository.FeedRepository
+	ReactionRepo   repository.ReactionRepository
 }
 
 func NewNewsPressService(repos *repository.Repos) NewsPressService {
@@ -34,6 +35,7 @@ func NewNewsPressService(repos *repository.Repos) NewsPressService {
 		StateRepo:      repos.State,
 		EntityRepo:     repos.Entity,
 		FeedRepo:       repos.Feed,
+		ReactionRepo:   repos.Reaction,
 	}
 }
 
@@ -142,7 +144,7 @@ func (s *newsPressService) GetDetailByID(userID int, id string) (*dto.NewsPressP
 		}
 	}
 	if userID > 0 {
-		reaction, _ := s.FeedRepo.GetReactionByUserIDAndPostID(userID, post.ID)
+		reaction, _ := s.ReactionRepo.GetByUserIDAndPostID(userID, post.ID)
 		if reaction != nil {
 			result.Reaction = utils.Vote(reaction.Reaction)
 		}

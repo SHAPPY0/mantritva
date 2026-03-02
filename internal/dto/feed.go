@@ -23,6 +23,7 @@ type ReactionReq struct {
 	Reaction        utils.Vote         `json:"reaction" binding:"required"`
 	FeedType        utils.FeedType     `json:"feed_type" binding:"required"`
 	SelectedOptions []int              `json:"selected_options,omitempty"`
+	UserIP          string             `json:"user_ip"`
 }
 
 type PostVotes struct {

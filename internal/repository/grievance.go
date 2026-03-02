@@ -110,11 +110,11 @@ func (r *grievanceRepository) ConsoleUpdateGrievanceStatus(grievanceID string, s
 	}
 	update := bson.M{
 		"$push": bson.M{
-			"updates": bson.M{
+			"status_revisions": bson.M{
 				"date":   status.Date.Time,
 				"status": status.Status,
 				"remark": status.Remark,
-				"link":   status.Link,
+				"source": status.Source,
 			},
 		},
 		"$set": bson.M{

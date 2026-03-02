@@ -63,7 +63,7 @@ func (s *grievanceSerivce) Create(ctx *gin.Context, req dto.Grievance) (*model.G
 		Impact:               req.Impact,
 		FinalStatus:          utils.UNDERREVIEW,
 		Evidences:            make([]model.Document, 0),
-		Updates:              make([]model.StatusUpdates, 0),
+		StatusRevisions:      make([]model.StatusRevisions, 0),
 		AuditFieldsBSON:      model.InsertBSONAuditFields(req.CreatedBy),
 	}
 

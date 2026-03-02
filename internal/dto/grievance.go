@@ -56,7 +56,7 @@ type GrievanceStatus struct {
 	Date   utils.DateOnly        `json:"date"`
 	Status utils.GrievanceStatus `json:"status"`
 	Remark string                `json:"remark"`
-	Link   string                `json:"link"`
+	Source string                `json:"source"`
 }
 
 type GrievanceShort struct {

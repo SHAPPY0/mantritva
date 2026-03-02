@@ -49,7 +49,8 @@ func (h *FeedHandler) SaveReaction(c *gin.Context) {
 		return
 	}
 	req.UserID = userID
-	resp, err := h.Service.SaveReaction(req, c.ClientIP())
+	req.UserIP = c.ClientIP()
+	resp, err := h.Service.CreateReaction(req)
 	if err != nil {
 		utils.Error(c, 500, "Failed to react post", err)
 		return

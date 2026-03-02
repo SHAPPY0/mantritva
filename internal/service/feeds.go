@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
@@ -16,7 +17,7 @@ type FeedService interface {
 	Create(dto.FeedReq) (bool, error)
 	UpdateStatus(string, dto.FeedReq) (bool, error)
 	GetLatestFeed(int) (*[]dto.FeedRes, error)
-	SaveReaction(dto.ReactionReq, string) (bool, error)
+	CreateReaction(dto.ReactionReq) (bool, error)
 }
 
 type feedService struct {
@@ -30,6 +31,8 @@ type feedService struct {
 	GrievanceRepository          repository.GrievanceRepository
 	DevelopmentWelfareRepository repository.DevelopmentWelfareRepository
 	ReportRepository             repository.ReportRepository
+	ReactionRepository           repository.ReactionRepository
+	ReactionQueue                chan dto.ReactionReq
 }
 
 type postSummary struct {
@@ -50,7 +53,10 @@ func NewFeedService(repos *repository.Repos) FeedService {
 		GrievanceRepository:          repos.Grievance,
 		DevelopmentWelfareRepository: repos.DevelopmentWelfare,
 		ReportRepository:             repos.Report,
+		ReactionRepository:           repos.Reaction,
+		ReactionQueue:                make(chan dto.ReactionReq, 500),
 	}
+	go svc.reactionQueueListener()
 	return svc
 }
 
@@ -144,34 +150,55 @@ func (s *feedService) persistPostCounts(feedType utils.FeedType, ps *postSummary
 	}
 }
 
+func (s *feedService) CreateReaction(req dto.ReactionReq) (bool, error) {
+	s.ReactionQueue <- req
+	return true, nil
+}
+
+func (s *feedService) reactionQueueListener() {
+	for req := range s.ReactionQueue {
+		if _, err := s.SaveReaction(req, req.UserIP); err != nil {
+			log.Errorf("Error processing reaction for post %s by user %d: %v", req.PostID, req.UserID, err)
+		}
+	}
+}
+
 func (s *feedService) SaveReaction(req dto.ReactionReq, userIP string) (bool, error) {
 	var postID primitive.ObjectID
 	var oldReactionScore int
+	var lockedAt *time.Time
+	currentDateTime := time.Now()
+
 	// Get existing post
 	post, err := s.getPostSummary(req.FeedType, req.PostID)
 	if err != nil {
-		return false, fmt.Errorf("Failed to get post: %v", err)
+		return false, fmt.Errorf("Failed to save reaction: %v", err)
 	}
 	postID = post.ID
 
 	// Check for existing reaction
-	reactionExist, err := s.FeedRepository.GetReactionByUserIDAndPostID(req.UserID, postID)
+	reactionExist, err := s.ReactionRepository.GetByUserIDAndPostID(req.UserID, postID)
 	if err != nil {
 		return false, fmt.Errorf("Failed to check existing reaction: %v", err)
 	}
 	// Handle existing reaction
 	if reactionExist != nil {
+		if reactionExist.LockedAt.Before(currentDateTime) {
+			log.Errorf("Reaction is locked for update")
+			return true, nil
+		}
 		// Same reaction type - no change needed
 		if reactionExist.Reaction == string(req.Reaction) && utils.CompareIntSlices(reactionExist.SelectedOptions, req.SelectedOptions) {
 			return true, nil
 		}
 
 		// Different reaction - update counts and soft delete old reaction
-		if err := s.FeedRepository.DeleteReaction(reactionExist.ID, req.UserID, req.PostID); err != nil {
+		if err := s.ReactionRepository.Delete(reactionExist.ID, req.UserID, req.PostID, true); err != nil {
 			return false, fmt.Errorf("Failed to delete old reaction: %v", err)
 		}
 
 		oldReactionScore = reactionExist.NormalizedScore
+		lockedAt = reactionExist.LockedAt
 
 		// Update counts based on reaction change
 		if reactionExist.Reaction == string(utils.UPVOTE) && req.Reaction == utils.DOWNVOTE {
@@ -196,13 +223,20 @@ func (s *feedService) SaveReaction(req dto.ReactionReq, userIP string) (bool, er
 	}
 
 	// Create new reaction
-	reaction := &model.PostReaction{
+	reaction := &model.Reaction{
 		PostID:          req.PostID,
 		UserID:          req.UserID,
 		Reaction:        string(req.Reaction),
 		UserIP:          userIP,
 		SelectedOptions: req.SelectedOptions,
 		AuditFieldsBSON: model.InsertBSONAuditFields(""),
+	}
+
+	if lockedAt != nil {
+		reaction.LockedAt = lockedAt
+	} else {
+		lockTime := currentDateTime.Add(24 * time.Hour)
+		reaction.LockedAt = &lockTime
 	}
 	if req.FeedType == utils.NEWSPRESS || req.FeedType == utils.DEVELOPMENT {
 		reactionScore := 0
@@ -232,7 +266,7 @@ func (s *feedService) SaveReaction(req dto.ReactionReq, userIP string) (bool, er
 	}
 
 	// Save new reaction
-	if err := s.FeedRepository.SaveReaction(reaction, reactionExist == nil); err != nil {
+	if err := s.ReactionRepository.Create(reaction, reactionExist == nil); err != nil {
 		return false, fmt.Errorf("Failed to save reaction: %v", err)
 	}
 	// Update post vote counts
@@ -295,7 +329,7 @@ func (s *feedService) GetNewsPressFeed(userID int, postID primitive.ObjectID) (d
 		}
 	}
 	if userID > 0 {
-		reaction, _ := s.FeedRepository.GetReactionByUserIDAndPostID(userID, np.ID)
+		reaction, _ := s.ReactionRepository.GetByUserIDAndPostID(userID, np.ID)
 		if reaction != nil {
 			newsPressPostRes.Reaction = utils.Vote(reaction.Reaction)
 		}
@@ -399,7 +433,7 @@ func (s *feedService) GetDevelopmentWelfareShort(userID int, postID primitive.Ob
 
 	// Fetch reaction if userID is provided
 	if userID > 0 {
-		reaction, _ := s.FeedRepository.GetReactionByUserIDAndPostID(userID, postID)
+		reaction, _ := s.ReactionRepository.GetByUserIDAndPostID(userID, postID)
 		if reaction != nil {
 			devWelFeed.Reaction = utils.Vote(reaction.Reaction)
 		}
@@ -428,7 +462,7 @@ func (s *feedService) UpdateStatus(updatedBy string, feed dto.FeedReq) (bool, er
 	return ok, nil
 }
 
-func getWeight(questionnaires *[]model.Questionnaire, reaction model.PostReaction) int {
+func getWeight(questionnaires *[]model.Questionnaire, reaction model.Reaction) int {
 	weight := 0
 	for _, q := range *questionnaires {
 		if q.ID == uint(reaction.SelectedOptions[0]) {

@@ -28,6 +28,7 @@ type Repos struct {
 	Event              EventRepository
 	DevelopmentWelfare DevelopmentWelfareRepository
 	Enquiry            EnquiryRepository
+	Reaction           ReactionRepository
 }
 
 func NewRepos(db *gorm.DB, mongoDB *config.MongoDB) *Repos {
@@ -54,5 +55,6 @@ func NewRepos(db *gorm.DB, mongoDB *config.MongoDB) *Repos {
 		Event:              NewEventRepository(mongoDB),
 		DevelopmentWelfare: NewDevelopmentWelfareRepository(db, mongoDB),
 		Enquiry:            NewEnquiryRepository(db),
+		Reaction:           NewReactionRepository(mongoDB),
 	}
 }

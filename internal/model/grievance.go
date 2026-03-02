@@ -27,7 +27,7 @@ type Grievance struct {
 	Impact               string                `json:"impact" bson:"impact"`
 	Evidences            []Document            `json:"evidences" bson:"evidences"`
 	FinalStatus          utils.GrievanceStatus `json:"final_status" bson:"final_status"`
-	Updates              []StatusUpdates       `json:"updates" bson:"updates"`
+	StatusRevisions      []StatusRevisions     `json:"status_revisions" bson:"status_revisions"`
 	AuditFieldsBSON      `bson:",inline"`
 }
 
@@ -38,9 +38,9 @@ type Document struct {
 	Remark   string `json:"remark" bson:"remark"`
 }
 
-type StatusUpdates struct {
+type StatusRevisions struct {
 	Date   time.Time `json:"date" bson:"date"`
 	Status string    `json:"status" bson:"status"`
 	Remark string    `json:"remark" bson:"remark"`
-	Link   string    `json:"link" bson:"link"`
+	Source string    `json:"source" bson:"source"`
 }

@@ -335,5 +335,13 @@ func (h *ConsoleHandler) UpdateRole(c *gin.Context) {
 	if ok {
 		utils.Success(c, "Role updated successfully", nil)
 	}
+}
 
+func (h *ConsoleHandler) GetEnquiriesList(c *gin.Context) {
+	resp, err := h.Service.GetEnquiriesList()
+	if err != nil {
+		utils.Error(c, 500, "Failed to get enquiries list", err)
+		return
+	}
+	utils.Success(c, "", resp)
 }

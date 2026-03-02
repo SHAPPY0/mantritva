@@ -22,7 +22,7 @@ type FeedType string
 type Vote string
 type Position string
 type GrievanceStatus string
-type KSA string
+type KRA string
 type DevelopmentStatus string
 
 const (
@@ -114,10 +114,10 @@ const (
 )
 
 const (
-	KSA_DEVELOPMENTS KSA = "developments"
-	KSA_GRIEVANCES   KSA = "grievances"
-	KSA_CALRECORDS   KSA = "cal_records"
-	KSA_NEWSPRESSES  KSA = "news_and_presses"
+	KRA_DEVELOPMENTS KRA = "developments"
+	KRA_GRIEVANCES   KRA = "grievances"
+	KRA_CALRECORDS   KRA = "cal_records"
+	KRA_NEWSPRESSES  KRA = "news_and_presses"
 )
 
 func (d *DateOnly) UnmarshalJSON(b []byte) error {

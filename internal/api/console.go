@@ -30,6 +30,7 @@ func consoleRouter(rg *gin.RouterGroup, services *service.Services) *gin.RouterG
 		console.GET("/grievance/:grievanceID", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), handler.GetGrievanceByID)
 		console.PUT("/grievance/:grievanceID/updateStatus", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), handler.GrievanceUpdateStatus)
 		console.POST("/leadership/exit/:id", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), handler.ExitLeadership)
+		console.GET("/enquiries", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), handler.GetEnquiriesList)
 	}
 	return console
 }

@@ -1,11 +1,13 @@
 package dto
 
 import (
+	"time"
+
 	"github.com/shappy0/mantritva/pkg/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type KSAWeights struct {
+type KRAWeights struct {
 	Developments uint
 	Grievances   uint
 	CALRecords   uint
@@ -13,26 +15,50 @@ type KSAWeights struct {
 }
 
 type MemberReport struct {
-	MemberID     uint              `json:"member_id"`
-	TotalScore   uint              `json:"total_score"`
-	Tenure       string            `json:"tenure"`
+	MemberID   uint      `json:"member_id"`
+	TotalScore uint      `json:"total_score"`
+	Year       string    `json:"year"`
+	KRAS       KRAReport `json:"kras"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
+type KRAReport struct {
 	Developments DevelopmentReport `json:"developments"`
 	Grievances   GrievanceReport   `json:"grievances"`
-	NewsPresses  NewsPressesReport `json:"news_presses"`
+	NewsPresses  NewsPressesReport `json:"news_pressses"`
+	CALRecords   CALReport         `json:"cal_records"`
 }
 
 type DevelopmentReport struct {
-	Score uint `json:"score"`
+	Name         string   `json:"name"`
+	Score        uint     `json:"score"`
+	Weight       uint     `json:"weight"`
+	Total        uint     `json:"total"`
+	Developments []string `json:"developments"`
 }
 
 type GrievanceReport struct {
-	Score      uint             `json:"score"`
-	Grievances []GrievanceShort `json:"grievances"`
+	Name       string   `json:"name"`
+	Score      uint     `json:"score"`
+	Weight     uint     `json:"weight"`
+	Total      uint     `json:"total"`
+	Grievances []string `json:"grievances"`
 }
 
 type NewsPressesReport struct {
-	Score       uint             `json:"score"`
-	NewsPresses []NewsPressShort `json:"news_presses"`
+	Name        string   `json:"name"`
+	Score       uint     `json:"score"`
+	Weight      uint     `json:"weight"`
+	Total       uint     `json:"total"`
+	NewsPresses []string `json:"news_presses"`
+}
+
+type CALReport struct {
+	Name       string   `json:"name"`
+	Score      uint     `json:"score"`
+	Weight     uint     `json:"weight"`
+	Total      uint     `json:"total"`
+	CALRecords []string `json:"cal_records"`
 }
 
 type MemberScore struct {

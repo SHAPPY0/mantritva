@@ -64,6 +64,7 @@ func (s *commonService) CreateEnquiry(c *gin.Context, data dto.Enquiry, files []
 	en := &model.Enquiry{
 		Name:        data.Name,
 		Email:       data.Email,
+		Mobile:      data.Mobile,
 		EnquiryType: data.EnquiryType,
 		Subject:     data.Subject,
 		Description: data.Description,

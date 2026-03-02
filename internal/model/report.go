@@ -5,9 +5,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type KSA struct {
+// Key Result Area (KRA) represents a specific area of focus or responsibility within an organization that contributes to the achievement of its goals and objectives.
+type KRA struct {
 	ID          uint   `json:"id" gorm:"primaryKey"`
-	KSAName     string `json:"ksa_name"`
+	KRAName     string `json:"kra_name"`
 	Weight      uint   `json:"weight"`
 	Description string `json:"description"`
 	IsActive    bool   `json:"is_active" gorm:"default:true"`
@@ -30,6 +31,7 @@ type MemberReport struct {
 	TotalScore      uint               `json:"total_score" bson:"total_score"`
 	MaxScore        uint               `json:"max_score" bson:"max_score"`
 	Year            string             `json:"year" bson:"year"`
+	Confidence      uint               `json:"confidence" bson:"confidence"`
 	Developments    DevelopmentReport  `json:"developments" bson:"developments"`
 	Grievances      GrievanceReport    `json:"grievances" bson:"grievances"`
 	NewsPresses     NewsPressReport    `json:"news_presses" bson:"news_presses"`
@@ -37,7 +39,7 @@ type MemberReport struct {
 	AuditFieldsBSON `bson:",inline"`
 }
 
-type MemberReportKSA struct {
+type MemberReportKRA struct {
 	Developments DevelopmentReport `json:"developments" bson:"developments"`
 	Grievances   GrievanceReport   `json:"grievances" bson:"grievances"`
 	NewsPresses  NewsPressReport   `json:"news_presses" bson:"news_presses"`
@@ -45,29 +47,37 @@ type MemberReportKSA struct {
 }
 
 type DevelopmentReport struct {
-	Score        uint     `json:"score" bson:"score"`
-	Weight       uint     `json:"weight" bson:"weight"`
-	Total        uint     `json:"total" bson:"total"`
-	Developments []string `json:"developments" bson:"developments"`
+	Score         uint     `json:"score" bson:"score"`
+	Weight        uint     `json:"weight" bson:"weight"`
+	Total         uint     `json:"total" bson:"total"`
+	Confidence    uint     `json:"confidence" bson:"confidence"`
+	GlobalAverage uint     `json:"global_average" bson:"global_average"`
+	Developments  []string `json:"developments" bson:"developments"` //Ids of developments, can be used to fetch details if needed
 }
 
 type GrievanceReport struct {
-	Score      uint     `json:"score" bson:"score"`
-	Weight     uint     `json:"weight" bson:"weight"`
-	Total      uint     `json:"total" bson:"total"`
-	Grievances []string `json:"grievances" bson:"grievances"`
+	Score         uint     `json:"score" bson:"score"`
+	Weight        uint     `json:"weight" bson:"weight"`
+	Total         uint     `json:"total" bson:"total"`
+	Confidence    uint     `json:"confidence" bson:"confidence"`
+	GlobalAverage uint     `json:"global_average" bson:"global_average"`
+	Grievances    []string `json:"grievances" bson:"grievances"`
 }
 
 type NewsPressReport struct {
-	Score       uint     `json:"score" bson:"score"`
-	Weight      uint     `json:"weight" bson:"weight"`
-	Total       uint     `json:"total" bson:"total"`
-	NewsPresses []string `json:"news_presses" bson:"news_presses"`
+	Score         uint     `json:"score" bson:"score"`
+	Weight        uint     `json:"weight" bson:"weight"`
+	Total         uint     `json:"total" bson:"total"`
+	Confidence    uint     `json:"confidence" bson:"confidence"`
+	GlobalAverage uint     `json:"global_average" bson:"global_average"`
+	NewsPresses   []string `json:"news_presses" bson:"news_presses"`
 }
 
 type CALRecordsReport struct {
-	Score      uint     `json:"score" bson:"score"`
-	Weight     uint     `json:"weight" bson:"weight"`
-	Total      uint     `json:"total" bson:"total"`
-	CALRecords []string `json:"cal_records" bson:"cal_records"`
+	Score         uint     `json:"score" bson:"score"`
+	Weight        uint     `json:"weight" bson:"weight"`
+	Total         uint     `json:"total" bson:"total"`
+	Confidence    uint     `json:"confidence" bson:"confidence"`
+	GlobalAverage uint     `json:"global_average" bson:"global_average"`
+	CALRecords    []string `json:"cal_records" bson:"cal_records"`
 }
