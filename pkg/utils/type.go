@@ -24,6 +24,7 @@ type Position string
 type GrievanceStatus string
 type KRA string
 type DevelopmentStatus string
+type GrievanceSeverity string
 
 const (
 	ADMIN     UserRole = "ADMIN"
@@ -95,9 +96,9 @@ const (
 	OPEN        GrievanceStatus = "OPEN"
 	REJECTED    GrievanceStatus = "REJECTED"
 	INPROGRESS  GrievanceStatus = "IN_PROGRESS"
+	INVALID     GrievanceStatus = "INVALID"
 	CLOSED      GrievanceStatus = "CLOSED"
-	FIXED       GrievanceStatus = "FIXED"
-	COMPLETED   GrievanceStatus = "COMPLETED"
+	RESOLVED    GrievanceStatus = "RESOLVED"
 	STAYED      GrievanceStatus = "STAYED"
 	NOUPDATE    GrievanceStatus = "NO_UPDATE"
 )
@@ -118,6 +119,13 @@ const (
 	KRA_GRIEVANCES   KRA = "grievances"
 	KRA_CALRECORDS   KRA = "cal_records"
 	KRA_NEWSPRESSES  KRA = "news_and_presses"
+)
+
+const (
+	GRIEVANCE_LOW      GrievanceSeverity = "LOW"
+	GRIEVANCE_MEDIUM   GrievanceSeverity = "MEDIUM"
+	GRIEVANCE_HIGH     GrievanceSeverity = "HIGH"
+	GRIEVANCE_CRITICAL GrievanceSeverity = "CRITICAL"
 )
 
 func (d *DateOnly) UnmarshalJSON(b []byte) error {

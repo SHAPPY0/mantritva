@@ -40,6 +40,10 @@ func NewReportService(repos *repository.Repos) ReportService {
 }
 
 func (s *reportService) GenerateReport(memberID int) (*model.Score, error) {
+	var totalScore float64
+	var totalWeight float64
+	var totalConfidenceWeighted float64
+
 	scoreData := model.Score{
 		ID:              primitive.NewObjectID(),
 		MemberID:        uint(memberID),
@@ -87,12 +91,13 @@ func (s *reportService) GenerateReport(memberID int) (*model.Score, error) {
 			// And Member don't have historic data then set default score using Bayesian average, this is to ensure that new members are not at disadvantage and they get a fair score based on global average until we have enough data to calculate their actual score
 			if useDefault {
 				defaultScore, confidence := setDefaultScore(ksaWeights.Developments, dReport.GlobalAverage)
-				dReport.Score = uint(defaultScore)
-				dReport.Confidence = uint(confidence)
+				dReport.Score = defaultScore
+				dReport.Confidence = confidence
 			}
 		}
-		scoreData.TotalScore += score
-		scoreData.Confidence += dReport.Confidence
+		totalScore += dReport.Score
+		totalWeight += float64(ksaWeights.Developments)
+		totalConfidenceWeighted += dReport.Confidence * float64(ksaWeights.Developments)
 		scoreData.Developments = *dReport
 	}
 
@@ -106,12 +111,13 @@ func (s *reportService) GenerateReport(memberID int) (*model.Score, error) {
 			// And Member don't have historic data then set default score using Bayesian average, this is to ensure that new members are not at disadvantage and they get a fair score based on global average until we have enough data to calculate their actual score
 			if useDefault {
 				defaultScore, confidence := setDefaultScore(ksaWeights.Grievances, gReport.GlobalAverage)
-				gReport.Score = uint(defaultScore)
-				gReport.Confidence = uint(confidence)
+				gReport.Score = defaultScore
+				gReport.Confidence = confidence
 			}
 		}
-		scoreData.TotalScore += score
-		scoreData.Confidence += gReport.Confidence
+		totalScore += gReport.Score
+		totalWeight += float64(ksaWeights.Grievances)
+		totalConfidenceWeighted += gReport.Confidence * float64(ksaWeights.Grievances)
 		scoreData.Grievances = *gReport
 	}
 
@@ -125,13 +131,19 @@ func (s *reportService) GenerateReport(memberID int) (*model.Score, error) {
 			// And Member don't have historic data then set default score using Bayesian average, this is to ensure that new members are not at disadvantage and they get a fair score based on global average until we have enough data to calculate their actual score
 			if useDefault {
 				defaultScore, confidence := setDefaultScore(ksaWeights.NewsPresses, nsReport.GlobalAverage)
-				nsReport.Score = uint(defaultScore)
-				nsReport.Confidence = uint(confidence)
+				nsReport.Score = defaultScore
+				nsReport.Confidence = confidence
 			}
 		}
-		scoreData.TotalScore += score
-		scoreData.Confidence += nsReport.Confidence
+		totalScore += nsReport.Score
+		totalWeight += float64(ksaWeights.NewsPresses)
+		totalConfidenceWeighted += nsReport.Confidence * float64(ksaWeights.NewsPresses)
 		scoreData.NewsPresses = *nsReport
+	}
+
+	if totalWeight > 0 {
+		scoreData.TotalScore = (totalScore / totalWeight) * 100 // convert to percentage
+		scoreData.Confidence = totalConfidenceWeighted / totalWeight
 	}
 
 	if err := s.ReportRepo.Create(&scoreData); err != nil {
@@ -189,17 +201,20 @@ func (s *reportService) CalculateDevelopmentScore(weight uint, memberID int, use
 			//get average of each post's reaction
 			postAverage := scoreSum / reactionCount
 			// Bayesian smoothing
-			adjustedPostScore := (reactionCount*postAverage + bayesianWeight*float64(kraReport.GlobalAverage)) / (reactionCount + bayesianWeight)
+			bayesianScore := (reactionCount*postAverage + bayesianWeight*float64(kraReport.GlobalAverage)) / (reactionCount + bayesianWeight)
 
 			mu.Lock()
-			totalWeightedScore += adjustedPostScore
+			totalWeightedScore += bayesianScore
 			totalPostsCount += 1
 			mu.Unlock()
 		}(d)
 	}
 	wg.Wait()
 	// average across all posts (including posts with zero reactions as 0)
-	rawDevelopmentScore := totalWeightedScore / totalPostsCount
+	var rawDevelopmentScore float64
+	if totalPostsCount > 0 {
+		rawDevelopmentScore = totalWeightedScore / totalPostsCount
+	}
 	if rawDevelopmentScore < 0 {
 		rawDevelopmentScore = 0
 	}
@@ -208,13 +223,28 @@ func (s *reportService) CalculateDevelopmentScore(weight uint, memberID int, use
 	}
 	//cover to scale 0 - weight
 	scaled := (rawDevelopmentScore / 100.0) * float64(weight)
-	kraReport.Score = uint(math.Round(scaled))
-	kraReport.Confidence = uint(math.Min(100, (totalPostsCount/(totalPostsCount+bayesianWeight))*100))
+	kraReport.Score = math.Round(scaled)
+	kraReport.Confidence = math.Min(100, (totalPostsCount/(totalPostsCount+bayesianWeight))*100)
 	kraReport.LastActivityAt = time.Now()
 	return &kraReport, nil
 }
 
 func (s *reportService) CalculateGrievanceScore(weight uint, memberID int) (*model.GrievanceScore, error) {
+	severityWeightage := map[utils.GrievanceSeverity]float64{
+		utils.GRIEVANCE_LOW:      1.0,
+		utils.GRIEVANCE_MEDIUM:   1.5,
+		utils.GRIEVANCE_HIGH:     2.0,
+		utils.GRIEVANCE_CRITICAL: 2.5,
+	}
+	grievanceStatusWeightage := map[utils.GrievanceStatus]float64{
+		utils.RESOLVED:   1.0,
+		utils.CLOSED:     0.8,
+		utils.INPROGRESS: 0.5,
+		utils.OPEN:       0.3,
+		utils.STAYED:     0.5,
+		utils.NOUPDATE:   0.2,
+		utils.REJECTED:   0.25,
+	}
 	kraReport := model.GrievanceScore{
 		Score:         0,
 		Weight:        weight,
@@ -233,21 +263,103 @@ func (s *reportService) CalculateGrievanceScore(weight uint, memberID int) (*mod
 	if total == 0 {
 		return &kraReport, nil
 	}
-	var closed float64
+	var totalSeverity float64
+	var weightedSum float64
+	var severeUnresolvedCount int
+	var resolvedCount int
+	var totalFeedbackScore float64
 	for _, grievance := range *grievances {
-		if grievance.FinalStatus == utils.COMPLETED || grievance.FinalStatus == utils.FIXED {
-			closed++
-		} else {
-			kraReport.GrievanceIds = append(kraReport.GrievanceIds, grievance.GrievanceID)
+		if grievance.FinalStatus == utils.UNDERREVIEW || grievance.FinalStatus == utils.INVALID {
+			continue
+		}
+
+		//severity weight
+		severityW, ok := severityWeightage[grievance.Severity]
+		if !ok {
+			continue
+		}
+		//status weight
+		statusW, ok := grievanceStatusWeightage[grievance.FinalStatus]
+		if !ok {
+			continue
+		}
+		// If severity HIGH or CRITICAL AND status NO_UPDATE → stronger penalty
+		if (grievance.Severity == utils.GRIEVANCE_HIGH || grievance.Severity == utils.GRIEVANCE_CRITICAL) &&
+			(grievance.FinalStatus == utils.NOUPDATE || grievance.FinalStatus == utils.OPEN) {
+			statusW = 0.1
+			severeUnresolvedCount++
+		}
+
+		//BaseScore becomes equal to Ws after normalization logic
+		baseScore := statusW
+		// 70% weighted grievance score of baseScore (0–100 scale)
+		grievanceScore := (baseScore * 0.70) * 100
+
+		//Feedaback  weight
+		if grievance.FinalStatus == utils.RESOLVED || grievance.FinalStatus == utils.CLOSED {
+			feedbackW := 1.0 //Fetch reactions ....positive feedback
+			if feedbackW < 0 {
+				feedbackW = 0
+			}
+			if feedbackW > 1 {
+				feedbackW = 1
+			}
+			resolvedCount++
+			totalFeedbackScore += feedbackW
+
+			// rest 30% weighted grievance score of feedback (0–100 scale)
+			grievanceScore += (feedbackW * 0.3) * 100
+		}
+
+		// Aggregate weighted by severity
+		weightedSum += grievanceScore * severityW
+		totalSeverity += severityW
+	}
+
+	var finalScore float64
+	if totalSeverity == 0 {
+		finalScore = float64(kraReport.GlobalAverage)
+	} else {
+		finalScore = weightedSum / totalSeverity
+	}
+	// RULE A: Severe Neglect Penalty
+	if severeUnresolvedCount > 0 {
+		finalScore *= 0.7
+	}
+
+	if severeUnresolvedCount >= 3 && finalScore > 40 {
+		finalScore = 40
+	}
+
+	//Horrible Feedback Penalty
+	if resolvedCount > 0 {
+		avgFeedback := totalFeedbackScore / float64(resolvedCount)
+		//If avgFeedback is less then 0.25 then add penalty. Reduce the grievance score by 25% when average user feedback for resolved grievances is very low
+		if avgFeedback < 0.25 {
+			finalScore *= 0.75
+		}
+		if avgFeedback < 0.10 && finalScore > 50 {
+			finalScore = 50
 		}
 	}
-	resolutionRate := closed / float64(total)
-	// Bayesian smoothing
-	bayesianWeight := 30.0
-	adjustedScore := ((float64(total) * resolutionRate) + (bayesianWeight * float64(kraReport.GlobalAverage))) / (float64(total) + bayesianWeight)
 
-	kraReport.Score = uint(float64(weight) * adjustedScore)
-	kraReport.Confidence = uint(math.Min(100, (float64(total)/(float64(total)+bayesianWeight))*100))
+	if finalScore < 0 {
+		finalScore = 0
+	}
+	if finalScore > 100 {
+		finalScore = 100
+	}
+	bayesianWeight := 30.0 // stabilization strength
+	// Not grievance count? Because not all grievances are equal Severity already represents importance.5 CRITICAL grievances is stronger evidence than 5 LOW grievances
+	// It means: “How much meaningful governance evidence do we have?” Not just “how many grievances handled".
+	n := totalSeverity
+	bayesianScore := ((n / (n + bayesianWeight)) * finalScore) + (float64(bayesianWeight) / float64(n+bayesianWeight) * float64(kraReport.GlobalAverage))
+	// if bayesianScore > finalScore {
+	// 	bayesianScore = finalScore
+	// }
+	scaled := (bayesianScore / 100.0) * float64(weight)
+	kraReport.Score = math.Round(scaled)
+	kraReport.Confidence = math.Min(100, (n/(n+bayesianWeight))*100)
 	kraReport.LastActivityAt = time.Now()
 	return &kraReport, nil
 }
@@ -319,16 +431,16 @@ func (s *reportService) CalculateNewsPressesScore(weight uint, memberID int) (*m
 	}
 	//cover to scale 0 - weight
 	scaled := (rawNewsPressScore / 100.0) * float64(weight)
-	kraReport.Score = uint(math.Round(scaled))
-	kraReport.Confidence = uint(math.Min(100, (totalPostsCount/(totalPostsCount+bayesianWeight))*100))
+	kraReport.Score = math.Round(scaled)
+	kraReport.Confidence = math.Min(100, (totalPostsCount/(totalPostsCount+bayesianWeight))*100)
 	kraReport.LastActivityAt = time.Now()
 	return &kraReport, nil
 }
 
-func setDefaultScore(kraWeight uint, globalAvg uint) (float64, float64) {
+func setDefaultScore(kraWeight uint, globalAvg float64) (float64, float64) {
 	//using Bayesian formula
-	score := (float64(globalAvg) / 100) * float64(kraWeight)
-	return score, 0
+	score := (globalAvg / 100.0) * float64(kraWeight)
+	return score, 5 //default to 5
 }
 
 func (s *reportService) GetReport(memberID int) (dto.MemberReport, error) {
@@ -341,36 +453,41 @@ func (s *reportService) GetReport(memberID int) (dto.MemberReport, error) {
 	if report == nil {
 		return memberReport, nil
 	}
-	memberReport.TotalScore = report.TotalScore
+	memberReport.TotalScore = utils.RoundToOneDecimal(report.TotalScore)
+	memberReport.Confidence = utils.RoundToOneDecimal(report.Confidence)
 	memberReport.CreatedAt = report.CreatedAt
 	memberReport.KRAS = dto.KRAReport{
 		Developments: dto.DevelopmentReport{
 			Name:         string(utils.KRA_DEVELOPMENTS),
-			Score:        report.Developments.Score,
+			Score:        utils.RoundToOneDecimal(report.Developments.Score),
+			Confidence:   utils.RoundToOneDecimal(report.Developments.Confidence),
 			Weight:       report.Developments.Weight,
-			Total:        report.Developments.Total,
-			Developments: report.Developments.Developments,
+			Total:        report.Developments.TotalCount,
+			Developments: report.Developments.DevelopmentIds,
 		},
 		Grievances: dto.GrievanceReport{
 			Name:       string(utils.KRA_GRIEVANCES),
-			Score:      report.Grievances.Score,
+			Score:      utils.RoundToOneDecimal(report.Grievances.Score),
+			Confidence: utils.RoundToOneDecimal(report.Grievances.Confidence),
 			Weight:     report.Grievances.Weight,
-			Total:      report.Grievances.Total,
-			Grievances: report.Grievances.Grievances,
+			Total:      report.Grievances.TotalCount,
+			Grievances: report.Grievances.GrievanceIds,
 		},
 		NewsPresses: dto.NewsPressesReport{
 			Name:        string(utils.KRA_NEWSPRESSES),
-			Score:       report.NewsPresses.Score,
+			Score:       utils.RoundToOneDecimal(report.NewsPresses.Score),
+			Confidence:  utils.RoundToOneDecimal(report.NewsPresses.Confidence),
 			Weight:      report.NewsPresses.Weight,
-			Total:       report.NewsPresses.Total,
-			NewsPresses: report.NewsPresses.NewsPresses,
+			Total:       report.NewsPresses.TotalCount,
+			NewsPresses: report.NewsPresses.NewsPressIds,
 		},
 		CALRecords: dto.CALReport{
 			Name:       string(utils.KRA_CALRECORDS),
-			Score:      report.CALRecords.Score,
+			Score:      utils.RoundToOneDecimal(report.CALRecords.Score),
+			Confidence: utils.RoundToOneDecimal(report.CALRecords.Confidence),
 			Weight:     report.CALRecords.Weight,
-			Total:      report.CALRecords.Total,
-			CALRecords: report.CALRecords.CALRecords,
+			Total:      report.CALRecords.TotalCount,
+			CALRecords: report.CALRecords.CALRecordIds,
 		},
 	}
 	return memberReport, nil

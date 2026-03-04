@@ -12,7 +12,8 @@ import (
 type ReportRepository interface {
 	GetReportKRA() ([]model.KRA, error)
 	Create(*model.Score) error
-	GetMemberScore(uint, string) (*model.MemberReport, error)
+	GetMemberScore(uint, string) (*model.Score, error)
+	GetMemberOverallScore(uint) ([]*model.Score, error)
 	GetQuestionnairesByCategory(string) (*[]model.Questionnaire, error)
 }
 
@@ -46,14 +47,14 @@ func (r *reportRepository) Create(scoreData *model.Score) error {
 	return nil
 }
 
-func (r *reportRepository) GetMemberScore(memberID uint, year string) (*model.MemberReport, error) {
-	result := model.MemberReport{
-		MemberID:     uint(memberID),
-		Year:         year,
-		Developments: model.DevelopmentReport{Weight: 40},
-		Grievances:   model.GrievanceReport{Weight: 30},
-		NewsPresses:  model.NewsPressReport{Weight: 15},
-		CALRecords:   model.CALRecordsReport{Weight: 15},
+func (r *reportRepository) GetMemberScore(memberID uint, year string) (*model.Score, error) {
+	result := model.Score{
+		MemberID: uint(memberID),
+		Year:     year,
+		// Developments: model.DevelopmentReport{Weight: 40},
+		// Grievances:   model.GrievanceReport{Weight: 30},
+		// NewsPresses:  model.NewsPressReport{Weight: 15},
+		// CALRecords:   model.CALRecordsReport{Weight: 15},
 	}
 	filter := bson.M{
 		"member_id": memberID,
@@ -68,6 +69,22 @@ func (r *reportRepository) GetMemberScore(memberID uint, year string) (*model.Me
 		log.Warnf("No report found for memberID %d for year %s", memberID, year)
 	}
 	return &result, nil
+}
+
+func (r *reportRepository) GetMemberOverallScore(memberID uint) ([]*model.Score, error) {
+	var scores []*model.Score
+	filter := bson.M{
+		"member_id": memberID,
+	}
+	opts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
+	err := r.MongoDB.FindMany(r.MongoDB.ScoreCollection, filter, opts, &scores)
+	if err != nil {
+		return nil, err
+	}
+	if len(scores) == 0 {
+		log.Warnf("No reports found for memberID %d", memberID)
+	}
+	return scores, nil
 }
 
 func (r *reportRepository) GetQuestionnairesByCategory(feedType string) (*[]model.Questionnaire, error) {

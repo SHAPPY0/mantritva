@@ -28,10 +28,10 @@ type Questionnaire struct {
 type MemberReport struct {
 	ID              primitive.ObjectID `json:"_id" bson:"_id"`
 	MemberID        uint               `json:"member_id" bson:"member_id"`
-	TotalScore      uint               `json:"total_score" bson:"total_score"`
+	TotalScore      float64            `json:"total_score" bson:"total_score"`
 	MaxScore        uint               `json:"max_score" bson:"max_score"`
 	Year            string             `json:"year" bson:"year"`
-	Confidence      uint               `json:"confidence" bson:"confidence"`
+	Confidence      float64            `json:"confidence" bson:"confidence"`
 	Developments    DevelopmentReport  `json:"developments" bson:"developments"`
 	Grievances      GrievanceReport    `json:"grievances" bson:"grievances"`
 	NewsPresses     NewsPressReport    `json:"news_presses" bson:"news_presses"`
@@ -47,37 +47,37 @@ type MemberReportKRA struct {
 }
 
 type DevelopmentReport struct {
-	Score         uint     `json:"score" bson:"score"`
+	Score         float64  `json:"score" bson:"score"`
 	Weight        uint     `json:"weight" bson:"weight"`
 	Total         uint     `json:"total" bson:"total"`
-	Confidence    uint     `json:"confidence" bson:"confidence"`
-	GlobalAverage uint     `json:"global_average" bson:"global_average"`
+	Confidence    float64  `json:"confidence" bson:"confidence"`
+	GlobalAverage float64  `json:"global_average" bson:"global_average"`
 	Developments  []string `json:"developments" bson:"developments"` //Ids of developments, can be used to fetch details if needed
 }
 
 type GrievanceReport struct {
-	Score         uint     `json:"score" bson:"score"`
+	Score         float64  `json:"score" bson:"score"`
 	Weight        uint     `json:"weight" bson:"weight"`
 	Total         uint     `json:"total" bson:"total"`
-	Confidence    uint     `json:"confidence" bson:"confidence"`
-	GlobalAverage uint     `json:"global_average" bson:"global_average"`
+	Confidence    float64  `json:"confidence" bson:"confidence"`
+	GlobalAverage float64  `json:"global_average" bson:"global_average"`
 	Grievances    []string `json:"grievances" bson:"grievances"`
 }
 
 type NewsPressReport struct {
-	Score         uint     `json:"score" bson:"score"`
+	Score         float64  `json:"score" bson:"score"`
 	Weight        uint     `json:"weight" bson:"weight"`
 	Total         uint     `json:"total" bson:"total"`
-	Confidence    uint     `json:"confidence" bson:"confidence"`
-	GlobalAverage uint     `json:"global_average" bson:"global_average"`
+	Confidence    float64  `json:"confidence" bson:"confidence"`
+	GlobalAverage float64  `json:"global_average" bson:"global_average"`
 	NewsPresses   []string `json:"news_presses" bson:"news_presses"`
 }
 
 type CALRecordsReport struct {
-	Score         uint     `json:"score" bson:"score"`
+	Score         float64  `json:"score" bson:"score"`
 	Weight        uint     `json:"weight" bson:"weight"`
 	Total         uint     `json:"total" bson:"total"`
-	Confidence    uint     `json:"confidence" bson:"confidence"`
-	GlobalAverage uint     `json:"global_average" bson:"global_average"`
+	Confidence    float64  `json:"confidence" bson:"confidence"`
+	GlobalAverage float64  `json:"global_average" bson:"global_average"`
 	CALRecords    []string `json:"cal_records" bson:"cal_records"`
 }

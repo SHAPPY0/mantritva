@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 	"sort"
 	"time"
@@ -76,4 +77,16 @@ func CompareIntSlices(a, b []int) bool {
 
 func IsEmpty(s interface{}) bool {
 	return reflect.DeepEqual(s, reflect.Zero(reflect.TypeOf(s)).Interface())
+}
+
+func RoundToOneDecimal(val float64) float64 {
+	if val == 0 {
+		return 0
+	}
+	rounded := math.Round(val*10) / 10
+	if rounded == 0 {
+		return 0
+	}
+
+	return rounded
 }

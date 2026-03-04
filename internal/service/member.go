@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"mime/multipart"
 
@@ -177,20 +176,30 @@ func (s *memberService) GetByName(name string) (*dto.MemberRes, error) {
 		data.Position = leadership.Position
 		data.Departments = leadership.Departments
 	}
-	currentYear := time.Now().Format("2006")
-	score, err := s.ReportRepository.GetMemberScore(member.ID, currentYear)
-	data.Score = &dto.MemberScore{
-		Year: currentYear,
-	}
-	if err != nil {
-		log.Warnf("No score found for member %s", memberName)
-	} else if score != nil {
-		data.Score.MaxScore = score.MaxScore
-		data.Score.Score = score.TotalScore
-		data.Score.Year = score.Year
-		data.Score.UpdatedAt = score.CreatedAt.String()
-	}
+	// currentYear := time.Now().Format("2006")
+	var totalWeightedScore float64
+	var totalConfidence float64
+	memberScore := &dto.MemberScore{MaxScore: 100}
 
+	reports, err := s.ReportRepository.GetMemberOverallScore(member.ID)
+	if err != nil {
+		log.Warnf("No reports found for memberID %d", member.ID)
+	}
+	for _, report := range reports {
+		if report.Confidence <= 0 {
+			continue
+		}
+		totalWeightedScore += report.TotalScore * report.Confidence
+		totalConfidence += report.Confidence
+	}
+	if totalConfidence == 0 {
+		memberScore.Score = 0
+		memberScore.Confidence = 0
+	} else {
+		memberScore.Score = utils.RoundToOneDecimal(totalWeightedScore / totalConfidence)
+		memberScore.Confidence = utils.RoundToOneDecimal(totalConfidence / float64(len(reports)))
+	}
+	data.Score = memberScore
 	return &data, nil
 }
 
@@ -216,18 +225,28 @@ func (s *memberService) GetByID(id uint) (*dto.MemberRes, error) {
 	data.Position = leadership.Position
 	data.Departments = leadership.Departments
 
-	score, err := s.ReportRepository.GetMemberScore(member.ID, time.Now().Format("2006"))
+	var totalWeightedScore float64
+	var totalConfidence float64
+	memberScore := &dto.MemberScore{MaxScore: 100}
+	reports, err := s.ReportRepository.GetMemberOverallScore(member.ID)
 	if err != nil {
-		log.Warnf("No score found for memberID %d", member.ID)
-	} else if score != nil {
-		data.Score = &dto.MemberScore{
-			Score:     score.TotalScore,
-			MaxScore:  score.MaxScore,
-			Year:      score.Year,
-			UpdatedAt: score.CreatedAt.String(),
-		}
+		log.Warnf("No reports found for memberID %d", member.ID)
 	}
-
+	for _, report := range reports {
+		if report.Confidence <= 0 {
+			continue
+		}
+		totalWeightedScore += report.TotalScore * report.Confidence
+		totalConfidence += report.Confidence
+	}
+	if totalConfidence == 0 {
+		memberScore.Score = 0
+		memberScore.Confidence = 0
+	} else {
+		memberScore.Score = utils.RoundToOneDecimal(totalWeightedScore / totalConfidence)
+		memberScore.Confidence = utils.RoundToOneDecimal(totalConfidence / float64(len(reports)))
+	}
+	data.Score = memberScore
 	return &data, nil
 }
 

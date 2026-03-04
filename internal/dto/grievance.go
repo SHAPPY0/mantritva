@@ -9,23 +9,25 @@ import (
 )
 
 type GrievanceReq struct {
-	Type                 string         `json:"type" form:"type"`
-	SubType              string         `json:"subtype" form:"subtype"`
-	Level                string         `json:"level" form:"level"`
-	CenterSubLevel       string         `json:"center_sublevel" form:"center_sublevel"`
-	CabinetMinisterID    uint           `json:"cabinet_minister_id" form:"cabinet_minister_id" binding:"omitempty"`
-	MemberOfParliamentID uint           `json:"member_of_parliament_id" form:"member_of_parliament_id" binding:"omitempty"`
-	StateID              uint           `json:"state_id" form:"state_id" binding:"omitempty"`
-	DistrictID           uint           `json:"district_id" form:"district_id" binding:"omitempty"`
-	StateLeaderID        uint           `json:"state_leader_id" form:"state_leader_id" binding:"omitempty"`
-	Title                string         `json:"title" form:"title"`
-	Description          string         `json:"description" form:"description"`
-	HideIdentity         bool           `json:"hide_identity" form:"hide_identity"`
-	DateOfIncident       utils.DateOnly `json:"date_of_incident" form:"date_of_incident"`
-	Location             string         `json:"location" form:"location"`
-	Impact               string         `json:"impact" form:"impact"`
+	Type                 string                  `json:"type" form:"type"`
+	SubType              string                  `json:"subtype" form:"subtype"`
+	Level                string                  `json:"level" form:"level"`
+	CenterSubLevel       string                  `json:"center_sublevel" form:"center_sublevel"`
+	CabinetMinisterID    uint                    `json:"cabinet_minister_id" form:"cabinet_minister_id" binding:"omitempty"`
+	MemberOfParliamentID uint                    `json:"member_of_parliament_id" form:"member_of_parliament_id" binding:"omitempty"`
+	StateID              uint                    `json:"state_id" form:"state_id" binding:"omitempty"`
+	DistrictID           uint                    `json:"district_id" form:"district_id" binding:"omitempty"`
+	StateLeaderID        uint                    `json:"state_leader_id" form:"state_leader_id" binding:"omitempty"`
+	Title                string                  `json:"title" form:"title"`
+	Description          string                  `json:"description" form:"description"`
+	HideIdentity         bool                    `json:"hide_identity" form:"hide_identity"`
+	DateOfIncident       utils.DateOnly          `json:"date_of_incident" form:"date_of_incident"`
+	Location             string                  `json:"location" form:"location"`
+	Impact               string                  `json:"impact" form:"impact"`
+	Severity             utils.GrievanceSeverity `json:"severity" form:"severity"`
 	// Evidences            []EvidenceReq      `json:"evidences" form:"evidences"`
-	FinalStatus utils.GrievanceStatus `json:"FinalStatus" form:"finalStatus"`
+	SLA         *utils.DateOnly       `json:"sla" form:"sla"`
+	FinalStatus utils.GrievanceStatus `json:"final_status" form:"final_status"`
 	// Updates              []GrievanceUpdates `json:"updates" form:"updates"`
 	CreatedBy string `json:"created_by"`
 }

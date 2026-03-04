@@ -16,7 +16,8 @@ type KRAWeights struct {
 
 type MemberReport struct {
 	MemberID   uint      `json:"member_id"`
-	TotalScore uint      `json:"total_score"`
+	TotalScore float64   `json:"total_score"`
+	Confidence float64   `json:"confidence"`
 	Year       string    `json:"year"`
 	KRAS       KRAReport `json:"kras"`
 	CreatedAt  time.Time `json:"created_at"`
@@ -31,7 +32,8 @@ type KRAReport struct {
 
 type DevelopmentReport struct {
 	Name         string   `json:"name"`
-	Score        uint     `json:"score"`
+	Score        float64  `json:"score"`
+	Confidence   float64  `json:"confidence"`
 	Weight       uint     `json:"weight"`
 	Total        uint     `json:"total"`
 	Developments []string `json:"developments"`
@@ -39,7 +41,8 @@ type DevelopmentReport struct {
 
 type GrievanceReport struct {
 	Name       string   `json:"name"`
-	Score      uint     `json:"score"`
+	Score      float64  `json:"score"`
+	Confidence float64  `json:"confidence"`
 	Weight     uint     `json:"weight"`
 	Total      uint     `json:"total"`
 	Grievances []string `json:"grievances"`
@@ -47,7 +50,8 @@ type GrievanceReport struct {
 
 type NewsPressesReport struct {
 	Name        string   `json:"name"`
-	Score       uint     `json:"score"`
+	Score       float64  `json:"score"`
+	Confidence  float64  `json:"confidence"`
 	Weight      uint     `json:"weight"`
 	Total       uint     `json:"total"`
 	NewsPresses []string `json:"news_presses"`
@@ -55,17 +59,19 @@ type NewsPressesReport struct {
 
 type CALReport struct {
 	Name       string   `json:"name"`
-	Score      uint     `json:"score"`
+	Score      float64  `json:"score"`
+	Confidence float64  `json:"confidence"`
 	Weight     uint     `json:"weight"`
 	Total      uint     `json:"total"`
 	CALRecords []string `json:"cal_records"`
 }
 
 type MemberScore struct {
-	Score     uint   `json:"score"`
-	MaxScore  uint   `json:"max_score"`
-	Year      string `json:"year"`
-	UpdatedAt string `json:"updated_at"`
+	Score      float64 `json:"score"`
+	MaxScore   uint    `json:"max_score"`
+	Confidence float64 `json:"confidence"`
+	Year       *string `json:"year,omitempty"`
+	UpdatedAt  *string `json:"updated_at,omitempty"`
 }
 
 type Questionnaire struct {
