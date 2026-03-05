@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/pkg/config"
+	"github.com/shappy0/mantritva/pkg/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -49,6 +50,7 @@ func (r *developmentWelfareRepository) GetPostByID(id primitive.ObjectID) (*mode
 	filter := bson.M{"_id": id}
 	opts := options.FindOne()
 	if _, err := r.DB.FindOne(r.DB.DevelopmentWelfare, filter, opts, &devWel); err != nil {
+		log.Errorf("Error while fetching development post %v", err)
 		return nil, err
 	}
 	return &devWel, nil

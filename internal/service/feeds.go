@@ -363,8 +363,10 @@ func (s *feedService) GetDevelopmentWelfareShort(userID int, postID primitive.Ob
 	var devWelRes dto.DevelopmentWelfareShort
 	devWel, err := s.DevelopmentWelfareRepository.GetPostByID(postID)
 	if err != nil {
+		log.Errorf("Error fetching development welfare post by id %s: %v", postID, err)
 		return &devWelRes, err
 	}
+	log.Infof("Got development welfare post: %+v", devWel)
 	devWelFeed := dto.DevelopmentWelfareShort{
 		ID:               devWel.ID.Hex(),
 		Category:         devWel.Category,
