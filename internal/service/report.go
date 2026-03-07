@@ -17,6 +17,8 @@ import (
 type ReportService interface {
 	GenerateReport(int) (*model.Score, error)
 	GetReport(int) (dto.MemberReport, error)
+	GetMemberReports(int, int, int) ([]dto.MemberReport, error)
+	// GetMemberReportCard(string) (dto.MemberReportCard, error)
 }
 
 type reportService struct {
@@ -43,12 +45,12 @@ func (s *reportService) GenerateReport(memberID int) (*model.Score, error) {
 	var totalScore float64
 	var totalWeight float64
 	var totalConfidenceWeighted float64
-
+	currentYear := time.Now().Year()
 	scoreData := model.Score{
 		ID:              primitive.NewObjectID(),
 		MemberID:        uint(memberID),
 		MaxScore:        100,
-		Year:            time.Now().Format("2006"),
+		Year:            currentYear,
 		Version:         1,
 		AuditFieldsBSON: model.InsertBSONAuditFields(""),
 	}
@@ -443,20 +445,11 @@ func setDefaultScore(kraWeight uint, globalAvg float64) (float64, float64) {
 	return score, 5 //default to 5
 }
 
-func (s *reportService) GetReport(memberID int) (dto.MemberReport, error) {
-	currentYear := time.Now().Format("2006")
-	memberReport := dto.MemberReport{MemberID: uint(memberID), Year: currentYear}
-	report, err := s.ReportRepo.GetMemberScore(uint(memberID), currentYear)
-	if err != nil {
-		return memberReport, err
-	}
-	if report == nil {
-		return memberReport, nil
-	}
-	memberReport.TotalScore = utils.RoundToOneDecimal(report.TotalScore)
-	memberReport.Confidence = utils.RoundToOneDecimal(report.Confidence)
-	memberReport.CreatedAt = report.CreatedAt
-	memberReport.KRAS = dto.KRAReport{
+func prepareReport(report *model.Score, memberReportResult *dto.MemberReport) {
+	memberReportResult.TotalScore = utils.RoundToOneDecimal(report.TotalScore)
+	memberReportResult.Confidence = utils.RoundToOneDecimal(report.Confidence)
+	memberReportResult.CreatedAt = report.CreatedAt
+	memberReportResult.KRAS = dto.KRAReport{
 		Developments: dto.DevelopmentReport{
 			Name:         string(utils.KRA_DEVELOPMENTS),
 			Score:        utils.RoundToOneDecimal(report.Developments.Score),
@@ -490,5 +483,32 @@ func (s *reportService) GetReport(memberID int) (dto.MemberReport, error) {
 			CALRecords: report.CALRecords.CALRecordIds,
 		},
 	}
+}
+
+func (s *reportService) GetReport(memberID int) (dto.MemberReport, error) {
+	currentYear := time.Now().Year()
+	memberReport := dto.MemberReport{MemberID: uint(memberID), Year: currentYear}
+	report, err := s.ReportRepo.GetMemberScore(uint(memberID), currentYear)
+	if err != nil {
+		return memberReport, err
+	}
+	if report == nil {
+		return memberReport, nil
+	}
+	prepareReport(report, &memberReport)
 	return memberReport, nil
+}
+
+func (s *reportService) GetMemberReports(memberID int, from, to int) ([]dto.MemberReport, error) {
+	memberReports := make([]dto.MemberReport, 0)
+	reports, err := s.ReportRepo.GetMemberScoreReports(uint(memberID), from, to)
+	if err != nil {
+		return memberReports, nil
+	}
+	for _, report := range reports {
+		memberReport := dto.MemberReport{MemberID: uint(memberID), Year: report.Year}
+		prepareReport(report, &memberReport)
+		memberReports = append(memberReports, memberReport)
+	}
+	return memberReports, nil
 }

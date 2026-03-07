@@ -9,7 +9,7 @@ import (
 type Score struct {
 	ID              primitive.ObjectID `json:"_id" bson:"_id"`
 	MemberID        uint               `json:"member_id" bson:"member_id"`
-	Year            string             `json:"year" bson:"year"`
+	Year            int                `json:"year" bson:"year"`
 	TotalScore      float64            `json:"total_score" bson:"total_score"`
 	MaxScore        uint               `json:"max_score" bson:"max_score"`
 	Confidence      float64            `json:"confidence" bson:"confidence"`

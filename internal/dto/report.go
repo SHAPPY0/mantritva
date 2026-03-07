@@ -18,7 +18,7 @@ type MemberReport struct {
 	MemberID   uint      `json:"member_id"`
 	TotalScore float64   `json:"total_score"`
 	Confidence float64   `json:"confidence"`
-	Year       string    `json:"year"`
+	Year       int       `json:"year"`
 	KRAS       KRAReport `json:"kras"`
 	CreatedAt  time.Time `json:"created_at"`
 }
@@ -88,4 +88,12 @@ type FeedReactionItem struct {
 	Reaction string
 	UserID   int
 	PostID   primitive.ObjectID
+}
+
+type MemberReportCard struct {
+	Member
+	From         int            `json:"from"`
+	To           int            `json:"to"`
+	OverallScore MemberScore    `json:"overall_score"`
+	Reports      []MemberReport `json:"reports"`
 }

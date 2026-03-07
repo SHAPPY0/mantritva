@@ -12,11 +12,13 @@ import (
 
 type MemberHandler struct {
 	Service service.MemberService
+	Report  service.ReportService
 }
 
-func NewMemberHandler(serivce service.MemberService) *MemberHandler {
+func NewMemberHandler(svc *service.Services) *MemberHandler {
 	return &MemberHandler{
-		Service: serivce,
+		Service: svc.MemberService,
+		Report:  svc.ReportService,
 	}
 }
 
@@ -167,4 +169,53 @@ func (h *MemberHandler) GetDevelopmentWelfareByMemberID(c *gin.Context) {
 		return
 	}
 	utils.Success(c, "", posts)
+}
+
+func (h *MemberHandler) GetMemberReportCard(c *gin.Context) {
+	memberName := c.Param("name")
+	if memberName == "" {
+		utils.Error(c, 400, "Invalid member name", nil)
+		return
+	}
+	from := c.Query("from")
+	if from == "" {
+		utils.Error(c, 400, "Please pass From Year", nil)
+		return
+	}
+	fromx, err := utils.StrToInt(from)
+	if err != nil {
+		utils.Error(c, 400, "Invalid from year", nil)
+		return
+	}
+	to := c.Query("to")
+	if to == "" {
+		utils.Error(c, 400, "Please pass To Year", nil)
+		return
+	}
+	tox, err := utils.StrToInt(to)
+	if err != nil {
+		utils.Error(c, 400, "Invalid to year", nil)
+		return
+	}
+	reportCard := dto.MemberReportCard{From: fromx, To: tox}
+	member, err := h.Service.GetByName(memberName)
+	if err != nil {
+		utils.Error(c, 500, "Failed to fetch member detail", err)
+		return
+	}
+	reportCard.Member = dto.Member{
+		Name:     member.Name,
+		Photo:    member.Photo,
+		Position: member.Position,
+		Party:    member.Party,
+	}
+	reportCard.OverallScore = *member.Score
+	reportCard.Reports = make([]dto.MemberReport, 0)
+
+	reports, err := h.Report.GetMemberReports(int(member.ID), fromx, tox)
+	if err != nil {
+	} else {
+		reportCard.Reports = reports
+	}
+	utils.Success(c, "", reportCard)
 }

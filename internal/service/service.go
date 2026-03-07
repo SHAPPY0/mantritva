@@ -8,6 +8,7 @@ type Services struct {
 	FeedService               FeedService
 	ConsoleService            ConsoleService
 	GrievanceService          GrievanceSerivce
+	MemberService             MemberService
 	ReportService             ReportService
 	EventService              EventService
 	DevelopmentWelfareService DevelopmentWelfareService
@@ -20,6 +21,7 @@ func NewServices(repos *repository.Repos) *Services {
 		NewsPressService:          NewNewsPressService(repos),
 		FeedService:               NewFeedService(repos),
 		ConsoleService:            NewConsoleService(repos),
+		MemberService:             NewMemberService(repos),
 		GrievanceService:          NewGrievanceService(repos),
 		ReportService:             NewReportService(repos),
 		EventService:              NewEventService(repos),

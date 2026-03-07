@@ -3,14 +3,12 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/api/handler"
-	"github.com/shappy0/mantritva/internal/repository"
 	"github.com/shappy0/mantritva/internal/service"
 	"github.com/shappy0/mantritva/pkg/auth"
 )
 
-func memberRouter(rg *gin.RouterGroup, repos *repository.Repos) *gin.RouterGroup {
-	service := service.NewMemberService(repos)
-	handler := handler.NewMemberHandler(service)
+func memberRouter(rg *gin.RouterGroup, services *service.Services) *gin.RouterGroup {
+	handler := handler.NewMemberHandler(services)
 
 	member := rg.Group("/member")
 	{
@@ -23,6 +21,7 @@ func memberRouter(rg *gin.RouterGroup, repos *repository.Repos) *gin.RouterGroup
 		member.GET("/id/:memberID/grievances", handler.GetGrievancesByMemberID)
 		member.GET("/id/:memberID/development-welfare", handler.GetDevelopmentWelfareByMemberID)
 		member.GET("/unaffiliated", handler.ListUnaffiliatedMembers)
+		member.GET("/:name/reportCard", handler.GetMemberReportCard)
 	}
 	return rg
 }

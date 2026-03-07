@@ -373,7 +373,7 @@ func (s *feedService) GetDevelopmentWelfareShort(userID int, postID primitive.Ob
 		Type:             devWel.Type,
 		Name:             devWel.Name,
 		Description:      devWel.Description,
-		AnnouncementDate: utils.DateOnly{Time: devWel.AnnouncementDate},
+		AnnouncementDate: devWel.AnnouncementDate,
 		Status:           utils.DevelopmentStatus(devWel.Status),
 		CreatedAt:        devWel.CreatedAt,
 	}

@@ -40,7 +40,7 @@ func SetupRouter(db *gorm.DB, mongoDB *config.MongoDB) *gin.Engine {
 		vidhanSabhaRouter(v1, db)
 		partyRouter(v1, repos)
 		allianceRouter(v1, db)
-		memberRouter(v1, repos)
+		memberRouter(v1, services)
 		rulersRouter(v1, repos)
 		leadershipRouter(v1, repos)
 		newsPressRouter(v1, services)

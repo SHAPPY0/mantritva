@@ -12,7 +12,8 @@ import (
 type ReportRepository interface {
 	GetReportKRA() ([]model.KRA, error)
 	Create(*model.Score) error
-	GetMemberScore(uint, string) (*model.Score, error)
+	GetMemberScore(uint, int) (*model.Score, error)
+	GetMemberScoreReports(uint, int, int) ([]*model.Score, error)
 	GetMemberOverallScore(uint) ([]*model.Score, error)
 	GetQuestionnairesByCategory(string) (*[]model.Questionnaire, error)
 }
@@ -47,7 +48,7 @@ func (r *reportRepository) Create(scoreData *model.Score) error {
 	return nil
 }
 
-func (r *reportRepository) GetMemberScore(memberID uint, year string) (*model.Score, error) {
+func (r *reportRepository) GetMemberScore(memberID uint, year int) (*model.Score, error) {
 	result := model.Score{
 		MemberID: uint(memberID),
 		Year:     year,
@@ -99,4 +100,22 @@ func (r *reportRepository) GetQuestionnairesByCategory(feedType string) (*[]mode
 		r.QuestionnaireCache[feedType] = &questionnaire
 	}
 	return &questionnaire, nil
+}
+
+func (r *reportRepository) GetMemberScoreReports(memberID uint, from, to int) ([]*model.Score, error) {
+	var scores []*model.Score
+	filter := bson.M{
+		"member_id":  memberID,
+		"year":       bson.M{"$gte": from, "$lte": to},
+		"is_deleted": false,
+	}
+	opts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
+	err := r.MongoDB.FindMany(r.MongoDB.ScoreCollection, filter, opts, &scores)
+	if err != nil {
+		return nil, err
+	}
+	if len(scores) == 0 {
+		log.Warnf("No reports found for memberID %d", memberID)
+	}
+	return scores, nil
 }

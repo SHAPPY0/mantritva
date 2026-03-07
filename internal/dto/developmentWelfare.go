@@ -45,7 +45,7 @@ type DevelopmentWelfareShort struct {
 	Description      string                  `json:"description"`
 	Member           Member                  `json:"member,omitempty"`
 	Party            Party                   `json:"party,omitempty"`
-	AnnouncementDate utils.DateOnly          `json:"announcement_date"`
+	AnnouncementDate *time.Time              `json:"announcement_date"`
 	Status           utils.DevelopmentStatus `json:"status"`
 	Reaction         utils.Vote              `json:"reaction"`
 	UpvoteCount      uint                    `json:"upvote_count"`
