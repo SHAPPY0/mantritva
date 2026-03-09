@@ -187,6 +187,7 @@ func (s *reportService) CalculateDevelopmentScore(weight uint, memberID int, use
 		go func(_development model.DevelopmentWelfare) {
 			defer wg.Done()
 			defer func() { <-sem }()
+
 			reactions, err := s.ReactionRepo.GetByPostID(d.ID)
 			if err != nil {
 				log.Errorf("Error fetching reaction of development %d", d.ID)
@@ -198,15 +199,16 @@ func (s *reportService) CalculateDevelopmentScore(weight uint, memberID int, use
 			}
 			var scoreSum float64
 			for _, reaction := range reactions {
-				scoreSum += float64(reaction.NormalizedScore)
+				normalizedScore := math.Max(0, math.Min(100, float64(reaction.NormalizedScore)))
+				scoreSum += normalizedScore
 			}
 			//get average of each post's reaction
 			postAverage := scoreSum / reactionCount
 			// Bayesian smoothing
-			bayesianScore := (reactionCount*postAverage + bayesianWeight*float64(kraReport.GlobalAverage)) / (reactionCount + bayesianWeight)
+			// bayesianScore := (reactionCount*postAverage + bayesianWeight*float64(kraReport.GlobalAverage)) / (reactionCount + bayesianWeight)
 
 			mu.Lock()
-			totalWeightedScore += bayesianScore
+			totalWeightedScore += postAverage
 			totalPostsCount += 1
 			mu.Unlock()
 		}(d)
@@ -217,6 +219,14 @@ func (s *reportService) CalculateDevelopmentScore(weight uint, memberID int, use
 	if totalPostsCount > 0 {
 		rawDevelopmentScore = totalWeightedScore / totalPostsCount
 	}
+
+	//Apply Bayesian smoothing Once at the aggregate level
+	//This balances between the calculated score and the gloabl average.
+	if totalPostsCount+bayesianWeight > 0 {
+		bayesianScore := ((totalPostsCount * rawDevelopmentScore) + (bayesianWeight * float64(kraReport.GlobalAverage))) / (totalPostsCount + bayesianWeight)
+		rawDevelopmentScore = bayesianScore
+	}
+
 	if rawDevelopmentScore < 0 {
 		rawDevelopmentScore = 0
 	}
@@ -226,7 +236,11 @@ func (s *reportService) CalculateDevelopmentScore(weight uint, memberID int, use
 	//cover to scale 0 - weight
 	scaled := (rawDevelopmentScore / 100.0) * float64(weight)
 	kraReport.Score = math.Round(scaled)
-	kraReport.Confidence = math.Min(100, (totalPostsCount/(totalPostsCount+bayesianWeight))*100)
+	if (totalPostsCount + bayesianWeight) == 0 {
+		kraReport.Confidence = 5.0
+	} else {
+		kraReport.Confidence = math.Min(100, (totalPostsCount/(totalPostsCount+bayesianWeight))*100)
+	}
 	kraReport.LastActivityAt = time.Now()
 	return &kraReport, nil
 }
@@ -269,12 +283,12 @@ func (s *reportService) CalculateGrievanceScore(weight uint, memberID int) (*mod
 	var weightedSum float64
 	var severeUnresolvedCount int
 	var resolvedCount int
-	var totalFeedbackScore float64
+	var totalReactionScore float64
+
 	for _, grievance := range *grievances {
 		if grievance.FinalStatus == utils.UNDERREVIEW || grievance.FinalStatus == utils.INVALID {
 			continue
 		}
-
 		//severity weight
 		severityW, ok := severityWeightage[grievance.Severity]
 		if !ok {
@@ -299,20 +313,38 @@ func (s *reportService) CalculateGrievanceScore(weight uint, memberID int) (*mod
 
 		//Feedaback  weight
 		if grievance.FinalStatus == utils.RESOLVED || grievance.FinalStatus == utils.CLOSED {
-			feedbackW := 1.0 //Fetch reactions ....positive feedback
-			if feedbackW < 0 {
-				feedbackW = 0
+			var reactionScore float64
+			var scoreSum float64
+			reactions, err := s.ReactionRepo.GetByPostID(grievance.ID)
+			if err == nil {
+				reactionCount := float64(len(reactions))
+				if reactionCount == 0 {
+					log.Warnf("No reaction found for grievance %d", grievance.ID)
+					reactionScore = 0.0 //Default to 0 if no reactions
+				} else {
+					for _, reaction := range reactions {
+						if reaction.NormalizedScore < 0 || reaction.NormalizedScore > 100 {
+							log.Warnf("Invalid normalizeScore %d for reaction in grievance %d clamping to 0-100", reaction.NormalizedScore, grievance.ID)
+						}
+						normalizedScore := math.Max(0, math.Min(100, float64(reaction.NormalizedScore)))
+						scoreSum += normalizedScore
+					}
+					//Calculate average feedback score (0-100) then normalize 0-1 for weight
+					avgReactionScore := scoreSum / reactionCount
+					reactionScore = avgReactionScore / 100.0 //Normalize to 0-1 scale
+				}
+			} else {
+				reactionScore = 0.0 // Default to 0 on error
+				log.Errorf("Error while fetching reaction of grievance %s", grievance.GrievanceID)
 			}
-			if feedbackW > 1 {
-				feedbackW = 1
-			}
+			// Clamp reactionScore to 0-1 (though it should already be)
+			reactionScore = math.Max(0, math.Min(1, reactionScore))
 			resolvedCount++
-			totalFeedbackScore += feedbackW
-
-			// rest 30% weighted grievance score of feedback (0–100 scale)
-			grievanceScore += (feedbackW * 0.3) * 100
+			totalReactionScore += reactionScore
+			// Rest 30% weighted grievance score of feedback (0–100 scale)
+			// Use reactionScore (0-1) scaled to contribute 0-30 to grievanceScore
+			grievanceScore += (reactionScore * 0.3) * 100
 		}
-
 		// Aggregate weighted by severity
 		weightedSum += grievanceScore * severityW
 		totalSeverity += severityW
@@ -335,12 +367,12 @@ func (s *reportService) CalculateGrievanceScore(weight uint, memberID int) (*mod
 
 	//Horrible Feedback Penalty
 	if resolvedCount > 0 {
-		avgFeedback := totalFeedbackScore / float64(resolvedCount)
-		//If avgFeedback is less then 0.25 then add penalty. Reduce the grievance score by 25% when average user feedback for resolved grievances is very low
-		if avgFeedback < 0.25 {
+		avgReaction := totalReactionScore / float64(resolvedCount)
+		//If avgReaction is less then 0.25 then add penalty. Reduce the grievance score by 25% when average user feedback for resolved grievances is very low
+		if avgReaction < 0.25 {
 			finalScore *= 0.75
 		}
-		if avgFeedback < 0.10 && finalScore > 50 {
+		if avgReaction < 0.10 && finalScore > 50 {
 			finalScore = 50
 		}
 	}
@@ -355,11 +387,15 @@ func (s *reportService) CalculateGrievanceScore(weight uint, memberID int) (*mod
 	// Not grievance count? Because not all grievances are equal Severity already represents importance.5 CRITICAL grievances is stronger evidence than 5 LOW grievances
 	// It means: “How much meaningful governance evidence do we have?” Not just “how many grievances handled".
 	n := totalSeverity
-	bayesianScore := ((n / (n + bayesianWeight)) * finalScore) + (float64(bayesianWeight) / float64(n+bayesianWeight) * float64(kraReport.GlobalAverage))
-	// if bayesianScore > finalScore {
-	// 	bayesianScore = finalScore
-	// }
-	scaled := (bayesianScore / 100.0) * float64(weight)
+	//prevent division by zero in Bayesian calculation
+	if n+bayesianWeight == 0 {
+		finalScore = float64(kraReport.GlobalAverage)
+	} else {
+		bayesianScore := ((n / (n + bayesianWeight)) * finalScore) + (float64(bayesianWeight) / float64(n+bayesianWeight) * float64(kraReport.GlobalAverage))
+		finalScore = bayesianScore
+	}
+
+	scaled := (finalScore / 100.0) * float64(weight)
 	kraReport.Score = math.Round(scaled)
 	kraReport.Confidence = math.Min(100, (n/(n+bayesianWeight))*100)
 	kraReport.LastActivityAt = time.Now()

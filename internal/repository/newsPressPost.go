@@ -19,7 +19,7 @@ type NewsPressPostRepository interface {
 	List() ([]model.NewsPressPost, error)
 	GetPostByID(primitive.ObjectID) (*model.NewsPressPost, error)
 	ConsoleGetNewsPressPostByID(primitive.ObjectID) (*model.NewsPressPost, error)
-	UpdatePostVoteCountsByID(primitive.ObjectID, uint, uint) error
+	UpdateVoteCountsByID(primitive.ObjectID, uint, uint) error
 	// UpdateVote(postID string, upvoteChange int, downvoteChange int) error
 	ConsoleGetNewsPressList() ([]model.NewsPressPost, error)
 	GetPostsByPartyID(pagination dto.Pagination, partyID int) (*[]model.NewsPressPost, error)
@@ -85,7 +85,7 @@ func (r *newsPressPostRepository) ConsoleGetNewsPressPostByID(id primitive.Objec
 	return &newsPressPost, nil
 }
 
-func (r *newsPressPostRepository) UpdatePostVoteCountsByID(postID primitive.ObjectID, upvoteCount, donwvoteCount uint) error {
+func (r *newsPressPostRepository) UpdateVoteCountsByID(postID primitive.ObjectID, upvoteCount, donwvoteCount uint) error {
 	filter := bson.M{"_id": postID}
 	update := bson.M{"$set": bson.M{"upvote_count": upvoteCount, "downvote_count": donwvoteCount}}
 

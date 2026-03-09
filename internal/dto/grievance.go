@@ -6,6 +6,7 @@ import (
 
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/pkg/utils"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type GrievanceReq struct {
@@ -45,12 +46,13 @@ type EvidenceReq struct {
 
 type GrievanceRes struct {
 	model.Grievance
-	CabinetMinister    *Member      `json:"cabinet_minister,omitempty"`
-	MemberOfParliament *Member      `json:"member_of_parliament,omitempty"`
-	StateLeader        *Member      `json:"state_leader,omitempty"`
-	State              *model.State `json:"state,omitempty"`
-	District           string       `json:"district,omitempty"`
-	User               UserClaim    `json:"user,omitempty"`
+	CabinetMinister    *Member         `json:"cabinet_minister,omitempty"`
+	MemberOfParliament *Member         `json:"member_of_parliament,omitempty"`
+	StateLeader        *Member         `json:"state_leader,omitempty"`
+	State              *model.State    `json:"state,omitempty"`
+	District           string          `json:"district,omitempty"`
+	User               UserClaim       `json:"user,omitempty"`
+	Questionnaire      []Questionnaire `json:"questionnaire,omitempty"`
 }
 
 type GrievanceStatus struct {
@@ -62,15 +64,22 @@ type GrievanceStatus struct {
 }
 
 type GrievanceShort struct {
+	ID             primitive.ObjectID    `json:"id"`
 	GrievanceID    string                `json:"grievance_id,omitempty"`
 	Type           string                `json:"type,omitempty"`
 	SubType        string                `json:"subtype,omitempty"`
 	Level          string                `json:"level,omitempty"`
 	CenterSubLevel string                `json:"center_sublevel,omitempty"`
 	Title          string                `json:"title,omitempty"`
+	Description    string                `json:"description"`
 	DateOfIncident utils.DateOnly        `json:"date_of_incident,omitempty"`
 	Location       string                `json:"location,omitempty"`
 	Impact         string                `json:"impact,omitempty"`
+	Severity       string                `json:"severity"`
 	FinalStatus    utils.GrievanceStatus `json:"final_status,omitempty"`
 	CreatedAt      time.Time             `json:"created_at,omitempty"`
+	Questionnaire  *[]Questionnaire      `json:"questionnaire,omitempty"`
+	Reaction       utils.Vote            `json:"reaction"`
+	UpvoteCount    uint                  `json:"upvote_count"`
+	DownvoteCount  uint                  `json:"downvote_count"`
 }

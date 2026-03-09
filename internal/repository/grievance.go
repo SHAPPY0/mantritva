@@ -21,6 +21,7 @@ type GrievanceRepository interface {
 	ConsoleUpdateGrievanceStatus(string, dto.GrievanceStatus) error
 	GetByMemberID(dto.Pagination, int, string) (*[]model.Grievance, error)
 	GetByStateID(int) (*[]model.Grievance, error)
+	UpdateVoteCountsByID(primitive.ObjectID, uint, uint) error
 }
 
 type grievanceRepository struct {
@@ -179,4 +180,14 @@ func (r *grievanceRepository) GetByStateID(stateID int) (*[]model.Grievance, err
 		return nil, err
 	}
 	return &grievances, nil
+}
+
+func (r *grievanceRepository) UpdateVoteCountsByID(postID primitive.ObjectID, upvoteCount, donwvoteCount uint) error {
+	filter := bson.M{"_id": postID}
+	update := bson.M{"$set": bson.M{"upvote_count": upvoteCount, "downvote_count": donwvoteCount}}
+	_, err := r.DB.UpdateOne(r.DB.GrievanceCollection, filter, update)
+	if err != nil {
+		return err
+	}
+	return nil
 }

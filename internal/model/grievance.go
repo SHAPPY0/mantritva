@@ -30,6 +30,8 @@ type Grievance struct {
 	FinalStatus          utils.GrievanceStatus   `json:"final_status" bson:"final_status"`
 	SLA                  *time.Time              `json:"sla" bson:"sla"`
 	StatusRevisions      []StatusRevisions       `json:"status_revisions" bson:"status_revisions"`
+	UpvoteCount          uint                    `json:"upvote_count" bson:"upvote_count"`
+	DownvoteCount        uint                    `json:"downvote_count" bson:"downvote_count"`
 	AuditFieldsBSON      `bson:",inline"`
 }
 

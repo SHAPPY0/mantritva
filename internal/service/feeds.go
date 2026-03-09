@@ -134,6 +134,13 @@ func (s *feedService) getPostSummary(feedType utils.FeedType, postID primitive.O
 			ps.DownvoteCount = *dw.DownvoteCount
 		}
 		return ps, nil
+	case utils.GRIEVANCE:
+		g, err := s.GrievanceRepository.GetByID(postID)
+		if err != nil {
+			return nil, err
+		}
+		return &postSummary{ID: g.ID, UpvoteCount: g.UpvoteCount, DownvoteCount: g.DownvoteCount}, nil
+
 	default:
 		return nil, fmt.Errorf("Unsupported feed type: %v", feedType)
 	}
@@ -142,9 +149,11 @@ func (s *feedService) getPostSummary(feedType utils.FeedType, postID primitive.O
 func (s *feedService) persistPostCounts(feedType utils.FeedType, ps *postSummary) error {
 	switch feedType {
 	case utils.NEWSPRESS:
-		return s.NewsPressPostRepository.UpdatePostVoteCountsByID(ps.ID, ps.UpvoteCount, ps.DownvoteCount)
+		return s.NewsPressPostRepository.UpdateVoteCountsByID(ps.ID, ps.UpvoteCount, ps.DownvoteCount)
 	case utils.DEVELOPMENT:
-		return s.DevelopmentWelfareRepository.UpdatePostVoteCountsByID(ps.ID, ps.UpvoteCount, ps.DownvoteCount)
+		return s.DevelopmentWelfareRepository.UpdateVoteCountsByID(ps.ID, ps.UpvoteCount, ps.DownvoteCount)
+	case utils.GRIEVANCE:
+		return s.GrievanceRepository.UpdateVoteCountsByID(ps.ID, ps.UpvoteCount, ps.DownvoteCount)
 	default:
 		return fmt.Errorf("Unsupported feed type: %v", feedType)
 	}
@@ -238,7 +247,7 @@ func (s *feedService) SaveReaction(req dto.ReactionReq, userIP string) (bool, er
 		lockTime := currentDateTime.Add(24 * time.Hour)
 		reaction.LockedAt = &lockTime
 	}
-	if req.FeedType == utils.NEWSPRESS || req.FeedType == utils.DEVELOPMENT {
+	if req.FeedType == utils.NEWSPRESS || req.FeedType == utils.DEVELOPMENT || req.FeedType == utils.GRIEVANCE {
 		reactionScore := 0
 		questionnaire, err := s.ReportRepository.GetQuestionnairesByCategory(string(req.FeedType))
 		if err != nil {
@@ -348,14 +357,49 @@ func (s *feedService) GetNewsPressFeed(userID int, postID primitive.ObjectID) (d
 	return newsPressPostRes, nil
 }
 
-func (s *feedService) GetGrievanceFeed(userID int, postID primitive.ObjectID) (*dto.GrievanceRes, error) {
-	var grievanceRes dto.GrievanceRes
-	grievance, err := s.GrievanceRepository.GetByID(postID)
+func (s *feedService) GetGrievanceFeed(userID int, postID primitive.ObjectID) (*dto.GrievanceShort, error) {
+	var grievanceRes dto.GrievanceShort
+	griev, err := s.GrievanceRepository.GetByID(postID)
 	if err != nil {
 		return nil, err
 	}
-
-	grievanceRes.Grievance = *grievance
+	grievanceRes = dto.GrievanceShort{
+		ID:             griev.ID,
+		GrievanceID:    griev.GrievanceID,
+		Type:           griev.Type,
+		SubType:        griev.SubType,
+		Level:          griev.Level,
+		CenterSubLevel: griev.CenterSubLevel,
+		Title:          griev.Title,
+		Description:    griev.Description,
+		DateOfIncident: utils.DateOnly{Time: &griev.DateOfIncident},
+		Location:       griev.Location,
+		Impact:         griev.Impact,
+		Severity:       string(griev.Severity),
+		UpvoteCount:    griev.UpvoteCount,
+		DownvoteCount:  griev.DownvoteCount,
+		FinalStatus:    griev.FinalStatus,
+		CreatedAt:      griev.CreatedAt,
+	}
+	if userID > 0 {
+		reaction, _ := s.ReactionRepository.GetByUserIDAndPostID(userID, griev.ID)
+		if reaction != nil {
+			grievanceRes.Reaction = utils.Vote(reaction.Reaction)
+		}
+	}
+	//Get Questionnaires for this feed
+	if grievanceRes.FinalStatus == utils.RESOLVED || grievanceRes.FinalStatus == utils.CLOSED {
+		if ques, _ := s.ReportRepository.GetQuestionnairesByCategory(string(utils.GRIEVANCE)); ques != nil {
+			grievanceRes.Questionnaire = new([]dto.Questionnaire)
+			for _, q := range *ques {
+				*grievanceRes.Questionnaire = append(*grievanceRes.Questionnaire, dto.Questionnaire{
+					ID:       q.ID,
+					Title:    q.Title,
+					VoteType: &q.VoteType,
+				})
+			}
+		}
+	}
 	return &grievanceRes, nil
 }
 
@@ -366,7 +410,6 @@ func (s *feedService) GetDevelopmentWelfareShort(userID int, postID primitive.Ob
 		log.Errorf("Error fetching development welfare post by id %s: %v", postID, err)
 		return &devWelRes, err
 	}
-	log.Infof("Got development welfare post: %+v", devWel)
 	devWelFeed := dto.DevelopmentWelfareShort{
 		ID:               devWel.ID.Hex(),
 		Category:         devWel.Category,

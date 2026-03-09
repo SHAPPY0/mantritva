@@ -214,9 +214,12 @@ func (s *grievanceSerivce) GetByStateID(stateID int) ([]*dto.GrievanceShort, err
 			Title:          g.Title,
 			DateOfIncident: utils.DateOnly{Time: &g.DateOfIncident},
 			Location:       g.Location,
+			Severity:       string(g.Severity),
 			Impact:         g.Impact,
 			FinalStatus:    g.FinalStatus,
 			CreatedAt:      g.CreatedAt,
+			UpvoteCount:    g.UpvoteCount,
+			DownvoteCount:  g.DownvoteCount,
 		})
 	}
 	return grievancesList, nil

@@ -14,7 +14,7 @@ type DevelopmentWelfareRepository interface {
 	Create(*model.DevelopmentWelfare) error
 	List() ([]model.DevelopmentWelfare, error)
 	GetPostByID(primitive.ObjectID) (*model.DevelopmentWelfare, error)
-	UpdatePostVoteCountsByID(primitive.ObjectID, uint, uint) error
+	UpdateVoteCountsByID(primitive.ObjectID, uint, uint) error
 	GetByMemberID(int) ([]model.DevelopmentWelfare, error)
 }
 
@@ -56,7 +56,7 @@ func (r *developmentWelfareRepository) GetPostByID(id primitive.ObjectID) (*mode
 	return &devWel, nil
 }
 
-func (r *developmentWelfareRepository) UpdatePostVoteCountsByID(postID primitive.ObjectID, upvoteCount, donwvoteCount uint) error {
+func (r *developmentWelfareRepository) UpdateVoteCountsByID(postID primitive.ObjectID, upvoteCount, donwvoteCount uint) error {
 	filter := bson.M{"_id": postID}
 	update := bson.M{"$set": bson.M{"upvote_count": upvoteCount, "downvote_count": donwvoteCount}}
 	_, err := r.DB.UpdateOne(r.DB.DevelopmentWelfare, filter, update)
