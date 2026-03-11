@@ -278,7 +278,7 @@ func (s *memberService) GetPostsByMemberID(userID int, pagination dto.Pagination
 		return nil, err
 	}
 	for _, post := range *posts {
-		dtoPost := dto.NewsPressPostRes{NewsPressPost: post, Questionnaire: make([]dto.Questionnaire, 0)}
+		dtoPost := dto.NewsPressPostRes{NewsPressPost: post, Questionnaire: new([]dto.Questionnaire)}
 		memberAndParty, err := s.Repository.GetMemberAndPartyDetails(memberID, int(post.PartyId))
 		if err != nil {
 			return nil, err
@@ -292,7 +292,7 @@ func (s *memberService) GetPostsByMemberID(userID int, pagination dto.Pagination
 			log.Errorf("No questionnairs found for NewsPress post %v", post.ID)
 		} else {
 			for _, q := range *ques {
-				dtoPost.Questionnaire = append(dtoPost.Questionnaire, dto.Questionnaire{
+				*dtoPost.Questionnaire = append(*dtoPost.Questionnaire, dto.Questionnaire{
 					ID:       q.ID,
 					Title:    q.Title,
 					VoteType: &q.VoteType,

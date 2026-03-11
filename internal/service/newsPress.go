@@ -24,6 +24,7 @@ type newsPressService struct {
 	EntityRepo     repository.EntityRepository
 	FeedRepo       repository.FeedRepository
 	ReactionRepo   repository.ReactionRepository
+	ReportRepo     repository.ReportRepository
 }
 
 func NewNewsPressService(repos *repository.Repos) NewsPressService {
@@ -36,6 +37,7 @@ func NewNewsPressService(repos *repository.Repos) NewsPressService {
 		EntityRepo:     repos.Entity,
 		FeedRepo:       repos.Feed,
 		ReactionRepo:   repos.Reaction,
+		ReportRepo:     repos.Report,
 	}
 }
 
@@ -51,6 +53,7 @@ func (s *newsPressService) Create(req dto.NewsPressReq) (*model.NewsPressPost, e
 		Statement:       req.Statement,
 		StatementDate:   *req.StatementDate.Time,
 		Status:          string(req.Status),
+		Source:          req.Source,
 		AuditFieldsBSON: model.InsertBSONAuditFields(""),
 	}
 	if err := s.Repository.Create(np); err != nil {
@@ -147,6 +150,18 @@ func (s *newsPressService) GetDetailByID(userID int, id string) (*dto.NewsPressP
 		reaction, _ := s.ReactionRepo.GetByUserIDAndPostID(userID, post.ID)
 		if reaction != nil {
 			result.Reaction = utils.Vote(reaction.Reaction)
+		}
+	}
+
+	//Get questionnair
+	if ques, _ := s.ReportRepo.GetQuestionnairesByCategory(string(utils.NEWSPRESS)); ques != nil {
+		result.Questionnaire = new([]dto.Questionnaire)
+		for _, q := range *ques {
+			*result.Questionnaire = append(*result.Questionnaire, dto.Questionnaire{
+				ID:       q.ID,
+				Title:    q.Title,
+				VoteType: &q.VoteType,
+			})
 		}
 	}
 	result.NewsPressPost = *post

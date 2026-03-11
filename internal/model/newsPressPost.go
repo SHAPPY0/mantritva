@@ -18,6 +18,7 @@ type NewsPressPost struct {
 	Statement       string             `json:"statement" bson:"statement"`
 	StatementDate   time.Time          `json:"statement_date" bson:"statement_date"`
 	Status          string             `json:"status" bson:"status"`
+	Source          *string            `json:"source" bson:"source"`
 	UpvoteCount     uint               `json:"upvote_count" bson:"upvote_count"`
 	DownvoteCount   uint               `json:"downvote_count" bson:"downvote_count"`
 	AuditFieldsBSON `bson:",inline"`

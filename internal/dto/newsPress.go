@@ -19,15 +19,16 @@ type NewsPressReq struct {
 	Statement     string              `json:"statement" binding:"required"`
 	StatementDate utils.DateOnly      `json:"statement_date" binding:"required"`
 	Status        utils.PostStatus    `json:"status" binding:"required"`
+	Source        *string             `json:"source"`
 }
 
 type NewsPressPostRes struct {
 	model.NewsPressPost
-	Member        Member          `json:"member,omitempty"`
-	Entity        Entity          `json:"entity,omitempty"`
-	Party         Party           `json:"party,omitempty"`
-	Reaction      utils.Vote      `json:"reaction"`
-	Questionnaire []Questionnaire `json:"questionnaire,omitempty"`
+	Member        Member           `json:"member,omitempty"`
+	Entity        Entity           `json:"entity,omitempty"`
+	Party         Party            `json:"party,omitempty"`
+	Reaction      utils.Vote       `json:"reaction"`
+	Questionnaire *[]Questionnaire `json:"questionnaire,omitempty"`
 }
 
 type NewsPressShort struct {
@@ -44,6 +45,7 @@ type NewsPressShort struct {
 	Entity        Entity             `json:"entity,omitempty"`
 	Party         Party              `json:"party,omitempty"`
 	Reaction      utils.Vote         `json:"reaction"`
+	Source        *string            `json:"source"`
 	Questionnaire *[]Questionnaire   `json:"questionnaire,omitempty"`
 	CreatedAt     time.Time          `json:"created_at"`
 }
