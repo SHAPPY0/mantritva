@@ -110,6 +110,7 @@ func (r *reactionRepository) GetAndLockMaturedReactions(computeDateTime time.Tim
 		"locked_at": bson.M{"$gte": hourStart.UTC(), "$lt": hourEnd.UTC()},
 		// "$or":       []bson.M{{"locked": true}, {"locked": nil}},
 	}
+	log.Infof("Filter: %v", filter)
 	opts := options.Find()
 	if err := r.DB.FindMany(r.DB.ReactionCollection, filter, opts, &reactions); err != nil {
 		log.Errorf("GetAndLockMaturedReactions: Error fetching locked reactions: %v", err)
