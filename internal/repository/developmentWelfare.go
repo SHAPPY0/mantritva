@@ -13,9 +13,10 @@ import (
 type DevelopmentWelfareRepository interface {
 	Create(*model.DevelopmentWelfare) error
 	List() ([]model.DevelopmentWelfare, error)
-	GetPostByID(primitive.ObjectID) (*model.DevelopmentWelfare, error)
+	GetByID(primitive.ObjectID) (*model.DevelopmentWelfare, error)
 	UpdateVoteCountsByID(primitive.ObjectID, uint, uint) error
 	GetByMemberID(int) ([]model.DevelopmentWelfare, error)
+	GetByMemberIDAndYear(int, int) ([]model.DevelopmentWelfare, error)
 }
 
 type developmentWelfareRepository struct {
@@ -45,7 +46,7 @@ func (r *developmentWelfareRepository) List() ([]model.DevelopmentWelfare, error
 	return developments, nil
 }
 
-func (r *developmentWelfareRepository) GetPostByID(id primitive.ObjectID) (*model.DevelopmentWelfare, error) {
+func (r *developmentWelfareRepository) GetByID(id primitive.ObjectID) (*model.DevelopmentWelfare, error) {
 	var devWel model.DevelopmentWelfare
 	filter := bson.M{"_id": id}
 	opts := options.FindOne()
@@ -69,6 +70,20 @@ func (r *developmentWelfareRepository) UpdateVoteCountsByID(postID primitive.Obj
 func (r *developmentWelfareRepository) GetByMemberID(memberID int) ([]model.DevelopmentWelfare, error) {
 	developments := make([]model.DevelopmentWelfare, 0)
 	filter := bson.M{"member_id": memberID}
+	opts := options.Find()
+	if err := r.DB.FindMany(r.DB.DevelopmentWelfare, filter, opts, &developments); err != nil {
+		return developments, err
+	}
+	return developments, nil
+}
+
+func (r *developmentWelfareRepository) GetByMemberIDAndYear(memberID, year int) ([]model.DevelopmentWelfare, error) {
+	developments := make([]model.DevelopmentWelfare, 0)
+	filter := bson.M{
+		"member_id":  memberID,
+		"created_at": prepareYearFilter(year),
+		"is_deleted": false,
+	}
 	opts := options.Find()
 	if err := r.DB.FindMany(r.DB.DevelopmentWelfare, filter, opts, &developments); err != nil {
 		return developments, err

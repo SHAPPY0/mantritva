@@ -18,6 +18,7 @@ type Score struct {
 	NewsPresses     NewsPressScore     `json:"news_presses_score" bson:"news_presses_score"`
 	CALRecords      CALRecordScore     `json:"cal_records_score" bson:"cal_records_score"`
 	Version         uint               `json:"version" bson:"version"`
+	IsProvisional   bool               `json:"is_provisional" bson:"is_provisional"`
 	AuditFieldsBSON `bson:",inline"`
 }
 
@@ -28,7 +29,8 @@ type DevelopmentScore struct {
 	Confidence     float64   `json:"confidence" bson:"confidence"`
 	GlobalAverage  float64   `json:"global_average" bson:"global_average"`
 	DevelopmentIds []string  `json:"development_ids" bson:"development_ids"` //Ids of developments, can be used to fetch details if needed
-	LastActivityAt time.Time `json:"last_activity_at" bson:"last_activity_at"`
+	IsProvisional  bool      `json:"is_provisional" bson:"is_provisional"`
+	LastComputedAt time.Time `json:"last_computed_at" bson:"last_computed_at"`
 }
 
 type GrievanceScore struct {
@@ -38,7 +40,8 @@ type GrievanceScore struct {
 	Confidence     float64   `json:"confidence" bson:"confidence"`
 	GlobalAverage  float64   `json:"global_average" bson:"global_average"`
 	GrievanceIds   []string  `json:"grievance_ids" bson:"grievance_ids"` //Ids of grievances, can be used to fetch details if needed
-	LastActivityAt time.Time `json:"last_activity_at" bson:"last_activity_at"`
+	IsProvisional  bool      `json:"is_provisional" bson:"is_provisional"`
+	LastComputedAt time.Time `json:"last_computed_at" bson:"last_computed_at"`
 }
 
 type NewsPressScore struct {
@@ -48,7 +51,8 @@ type NewsPressScore struct {
 	Confidence     float64   `json:"confidence" bson:"confidence"`
 	GlobalAverage  float64   `json:"global_average" bson:"global_average"`
 	NewsPressIds   []string  `json:"news_press_ids" bson:"news_press_ids"` //Ids of news presses, can be used to fetch details if needed
-	LastActivityAt time.Time `json:"last_activity_at" bson:"last_activity_at"`
+	IsProvisional  bool      `json:"is_provisional" bson:"is_provisional"`
+	LastComputedAt time.Time `json:"last_computed_at" bson:"last_computed_at"`
 }
 
 type CALRecordScore struct {
@@ -58,5 +62,6 @@ type CALRecordScore struct {
 	Confidence     float64   `json:"confidence" bson:"confidence"`
 	GlobalAverage  float64   `json:"global_average" bson:"global_average"`
 	CALRecordIds   []string  `json:"cal_record_ids" bson:"cal_record_ids"` //Ids of cal records, can be used to fetch details if needed
-	LastActivityAt time.Time `json:"last_activity_at" bson:"last_activity_at"`
+	IsProvisional  bool      `json:"is_provisional" bson:"is_provisional"`
+	LastComputedAt time.Time `json:"last_computed_at" bson:"last_computed_at"`
 }

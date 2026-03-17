@@ -35,3 +35,15 @@ func InsertBSONAuditFields(createdBy string) AuditFieldsBSON {
 	}
 	return a
 }
+
+func UpdateBSONAuditFields(updatedBy string) AuditFieldsBSON {
+	a := AuditFieldsBSON{
+		UpdatedAt: time.Now(),
+		UpdatedBy: "SYSTEM",
+		IsDeleted: false,
+	}
+	if updatedBy != "" {
+		a.UpdatedBy = updatedBy
+	}
+	return a
+}

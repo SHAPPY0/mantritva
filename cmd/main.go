@@ -24,10 +24,24 @@ func main() {
 		panic(err.Error())
 	}
 
-	r := api.SetupRouter(db, mongoDB)
+	r, cj := api.SetupRouter(db, mongoDB)
+	//Start Cron Job
+	if cj != nil {
+		go cj.Start()
+	}
 
-	// Enable CORS middleware
-	// r.Use(corsMiddleware())
+	// wait for interrupt
+	// quit := make(chan os.Signal, 1)
+	// signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	// <-quit
+	// log.Println("Shutting down server...")
+
+	// stop cron and wait for running jobs to finish (with same timeout)
+	// if cj != nil {
+	// 	stopCtx := cj.Stop()
+	// 	<-stopCtx.Done()
+	// 	log.Printf("Cron stopped")
+	// }
 
 	if err := r.Run(":" + config.GetConfig().GetString("PORT")); err != nil {
 		panic(err)

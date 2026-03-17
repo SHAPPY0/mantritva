@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"time"
+
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/pkg/config"
@@ -20,6 +22,7 @@ type GrievanceRepository interface {
 	ConsoleGetGrievanceByID(string) (*model.Grievance, error)
 	ConsoleUpdateGrievanceStatus(string, dto.GrievanceStatus) error
 	GetByMemberID(dto.Pagination, int, string) (*[]model.Grievance, error)
+	GetByMemberIDAndYear(dto.Pagination, int, int) (*[]model.Grievance, error)
 	GetByStateID(int) (*[]model.Grievance, error)
 	UpdateVoteCountsByID(primitive.ObjectID, uint, uint) error
 }
@@ -190,4 +193,37 @@ func (r *grievanceRepository) UpdateVoteCountsByID(postID primitive.ObjectID, up
 		return err
 	}
 	return nil
+}
+
+func prepareYearFilter(year int) bson.M {
+	start := time.Date(year, time.January, 1, 0, 0, 0, 0, time.UTC)
+	end := start.AddDate(1, 0, 0)
+	return bson.M{"$gte": start, "$lt": end}
+}
+
+func (r *grievanceRepository) GetByMemberIDAndYear(pagination dto.Pagination, memberID, year int) (*[]model.Grievance, error) {
+	var grievances []model.Grievance
+	skip := (pagination.Offset - 1) * pagination.Offset
+	limit := pagination.Limit
+	filter := bson.M{
+		"final_status": bson.M{
+			"$ne": utils.UNDERREVIEW,
+		},
+		"$or": []bson.M{
+			{"cabinet_minister_id": memberID},
+			{"state_leader_id": memberID},
+			{"member_of_parliament_id": memberID},
+		},
+		"created_at": prepareYearFilter(year),
+		"is_deleted": false,
+	}
+	opts := options.Find().
+		SetSort(bson.D{{Key: "created_at", Value: -1}}).
+		SetSkip(int64(skip)).
+		SetLimit(int64(limit))
+	err := r.DB.FindMany(r.DB.GrievanceCollection, filter, opts, &grievances)
+	if err != nil {
+		return nil, err
+	}
+	return &grievances, nil
 }

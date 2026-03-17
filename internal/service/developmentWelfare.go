@@ -107,7 +107,7 @@ func (s *developmentWelfareService) GetByID(id string) (*model.DevelopmentWelfar
 	if err != nil {
 		return nil, err
 	}
-	resp, err := s.Repository.GetPostByID(idd)
+	resp, err := s.Repository.GetByID(idd)
 	if err != nil {
 		log.Errorf("Error fetching development welfare by id: %v", err)
 		return nil, err
@@ -120,7 +120,7 @@ func (s *developmentWelfareService) GetDetailByID(id string) (*dto.DevelopmentWe
 	if err != nil {
 		return nil, err
 	}
-	resp, err := s.Repository.GetPostByID(idd)
+	resp, err := s.Repository.GetByID(idd)
 	if err != nil {
 		log.Errorf("Error fetching development welfare by id: %v", err)
 		return nil, err

@@ -109,7 +109,7 @@ func (s *newsPressService) GetDetailByID(userID int, id string) (*dto.NewsPressP
 		return nil, err
 	}
 	var result dto.NewsPressPostRes
-	post, err := s.Repository.GetPostByID(postId)
+	post, err := s.Repository.GetByID(postId)
 	if err != nil {
 		return nil, err
 	}

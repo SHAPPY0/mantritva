@@ -25,6 +25,7 @@ type Reaction struct {
 	PrevNormalizedScore *int               `json:"prev_normalized_score" bson:"prev_normalized_score"`
 	NormalizedScore     int                `json:"normalized_score" bson:"normalized_score"`
 	LockedAt            *time.Time         `json:"locked_at,omitempty" bson:"locked_at,omitempty"`
+	Locked              bool               `json:"locked" bson:"locked"`
 	AuditFieldsBSON     `bson:",inline"`
 }
 

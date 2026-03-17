@@ -116,13 +116,13 @@ func (s *feedService) GetLatestFeed(userID int) (*[]dto.FeedRes, error) {
 func (s *feedService) getPostSummary(feedType utils.FeedType, postID primitive.ObjectID) (*postSummary, error) {
 	switch feedType {
 	case utils.NEWSPRESS:
-		np, err := s.NewsPressPostRepository.GetPostByID(postID)
+		np, err := s.NewsPressPostRepository.GetByID(postID)
 		if err != nil {
 			return nil, err
 		}
 		return &postSummary{ID: np.ID, UpvoteCount: np.UpvoteCount, DownvoteCount: np.DownvoteCount}, nil
 	case utils.DEVELOPMENT:
-		dw, err := s.DevelopmentWelfareRepository.GetPostByID(postID)
+		dw, err := s.DevelopmentWelfareRepository.GetByID(postID)
 		if err != nil {
 			return nil, err
 		}
@@ -243,9 +243,11 @@ func (s *feedService) SaveReaction(req dto.ReactionReq, userIP string) (bool, er
 
 	if lockedAt != nil {
 		reaction.LockedAt = lockedAt
+		reaction.Locked = false
 	} else {
 		lockTime := currentDateTime.Add(24 * time.Hour)
 		reaction.LockedAt = &lockTime
+		reaction.Locked = false
 	}
 	if req.FeedType == utils.NEWSPRESS || req.FeedType == utils.DEVELOPMENT || req.FeedType == utils.GRIEVANCE {
 		reactionScore := 0
@@ -288,7 +290,7 @@ func (s *feedService) SaveReaction(req dto.ReactionReq, userIP string) (bool, er
 func (s *feedService) GetNewsPressFeed(userID int, postID primitive.ObjectID) (dto.NewsPressShort, error) {
 	var newsPressPostRes dto.NewsPressShort
 
-	np, err := s.NewsPressPostRepository.GetPostByID(postID)
+	np, err := s.NewsPressPostRepository.GetByID(postID)
 	if err != nil {
 		return newsPressPostRes, err
 	}
@@ -405,7 +407,7 @@ func (s *feedService) GetGrievanceFeed(userID int, postID primitive.ObjectID) (*
 
 func (s *feedService) GetDevelopmentWelfareShort(userID int, postID primitive.ObjectID) (*dto.DevelopmentWelfareShort, error) {
 	var devWelRes dto.DevelopmentWelfareShort
-	devWel, err := s.DevelopmentWelfareRepository.GetPostByID(postID)
+	devWel, err := s.DevelopmentWelfareRepository.GetByID(postID)
 	if err != nil {
 		log.Errorf("Error fetching development welfare post by id %s: %v", postID, err)
 		return &devWelRes, err

@@ -5,6 +5,7 @@ import (
 	"github.com/shappy0/mantritva/internal/repository"
 	"github.com/shappy0/mantritva/internal/service"
 	"github.com/shappy0/mantritva/pkg/config"
+	"github.com/shappy0/mantritva/pkg/cron"
 	"gorm.io/gorm"
 )
 
@@ -22,7 +23,7 @@ func CORSMiddleware() gin.HandlerFunc {
 	}
 }
 
-func SetupRouter(db *gorm.DB, mongoDB *config.MongoDB) *gin.Engine {
+func SetupRouter(db *gorm.DB, mongoDB *config.MongoDB) (*gin.Engine, *cron.CronJob) {
 	r := gin.Default()
 	r.RedirectTrailingSlash = true
 	r.Use(CORSMiddleware())
@@ -54,5 +55,8 @@ func SetupRouter(db *gorm.DB, mongoDB *config.MongoDB) *gin.Engine {
 		developmentWelfareRouter(v1, services)
 		commonRouter(v1, services)
 	}
-	return r
+
+	cj := cron.NewCronJob(services.ReportService.GeneratReportCron)
+
+	return r, cj
 }

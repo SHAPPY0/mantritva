@@ -5,6 +5,7 @@ import (
 	"github.com/shappy0/mantritva/pkg/config"
 	"github.com/shappy0/mantritva/pkg/log"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"gorm.io/gorm"
 )
@@ -12,6 +13,8 @@ import (
 type ReportRepository interface {
 	GetReportKRA() ([]model.KRA, error)
 	Create(*model.Score) error
+	CreateScore(*model.Score) error
+	Upsert(*model.Score) error
 	GetMemberScore(uint, int) (*model.Score, error)
 	GetMemberScoreReports(uint, int, int) ([]*model.Score, error)
 	GetMemberOverallScore(uint) ([]*model.Score, error)
@@ -42,6 +45,34 @@ func (r *reportRepository) GetReportKRA() ([]model.KRA, error) {
 
 func (r *reportRepository) Create(scoreData *model.Score) error {
 	_, err := r.MongoDB.Insert(r.MongoDB.ScoreCollection, scoreData)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *reportRepository) CreateScore(scoreData *model.Score) error {
+	memberScore, _ := r.GetMemberScore(scoreData.MemberID, scoreData.Year)
+	if memberScore != nil {
+		_, err := r.MongoDB.DeleteOne(r.MongoDB.ScoreCollection, bson.M{"member_id": scoreData.MemberID, "year": scoreData.Year})
+		if err != nil {
+			log.Errorf("CreateScore: Error deleting existing score")
+			return err
+		}
+	}
+	scoreData.ID = primitive.NewObjectID()
+	ok, err := r.MongoDB.Insert(r.MongoDB.ScoreCollection, scoreData)
+	if err != nil {
+		return err
+	}
+	if ok != nil {
+		return nil
+	}
+	return nil
+}
+
+func (r *reportRepository) Upsert(scoreData *model.Score) error {
+	_, err := r.MongoDB.Upsert(r.MongoDB.ScoreCollection, scoreData)
 	if err != nil {
 		return err
 	}

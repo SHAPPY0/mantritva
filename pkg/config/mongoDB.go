@@ -161,6 +161,45 @@ func (m *MongoDB) Insert(collection *mongo.Collection, data any) (*mongo.InsertO
 	return res, nil
 }
 
+func (m *MongoDB) Upsert(collection *mongo.Collection, data any) (*mongo.InsertOneResult, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Try to marshal the incoming data to BSON map to detect an _id field.
+	var doc bson.M
+	raw, err := bson.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+	if err := bson.Unmarshal(raw, &doc); err != nil {
+		return nil, err
+	}
+
+	// If document contains an _id, perform a ReplaceOne with upsert=true so existing
+	// documents are replaced and missing ones are inserted.
+	if id, ok := doc["_id"]; ok && id != nil {
+		filter := bson.M{"_id": id}
+		opts := options.Replace().SetUpsert(true)
+		updRes, err := collection.ReplaceOne(ctx, filter, data, opts)
+		if err != nil {
+			return nil, err
+		}
+		// If an upsert happened, return an InsertOneResult-like value with the UpsertedID.
+		if updRes.UpsertedCount > 0 {
+			return &mongo.InsertOneResult{InsertedID: updRes.UpsertedID}, nil
+		}
+		// No insert (existing document replaced) — return a nil InsertedID to indicate update.
+		return &mongo.InsertOneResult{InsertedID: nil}, nil
+	}
+
+	// No _id present — fall back to InsertOne.
+	res, err := collection.InsertOne(ctx, data)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 func (m *MongoDB) InsertMany(collection *mongo.Collection, data []any) (*mongo.InsertManyResult, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

@@ -1,6 +1,9 @@
 package service
 
-import "github.com/shappy0/mantritva/internal/repository"
+import (
+	"github.com/shappy0/mantritva/internal/repository"
+	"github.com/shappy0/mantritva/pkg/cron"
+)
 
 type Services struct {
 	UserService               UserService
@@ -13,10 +16,11 @@ type Services struct {
 	EventService              EventService
 	DevelopmentWelfareService DevelopmentWelfareService
 	CommonService             CommonService
+	CronJob                   *cron.CronJob
 }
 
 func NewServices(repos *repository.Repos) *Services {
-	return &Services{
+	svcs := &Services{
 		UserService:               NewUserService(repos),
 		NewsPressService:          NewNewsPressService(repos),
 		FeedService:               NewFeedService(repos),
@@ -28,4 +32,5 @@ func NewServices(repos *repository.Repos) *Services {
 		DevelopmentWelfareService: NewDevelopmentWelfareService(repos),
 		CommonService:             NewCommonService(repos),
 	}
+	return svcs
 }

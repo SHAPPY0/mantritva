@@ -17,7 +17,7 @@ import (
 type NewsPressPostRepository interface {
 	Create(*model.NewsPressPost) error
 	List() ([]model.NewsPressPost, error)
-	GetPostByID(primitive.ObjectID) (*model.NewsPressPost, error)
+	GetByID(primitive.ObjectID) (*model.NewsPressPost, error)
 	ConsoleGetNewsPressPostByID(primitive.ObjectID) (*model.NewsPressPost, error)
 	UpdateVoteCountsByID(primitive.ObjectID, uint, uint) error
 	// UpdateVote(postID string, upvoteChange int, downvoteChange int) error
@@ -25,6 +25,7 @@ type NewsPressPostRepository interface {
 	GetPostsByPartyID(pagination dto.Pagination, partyID int) (*[]model.NewsPressPost, error)
 	GetPostsByMemberID(pagination dto.Pagination, memberID int) (*[]model.NewsPressPost, error)
 	GetPostsByEntityID(pagination dto.Pagination, entityID int) (*[]model.NewsPressPost, error)
+	GetByMemberIDAndYear(dto.Pagination, int, int) (*[]model.NewsPressPost, error)
 	UpdatePost(string, map[string]interface{}) (bool, error)
 }
 
@@ -55,7 +56,7 @@ func (r *newsPressPostRepository) List() ([]model.NewsPressPost, error) {
 	return newsPressPosts, nil
 }
 
-func (r *newsPressPostRepository) GetPostByID(postID primitive.ObjectID) (*model.NewsPressPost, error) {
+func (r *newsPressPostRepository) GetByID(postID primitive.ObjectID) (*model.NewsPressPost, error) {
 	var newsPressPost model.NewsPressPost
 	filter := bson.M{"_id": postID, "status": "Published"}
 	opts := options.FindOne()
@@ -191,4 +192,18 @@ func (r *newsPressPostRepository) UpdatePost(id string, data map[string]interfac
 		return false, err
 	}
 	return true, nil
+}
+
+func (r *newsPressPostRepository) GetByMemberIDAndYear(pagination dto.Pagination, memberID, year int) (*[]model.NewsPressPost, error) {
+	newsPressList := make([]model.NewsPressPost, 0)
+	filter := bson.M{
+		"member_id":  memberID,
+		"created_at": prepareYearFilter(year),
+		"is_deleted": false,
+	}
+	opts := options.Find()
+	if err := r.DB.FindMany(r.DB.NewsPressPostCollection, filter, opts, &newsPressList); err != nil {
+		return &newsPressList, err
+	}
+	return &newsPressList, nil
 }
