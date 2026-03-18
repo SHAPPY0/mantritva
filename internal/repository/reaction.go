@@ -105,9 +105,9 @@ func (r *reactionRepository) GetLockedReactions(postID primitive.ObjectID) ([]*m
 func (r *reactionRepository) GetAndLockMaturedReactions(computeDateTime time.Time) ([]model.Reaction, error) {
 	var reactions []model.Reaction
 	hourStart := computeDateTime.Truncate(time.Hour)
-	hourEnd := computeDateTime.Truncate(time.Hour).Add(time.Hour)
+	hourEnd := hourStart.Add(time.Hour)
 	filter := bson.M{
-		"locked_at": bson.M{"$gte": hourStart.UTC(), "$lt": hourEnd.UTC()},
+		"locked_at": bson.M{"$gte": hourStart, "$lt": hourEnd},
 		// "$or":       []bson.M{{"locked": true}, {"locked": nil}},
 	}
 	log.Infof("Filter: %v", filter)

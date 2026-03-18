@@ -177,7 +177,7 @@ func (h *MemberHandler) GetMemberReportCard(c *gin.Context) {
 		utils.Error(c, 400, "Invalid member name", nil)
 		return
 	}
-	from := c.Query("from")
+	from := c.Param("from")
 	if from == "" {
 		utils.Error(c, 400, "Please pass From Year", nil)
 		return
@@ -187,7 +187,7 @@ func (h *MemberHandler) GetMemberReportCard(c *gin.Context) {
 		utils.Error(c, 400, "Invalid from year", nil)
 		return
 	}
-	to := c.Query("to")
+	to := c.Param("to")
 	if to == "" {
 		utils.Error(c, 400, "Please pass To Year", nil)
 		return

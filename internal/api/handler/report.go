@@ -1,8 +1,12 @@
 package handler
 
 import (
+	"fmt"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/service"
+	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/utils"
 )
 
@@ -43,4 +47,21 @@ func (h *ReportHandler) GetReport(c *gin.Context) {
 	}
 
 	utils.Success(c, "", report)
+}
+
+func (h *ReportHandler) Download(c *gin.Context) {
+	url := c.Query("url")
+	log.Infof("URL %s", url)
+	if url == "" {
+		utils.Error(c, 404, "Please provide report url to download", nil)
+		return
+	}
+	reportPdf, err := h.Service.DownloadReport(url, "report-card")
+	if err != nil {
+		utils.Error(c, 501, "Error downloading report", err)
+		return
+	}
+
+	c.Header("Content-Disposition", fmt.Sprintf(`inline; filename="report-%s.pdf"`, "memberID"))
+	c.Data(http.StatusOK, "application/pdf", reportPdf)
 }

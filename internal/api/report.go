@@ -13,6 +13,7 @@ func reportRouter(rg *gin.RouterGroup, services *service.Services) *gin.RouterGr
 	{
 		report.GET("/member/:memberID/generate", handler.GenerateReport)
 		report.GET("/member/:memberID", handler.GetReport)
+		report.GET("/download", handler.Download)
 	}
 	return rg
 }

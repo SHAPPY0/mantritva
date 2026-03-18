@@ -1,9 +1,14 @@
 package service
 
 import (
+	"context"
+	"fmt"
 	"sync"
 	"time"
 
+	"github.com/chromedp/cdproto/page"
+	"github.com/chromedp/cdproto/runtime"
+	"github.com/chromedp/chromedp"
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
@@ -17,6 +22,7 @@ type ReportService interface {
 	GetReport(int) (dto.MemberReport, error)
 	GetMemberReports(int, int, int) ([]dto.MemberReport, error)
 	GeneratReportCron()
+	DownloadReport(string, string) ([]byte, error)
 }
 
 type reportService struct {
@@ -232,7 +238,7 @@ func (s *reportService) GenerateReport(memberID int) (*model.Score, error) {
 }
 
 func (svc *reportService) GeneratReportCron() {
-	computeDateTime := time.Now()
+	computeDateTime := time.Now().UTC()
 	log.Infof("GenerateReportCron: Starting run at %s", computeDateTime.Format(time.RFC3339))
 
 	//Step1: fetch reactions that have passed their lock tim
@@ -381,6 +387,183 @@ func (s *reportService) GetMemberReports(memberID int, from, to int) ([]dto.Memb
 		memberReports = append(memberReports, memberReport)
 	}
 	return memberReports, nil
+}
+
+func (s *reportService) DownloadReport(url, divSelector string) ([]byte, error) {
+	opts := append(chromedp.DefaultExecAllocatorOptions[:],
+		chromedp.Flag("headless", true),
+		chromedp.Flag("disable-gpu", true),
+		chromedp.Flag("no-sandbox", true),
+		chromedp.Flag("disable-dev-shm-usage", true),
+		chromedp.Flag("ignore-certificate-errors", true),
+	)
+
+	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
+	defer cancel()
+
+	ctx, cancel := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Infof))
+	defer cancel()
+
+	ctx, cancel = context.WithTimeout(ctx, 120*time.Second)
+	defer cancel()
+
+	var divHTML string
+	var pdfBuf []byte
+	var cssContent string
+
+	if err := chromedp.Run(ctx,
+		chromedp.Navigate(url),
+
+		// ── Fix 1: Evaluate with awaitPromise ────────────────────────────
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			var res interface{}
+			return chromedp.Evaluate(`
+				new Promise((resolve) => {
+					if (document.readyState === 'complete') {
+						setTimeout(resolve, 3000)
+					} else {
+						window.addEventListener('load', () => setTimeout(resolve, 3000))
+					}
+				})
+			`, &res, func(p *runtime.EvaluateParams) *runtime.EvaluateParams {
+				return p.WithAwaitPromise(true) // ← critical, without this Promise is not awaited
+			}).Do(ctx)
+		}),
+
+		// ── Fix 2: Poll for div instead of WaitVisible ───────────────────
+		// WaitVisible can timeout if selector doesn't exist
+		// This polls every 500ms for up to 60s
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.Poll(fmt.Sprintf(`document.querySelector('#%s') !== null`, divSelector), nil,
+				chromedp.WithPollingInterval(500*time.Millisecond),
+				chromedp.WithPollingTimeout(60*time.Second),
+			).Do(ctx)
+		}),
+		chromedp.WaitVisible("#"+divSelector, chromedp.ByQuery),
+
+		// ── extract all styles from the live page ──────────────────────
+		// this grabs every <style> tag and every loaded <link> stylesheet
+		// already parsed and applied by the browser — no external requests needed
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.Evaluate(`
+                (function() {
+                    let css = '';
+                    // grab all stylesheets already loaded by the browser
+                    for (const sheet of document.styleSheets) {
+                        try {
+                            for (const rule of sheet.cssRules) {
+                                css += rule.cssText + '\n';
+                            }
+                        } catch(e) {
+                            // cross-origin sheets may throw — skip
+                        }
+                    }
+                    return css;
+                })()
+            `, &cssContent).Do(ctx)
+		}),
+
+		// ── After capturing divHTML, convert all image srcs to base64 ─────────
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.Evaluate(`
+				(async function() {
+					const imgs = document.querySelectorAll('#`+divSelector+` img');
+					const toBase64 = (url) => fetch(url)
+						.then(r => r.blob())
+						.then(blob => new Promise((resolve, reject) => {
+							const reader = new FileReader();
+							reader.onloadend = () => resolve(reader.result);
+							reader.onerror = reject;
+							reader.readAsDataURL(blob);
+						}));
+
+					for (const img of imgs) {
+						try {
+							const src = img.src; // always absolute in browser
+							if (src && !src.startsWith('data:')) {
+								img.src = await toBase64(src);
+							}
+						} catch(e) {
+							console.warn('failed to convert image:', img.src, e);
+						}
+					}
+				})()
+			`, nil, func(p *runtime.EvaluateParams) *runtime.EvaluateParams {
+				return p.WithAwaitPromise(true) // wait for all images to convert
+			}).Do(ctx)
+		}),
+
+		chromedp.OuterHTML("#"+divSelector, &divHTML, chromedp.ByQuery),
+	); err != nil {
+		return nil, fmt.Errorf("failed to capture div: %w", err)
+	}
+
+	if divHTML == "" {
+		return nil, fmt.Errorf("div #%s not found or empty", divSelector)
+	}
+
+	fullHTML := fmt.Sprintf(`
+		<!DOCTYPE html>
+		<html>
+		<head>
+			<meta charset="UTF-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<style>
+				* {
+					-webkit-print-color-adjust: exact !important;
+					print-color-adjust: exact !important;
+					margin: 0;
+					padding: 0;
+					box-sizing: border-box;
+				}
+				body {
+					font-family: sans-serif;
+				}
+				a::after {
+					display: none !important;
+					content: none !important;
+				}
+				a {
+					text-decoration: none; /* optional — remove underline too */
+				}
+				%s
+			</style>
+			
+		</head>
+		<body>
+			%s
+		</body>
+		</html>
+	`, cssContent, divHTML)
+	if err := chromedp.Run(ctx,
+		chromedp.Navigate("about:blank"),
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			frameTree, err := page.GetFrameTree().Do(ctx)
+			if err != nil {
+				return err
+			}
+			return page.SetDocumentContent(frameTree.Frame.ID, fullHTML).Do(ctx)
+		}),
+		chromedp.WaitReady("body", chromedp.ByQuery),
+		chromedp.Sleep(1*time.Second), // let CSS load
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			var err error
+			pdfBuf, _, err = page.PrintToPDF().
+				WithPrintBackground(true).
+				WithPaperWidth(8.27).
+				WithPaperHeight(11.69).
+				WithMarginTop(0.1).
+				WithMarginBottom(0.1).
+				WithMarginLeft(0.1).
+				WithMarginRight(0.1).
+				Do(ctx)
+			return err
+		}),
+	); err != nil {
+		return nil, fmt.Errorf("failed to generate pdf: %w", err)
+	}
+
+	return pdfBuf, nil
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
