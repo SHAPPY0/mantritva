@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/service"
-	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/utils"
 )
 
@@ -50,8 +49,12 @@ func (h *ReportHandler) GetReport(c *gin.Context) {
 }
 
 func (h *ReportHandler) Download(c *gin.Context) {
+	memberName := c.Param("name")
+	if memberName == "" {
+		utils.Error(c, 404, "Invalid report download request", nil)
+		return
+	}
 	url := c.Query("url")
-	log.Infof("URL %s", url)
 	if url == "" {
 		utils.Error(c, 404, "Please provide report url to download", nil)
 		return
@@ -62,6 +65,6 @@ func (h *ReportHandler) Download(c *gin.Context) {
 		return
 	}
 
-	c.Header("Content-Disposition", fmt.Sprintf(`inline; filename="report-%s.pdf"`, "memberID"))
+	c.Header("Content-Disposition", fmt.Sprintf(`inline; filename="%s-report-card.pdf"`, memberName))
 	c.Data(http.StatusOK, "application/pdf", reportPdf)
 }

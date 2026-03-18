@@ -15,7 +15,7 @@ func NewCronJob(fn func()) *CronJob {
 		Cron: rcron.New(),
 	}
 	// cj.Cron.AddFunc("@every 5s", fn)
-	cj.Cron.AddFunc("@hourly", fn)
+	cj.Cron.AddFunc("@every 15m", fn)
 	return cj
 }
 
