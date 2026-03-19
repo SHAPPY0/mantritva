@@ -299,8 +299,8 @@ func (svc *reportService) resolveMemberIDs(reactions []model.Reaction) []uint {
 			case grievance.CabinetMinisterID != 0:
 				memberID = grievance.CabinetMinisterID
 			}
-		} else if np, err := svc.NewsPressRepo.GetByID(postID); err == nil && np != nil && np.MemberId != 0 {
-			memberID = np.MemberId
+		} else if np, err := svc.NewsPressRepo.GetByID(postID); err == nil && np != nil && np.MemberID != 0 {
+			memberID = np.MemberID
 		}
 
 		if memberID == 0 {

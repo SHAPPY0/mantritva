@@ -62,7 +62,7 @@ func (r *newsPressPostRepository) GetByID(postID primitive.ObjectID) (*model.New
 	opts := options.FindOne()
 	rowFound, err := r.DB.FindOne(r.DB.NewsPressPostCollection, filter, opts, &newsPressPost)
 	if err != nil {
-		log.Errorf("Error fetching newpresspost by postID %s", postID)
+		log.Errorf("Error fetching newpress by postID %s", postID)
 		return nil, err
 	}
 	if !rowFound {

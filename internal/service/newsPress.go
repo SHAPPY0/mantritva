@@ -45,7 +45,7 @@ func (s *newsPressService) Create(req dto.NewsPressReq) (*model.NewsPressPost, e
 	np := &model.NewsPressPost{
 		ID:              primitive.NewObjectID(),
 		Event:           &req.Event,
-		MemberId:        req.MemberID,
+		MemberID:        req.MemberID,
 		PartyId:         req.PartyID,
 		Subject:         string(req.Subject),
 		Type:            string(req.Type),
@@ -71,8 +71,8 @@ func (s *newsPressService) GetPostsByPartyID(pagination dto.Pagination, partyID 
 	for _, post := range *posts {
 		var newsPresPost dto.NewsPressPostRes
 		newsPresPost.NewsPressPost = post
-		if post.MemberId > 0 {
-			member, err := s.MemberRepo.GetByID(post.MemberId)
+		if post.MemberID > 0 {
+			member, err := s.MemberRepo.GetByID(post.MemberID)
 			if err == nil && member != nil {
 				newsPresPost.Member = dto.Member{Name: member.Name, Photo: member.Photo}
 				leader, err := s.LeadershipRepo.GetByMemberID(member.ID)
@@ -113,10 +113,10 @@ func (s *newsPressService) GetDetailByID(userID int, id string) (*dto.NewsPressP
 	if err != nil {
 		return nil, err
 	}
-	if post.MemberId > 0 {
-		memberInfo, err := s.MemberRepo.GetMemberById(post.MemberId)
+	if post.MemberID > 0 {
+		memberInfo, err := s.MemberRepo.GetMemberById(post.MemberID)
 		if err != nil {
-			log.Errorf("Error fetching member info by id %d", post.MemberId)
+			log.Errorf("Error fetching member info by id %d", post.MemberID)
 			return nil, err
 		} else {
 			if err := utils.MapToStruct(memberInfo, &result.Member); err != nil {

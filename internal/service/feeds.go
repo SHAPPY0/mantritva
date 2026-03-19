@@ -306,10 +306,10 @@ func (s *feedService) GetNewsPressFeed(userID int, postID primitive.ObjectID) (d
 		DownvoteCount: np.DownvoteCount,
 		CreatedAt:     np.CreatedAt,
 	}
-	if np.MemberId > 0 {
-		memberInfo, err := s.MemberRepository.GetMemberById(np.MemberId)
+	if np.MemberID > 0 {
+		memberInfo, err := s.MemberRepository.GetMemberById(np.MemberID)
 		if err != nil {
-			log.Errorf("Error fetching member info by id %d", np.MemberId)
+			log.Errorf("Error fetching member info by id %d", np.MemberID)
 			return newsPressPostRes, err
 		} else {
 			if err := utils.MapToStruct(memberInfo, &newsPressPostRes.Member); err != nil {

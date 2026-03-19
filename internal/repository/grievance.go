@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/shappy0/mantritva/internal/dto"
@@ -66,9 +67,12 @@ func (r *grievanceRepository) GetByID(id primitive.ObjectID) (*model.Grievance, 
 	}
 	var grievance model.Grievance
 	opts := options.FindOne()
-	_, err := r.DB.FindOne(r.DB.GrievanceCollection, filter, opts, &grievance)
+	rowFound, err := r.DB.FindOne(r.DB.GrievanceCollection, filter, opts, &grievance)
 	if err != nil {
 		return nil, err
+	}
+	if !rowFound {
+		return nil, fmt.Errorf("no grievance found for id %s", id)
 	}
 	return &grievance, nil
 }

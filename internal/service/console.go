@@ -229,10 +229,10 @@ func (s *consoleService) GetNewsPressList() (*[]dto.NewsPressPostRes, error) {
 	}
 	for _, post := range newsPressPosts {
 		newsPostRes := dto.NewsPressPostRes{NewsPressPost: post}
-		if post.MemberId > 0 {
-			member, err := s.MemberRepository.GetByID(post.MemberId)
+		if post.MemberID > 0 {
+			member, err := s.MemberRepository.GetByID(post.MemberID)
 			if err != nil {
-				log.Errorf("Error: While getting Member Detail %d, %v", post.MemberId, err)
+				log.Errorf("Error: While getting Member Detail %d, %v", post.MemberID, err)
 			} else {
 				newsPostRes.Member = dto.Member{Name: member.Name, Photo: member.Photo}
 			}

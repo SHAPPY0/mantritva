@@ -9,7 +9,7 @@ import (
 type NewsPressPost struct {
 	ID              primitive.ObjectID `json:"_id" bson:"_id,omitempty"`
 	Event           *string            `json:"event" bson:"event"`
-	MemberId        uint               `json:"member_id" bson:"member_id"`
+	MemberID        uint               `json:"member_id" bson:"member_id"`
 	PartyId         uint               `json:"party_id" bson:"party_id"`
 	EntityId        uint               `json:"entity_id" bson:"entity_id"`
 	Subject         string             `json:"subject" bson:"subject"`
