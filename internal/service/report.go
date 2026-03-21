@@ -391,6 +391,7 @@ func (s *reportService) GetMemberReports(memberID int, from, to int) ([]dto.Memb
 
 func (s *reportService) DownloadReport(url, divSelector string) ([]byte, error) {
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
+		chromedp.ExecPath("/usr/bin/chromium"),
 		chromedp.Flag("headless", true),
 		chromedp.Flag("disable-gpu", true),
 		chromedp.Flag("no-sandbox", true),
