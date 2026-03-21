@@ -1,9 +1,0 @@
-[phases.setup]
-nixPkgs = ["...", "chromium"] # Keep your existing pkgs or leave "..." for defaults
-
-[phases.build]
-cmds = ["go build -o out main.go"]
-
-# Ensure Chromium is available to your Go binary
-[variables]
-CHROME_PATH = "/usr/bin/chromium"
