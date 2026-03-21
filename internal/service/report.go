@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
 	"sync"
 	"time"
 
@@ -390,8 +392,15 @@ func (s *reportService) GetMemberReports(memberID int, from, to int) ([]dto.Memb
 }
 
 func (s *reportService) DownloadReport(url, divSelector string) ([]byte, error) {
+	cmd := exec.Command("which", "chromium")
+	out, _ := cmd.Output()
+	log.Infof("Chromium path: {}", string(out))
+	path := "/usr/bin/chromium"
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		path = "/usr/bin/chromium-browser"
+	}
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.ExecPath("/usr/bin/chromium"),
+		chromedp.ExecPath(path),
 		chromedp.Flag("headless", true),
 		chromedp.Flag("disable-gpu", true),
 		chromedp.Flag("no-sandbox", true),
