@@ -392,9 +392,12 @@ func (s *reportService) GetMemberReports(memberID int, from, to int) ([]dto.Memb
 }
 
 func (s *reportService) DownloadReport(url, divSelector string) ([]byte, error) {
-	cmd := exec.Command("which", "chromium")
-	out, _ := cmd.Output()
-	log.Infof("Chromium path: {}", string(out))
+	cmd := exec.Command("ls", "-l", "/usr/bin")
+	out, _ := cmd.CombinedOutput()
+	log.Info(string(out))
+	// cmd := exec.Command("which", "chromium")
+	// out, _ := cmd.Output()
+	// log.Infof("Chromium path: {}", string(out))
 	path := "/usr/bin/chromium"
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		path = "/usr/bin/chromium-browser"
