@@ -343,6 +343,9 @@ func (s *feedService) GetNewsPressFeed(userID int, postID primitive.ObjectID) (d
 		reaction, _ := s.ReactionRepository.GetByUserIDAndPostID(userID, np.ID)
 		if reaction != nil {
 			newsPressPostRes.Reaction = utils.Vote(reaction.Reaction)
+			if reaction.LockedAt != nil && time.Now().After(*reaction.LockedAt) {
+				newsPressPostRes.ReactionLocked = true
+			}
 		}
 	}
 	//Get Questionnaires for this feed
@@ -387,6 +390,9 @@ func (s *feedService) GetGrievanceFeed(userID int, postID primitive.ObjectID) (*
 		reaction, _ := s.ReactionRepository.GetByUserIDAndPostID(userID, griev.ID)
 		if reaction != nil {
 			grievanceRes.Reaction = utils.Vote(reaction.Reaction)
+			if reaction.LockedAt != nil && time.Now().After(*reaction.LockedAt) {
+				grievanceRes.ReactionLocked = true
+			}
 		}
 	}
 	//Get Questionnaires for this feed
@@ -483,6 +489,9 @@ func (s *feedService) GetDevelopmentWelfareShort(userID int, postID primitive.Ob
 		reaction, _ := s.ReactionRepository.GetByUserIDAndPostID(userID, postID)
 		if reaction != nil {
 			devWelFeed.Reaction = utils.Vote(reaction.Reaction)
+			if reaction.LockedAt != nil && time.Now().After(*reaction.LockedAt) {
+				devWelFeed.ReactionLocked = true
+			}
 		}
 	}
 

@@ -22,6 +22,7 @@ func memberRouter(rg *gin.RouterGroup, services *service.Services) *gin.RouterGr
 		member.GET("/id/:memberID/development-welfare", handler.GetDevelopmentWelfareByMemberID)
 		member.GET("/unaffiliated", handler.ListUnaffiliatedMembers)
 		member.GET("/:name/reportCard/:from/:to", handler.GetMemberReportCard)
+		member.GET("/topScorer", handler.GetTopScorer)
 	}
 	return rg
 }

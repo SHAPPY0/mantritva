@@ -1,12 +1,11 @@
 package handler
 
 import (
-	"log"
-
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/service"
 	"github.com/shappy0/mantritva/pkg/auth"
+	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/utils"
 )
 
@@ -47,7 +46,7 @@ func (h *MemberHandler) ListMember(c *gin.Context) {
 		utils.Error(c, 500, "Failed to fetch member", nil)
 		return
 	}
-	utils.Success(c, "Member fetched successfully", val)
+	utils.Success(c, "", val)
 }
 
 func (h *MemberHandler) BulkMemberUpload(c *gin.Context) {
@@ -100,7 +99,7 @@ func (h *MemberHandler) GetMemberCareer(c *gin.Context) {
 	for _, career := range careers {
 		careerDto := dto.CareerRes{}
 		if err := utils.MapToStruct(career, &careerDto); err != nil {
-			log.Fatal("Failed to parse career data. Error: ", err)
+			log.Errorf("Failed to parse career data. Error: %v", err)
 		} else {
 			careersDto = append(careersDto, careerDto)
 		}
@@ -218,4 +217,51 @@ func (h *MemberHandler) GetMemberReportCard(c *gin.Context) {
 		reportCard.Reports = reports
 	}
 	utils.Success(c, "", reportCard)
+}
+
+func (h *MemberHandler) GetTopScorer(c *gin.Context) {
+	scorers, err := h.Report.GetTopScorer()
+	if err != nil {
+		utils.Error(c, 500, "Failed to top scorer members", nil)
+		return
+	}
+	if scorers != nil {
+		for _, memberScore := range *scorers {
+			member, err := h.Service.GetByID(toUint(memberScore["member_id"]))
+			if err != nil {
+				log.Errorf("Error fetching top scorer's member data %v", err)
+				continue
+			}
+			memberScore["member"] = dto.Member{
+				Name:     member.Name,
+				Photo:    member.Photo,
+				Position: member.Position,
+				Party:    member.Party,
+			}
+		}
+	}
+	utils.Success(c, "", scorers)
+}
+
+func toUint(v interface{}) uint {
+	switch val := v.(type) {
+	case int:
+		return uint(val)
+	case int32:
+		return uint(val)
+	case int64:
+		return uint(val)
+	case float32:
+		return uint(val)
+	case float64:
+		return uint(val)
+	case uint:
+		return val
+	case uint32:
+		return uint(val)
+	case uint64:
+		return uint(val)
+	default:
+		return 0
+	}
 }

@@ -29,6 +29,7 @@ type Repos struct {
 	DevelopmentWelfare DevelopmentWelfareRepository
 	Enquiry            EnquiryRepository
 	Reaction           ReactionRepository
+	AnalyticStat       AnalyticStatRepository
 }
 
 func NewRepos(db *gorm.DB, mongoDB *config.MongoDB) *Repos {
@@ -56,5 +57,6 @@ func NewRepos(db *gorm.DB, mongoDB *config.MongoDB) *Repos {
 		DevelopmentWelfare: NewDevelopmentWelfareRepository(db, mongoDB),
 		Enquiry:            NewEnquiryRepository(db),
 		Reaction:           NewReactionRepository(mongoDB),
+		AnalyticStat:       NewAnalyticStat(mongoDB),
 	}
 }

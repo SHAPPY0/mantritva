@@ -80,6 +80,7 @@ type GrievanceShort struct {
 	CreatedAt      time.Time             `json:"created_at,omitempty"`
 	Questionnaire  *[]Questionnaire      `json:"questionnaire,omitempty"`
 	Reaction       utils.Vote            `json:"reaction"`
+	ReactionLocked bool                  `json:"reaction_locked"`
 	UpvoteCount    uint                  `json:"upvote_count"`
 	DownvoteCount  uint                  `json:"downvote_count"`
 }

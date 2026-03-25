@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
+	"math"
 	"os"
-	"os/exec"
 	"sync"
 	"time"
 
@@ -25,27 +25,30 @@ type ReportService interface {
 	GetMemberReports(int, int, int) ([]dto.MemberReport, error)
 	GeneratReportCron()
 	DownloadReport(string, string) ([]byte, error)
+	GetTopScorer() (*[]map[string]any, error)
 }
 
 type reportService struct {
-	ReportRepo      repository.ReportRepository
-	GrievanceRepo   repository.GrievanceRepository
-	DevelopmentRepo repository.DevelopmentWelfareRepository
-	NewsPressRepo   repository.NewsPressPostRepository
-	PartyRepo       repository.PartyRepository
-	ReactionRepo    repository.ReactionRepository
-	ScoreSvc        compute.Score
+	ReportRepo          repository.ReportRepository
+	GrievanceRepo       repository.GrievanceRepository
+	DevelopmentRepo     repository.DevelopmentWelfareRepository
+	NewsPressRepo       repository.NewsPressPostRepository
+	PartyRepo           repository.PartyRepository
+	ReactionRepo        repository.ReactionRepository
+	ScoreSvc            compute.Score
+	AnalyticStatService AnalyticStatsService
 }
 
-func NewReportService(repos *repository.Repos) ReportService {
+func NewReportService(repos *repository.Repos, svcs *Services) ReportService {
 	return &reportService{
-		ReportRepo:      repos.Report,
-		GrievanceRepo:   repos.Grievance,
-		DevelopmentRepo: repos.DevelopmentWelfare,
-		NewsPressRepo:   repos.NewsPressPost,
-		PartyRepo:       repos.Party,
-		ReactionRepo:    repos.Reaction,
-		ScoreSvc:        compute.NewScore(repos),
+		ReportRepo:          repos.Report,
+		GrievanceRepo:       repos.Grievance,
+		DevelopmentRepo:     repos.DevelopmentWelfare,
+		NewsPressRepo:       repos.NewsPressPost,
+		PartyRepo:           repos.Party,
+		ReactionRepo:        repos.Reaction,
+		ScoreSvc:            compute.NewScore(repos),
+		AnalyticStatService: svcs.AnalyticStatsService,
 	}
 }
 
@@ -226,7 +229,8 @@ func (s *reportService) GenerateReport(memberID int) (*model.Score, error) {
 		scoreData.NewsPresses.IsProvisional ||
 		scoreData.CALRecords.IsProvisional
 
-	log.Infof("***ScoreData*** %v", scoreData)
+	scoreData.TotalScore = math.Round(scoreData.TotalScore*100) / 100
+	scoreData.Confidence = math.Round(scoreData.Confidence*100) / 100
 	// ── Upsert — never insert duplicates ──────────────────────────────────
 	// Use Upsert(filter={member_id, year}, update=$set{...}) in MongoDB.
 	// This replaces the old Create() which inserted a new doc every run.
@@ -267,6 +271,21 @@ func (svc *reportService) GeneratReportCron() {
 	const maxConcurrentMembers = 5
 	sem := make(chan struct{}, maxConcurrentMembers)
 	var wg sync.WaitGroup
+	scoreCh := make(chan *model.Score, len(memberIDs))
+	// consumer: calls analytic stats service for each score
+	var consumerWg sync.WaitGroup
+	consumerWg.Add(1)
+	go func() {
+		defer consumerWg.Done()
+		for sc := range scoreCh {
+			if sc == nil {
+				continue
+			}
+			if err := svc.AnalyticStatService.ComputeTopScorer(sc); err != nil {
+				log.Errorf("GenerateReportCron: ComputeTopScorer failed for member %d: %v", sc.MemberID, err)
+			}
+		}
+	}()
 
 	for _, memberID := range memberIDs {
 		wg.Add(1)
@@ -275,8 +294,10 @@ func (svc *reportService) GeneratReportCron() {
 		go func() {
 			defer wg.Done()
 			defer func() { <-sem }()
-			if _, err := svc.GenerateReport(int(mID)); err != nil {
+			if scoreReport, err := svc.GenerateReport(int(mID)); err != nil {
 				log.Errorf("GenerateReportCron: GenerateReport failed for member %d: %v", mID, err)
+			} else if scoreReport != nil {
+				scoreCh <- scoreReport
 			}
 		}()
 	}
@@ -392,12 +413,6 @@ func (s *reportService) GetMemberReports(memberID int, from, to int) ([]dto.Memb
 }
 
 func (s *reportService) DownloadReport(url, divSelector string) ([]byte, error) {
-	cmd := exec.Command("ls", "-l", "/usr/bin")
-	out, _ := cmd.CombinedOutput()
-	log.Info(string(out))
-	// cmd := exec.Command("which", "chromium")
-	// out, _ := cmd.Output()
-	// log.Infof("Chromium path: {}", string(out))
 	path := "/usr/bin/chromium"
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		path = "/usr/bin/chromium-browser"
@@ -577,6 +592,18 @@ func (s *reportService) DownloadReport(url, divSelector string) ([]byte, error) 
 	}
 
 	return pdfBuf, nil
+}
+
+func (s *reportService) GetTopScorer() (*[]map[string]any, error) {
+	result := make([]map[string]any, 0)
+	currentDateTime := time.Now()
+	currentYear := currentDateTime.Year()
+	topScorers, err := s.AnalyticStatService.GetTopScorer(currentYear)
+	if err != nil {
+		return &result, err
+	}
+	result = topScorers.Data
+	return &result, nil
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -48,6 +48,7 @@ type DevelopmentWelfareShort struct {
 	AnnouncementDate *time.Time              `json:"announcement_date"`
 	Status           utils.DevelopmentStatus `json:"status"`
 	Reaction         utils.Vote              `json:"reaction"`
+	ReactionLocked   bool                    `json:"reaction_locked"`
 	UpvoteCount      uint                    `json:"upvote_count"`
 	DownvoteCount    uint                    `json:"downvote_count"`
 	Questionnaire    *[]Questionnaire        `json:"questionnaire,omitempty"`

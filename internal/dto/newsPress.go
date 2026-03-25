@@ -32,20 +32,21 @@ type NewsPressPostRes struct {
 }
 
 type NewsPressShort struct {
-	ID            primitive.ObjectID `json:"id"`
-	Event         *string            `json:"event"`
-	Statement     string             `json:"statement"`
-	StatementDate time.Time          `json:"statement_date"`
-	Subject       string             `json:"subject"`
-	Type          string             `json:"type"`
-	Tone          string             `json:"tone"`
-	UpvoteCount   uint               `json:"upvote_count"`
-	DownvoteCount uint               `json:"downvote_count"`
-	Member        Member             `json:"member,omitempty"`
-	Entity        Entity             `json:"entity,omitempty"`
-	Party         Party              `json:"party,omitempty"`
-	Reaction      utils.Vote         `json:"reaction"`
-	Source        *string            `json:"source"`
-	Questionnaire *[]Questionnaire   `json:"questionnaire,omitempty"`
-	CreatedAt     time.Time          `json:"created_at"`
+	ID             primitive.ObjectID `json:"id"`
+	Event          *string            `json:"event"`
+	Statement      string             `json:"statement"`
+	StatementDate  time.Time          `json:"statement_date"`
+	Subject        string             `json:"subject"`
+	Type           string             `json:"type"`
+	Tone           string             `json:"tone"`
+	UpvoteCount    uint               `json:"upvote_count"`
+	DownvoteCount  uint               `json:"downvote_count"`
+	Member         Member             `json:"member,omitempty"`
+	Entity         Entity             `json:"entity,omitempty"`
+	Party          Party              `json:"party,omitempty"`
+	Reaction       utils.Vote         `json:"reaction"`
+	ReactionLocked bool               `json:"reaction_locked"`
+	Source         *string            `json:"source"`
+	Questionnaire  *[]Questionnaire   `json:"questionnaire,omitempty"`
+	CreatedAt      time.Time          `json:"created_at"`
 }

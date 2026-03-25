@@ -24,6 +24,7 @@ type MongoDB struct {
 	ScoreSnapShotCollection *mongo.Collection
 	EventCollection         *mongo.Collection
 	DevelopmentWelfare      *mongo.Collection
+	AnalyticStatsCollection *mongo.Collection
 	Filter                  bson.M
 }
 
@@ -120,6 +121,12 @@ func (m *MongoDB) SetupCollections(dbName string) error {
 		return err
 	} else {
 		m.DevelopmentWelfare = db.Collection("development_welfares")
+	}
+
+	if err := createCollection(db, "analytic_stats"); err != nil {
+		return err
+	} else {
+		m.AnalyticStatsCollection = db.Collection("analytic_stats")
 	}
 	return nil
 }
