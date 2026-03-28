@@ -6,6 +6,7 @@ import (
 	"math"
 	"reflect"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -89,4 +90,13 @@ func RoundToOneDecimal(val float64) float64 {
 	}
 
 	return rounded
+}
+
+func NormalizeEntityName(name string) string {
+	if name == "" {
+		return name
+	}
+	name = strings.ToLower(name)
+	name = strings.ReplaceAll(name, "_", " ")
+	return strings.ReplaceAll(name, "-", " ")
 }

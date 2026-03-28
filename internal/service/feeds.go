@@ -325,7 +325,7 @@ func (s *feedService) GetNewsPressFeed(userID int, postID primitive.ObjectID) (d
 		}
 	}
 	if np.EntityId > 0 {
-		ok, entity, err := s.EntityRepository.GetEntityByID(int(np.EntityId))
+		ok, entity, err := s.EntityRepository.GetByID(int(np.EntityId))
 		if err != nil {
 			return newsPressPostRes, err
 		}
@@ -373,7 +373,7 @@ func (s *feedService) GetGrievanceFeed(userID int, postID primitive.ObjectID) (*
 		GrievanceID:    griev.GrievanceID,
 		Type:           griev.Type,
 		SubType:        griev.SubType,
-		Level:          griev.Level,
+		Jurisdiction:   griev.Jurisdiction,
 		CenterSubLevel: griev.CenterSubLevel,
 		Title:          griev.Title,
 		Description:    griev.Description,

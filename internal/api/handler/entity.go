@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"strings"
-
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/service"
@@ -44,7 +42,7 @@ func (h *EntityHandler) ListEntity(c *gin.Context) {
 
 func (h *EntityHandler) GetEntityByName(c *gin.Context) {
 	name := c.Param("name")
-	entityName := strings.Replace(name, "_", " ", -1)
+	entityName := utils.NormalizeEntityName(name)
 	val, err := h.Service.GetEntityByName(entityName)
 	if err != nil {
 		utils.Error(c, 500, "Failed to fetch entity", nil)

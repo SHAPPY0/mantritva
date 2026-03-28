@@ -132,7 +132,7 @@ func (s *newsPressService) GetDetailByID(userID int, id string) (*dto.NewsPressP
 		}
 	}
 	if post.EntityId > 0 {
-		ok, entity, err := s.EntityRepo.GetEntityByID(int(post.EntityId))
+		ok, entity, err := s.EntityRepo.GetByID(int(post.EntityId))
 		if err != nil {
 			log.Errorf("Error getting entity by id %d", post.EntityId)
 		}

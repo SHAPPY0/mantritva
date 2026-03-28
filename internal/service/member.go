@@ -152,11 +152,10 @@ func (s *memberService) BulkMemberUpload(c *gin.Context, filePath string) (bool,
 
 func (s *memberService) GetByName(name string) (*dto.MemberRes, error) {
 	var data dto.MemberRes
-	memberName := strings.Replace(name, "_", " ", -1)
-	memberName = strings.ToUpper(string(memberName[0])) + memberName[1:]
+	memberName := utils.NormalizeEntityName(name)
 	member, err := s.Repository.GetByName(memberName)
 	if err != nil {
-		log.Errorf("Member not found %s", memberName)
+		log.Errorf("GetByName: Member not found %s", memberName)
 		return nil, err
 	}
 	data.Member = *member
@@ -324,7 +323,7 @@ func (s *memberService) GetGrievancesByMemberID(pagination dto.Pagination, membe
 			Title:          grievance.Title,
 			Type:           grievance.Type,
 			SubType:        grievance.SubType,
-			Level:          grievance.Level,
+			Jurisdiction:   grievance.Jurisdiction,
 			CenterSubLevel: grievance.CenterSubLevel,
 			DateOfIncident: utils.DateOnly{Time: &grievance.DateOfIncident},
 			Location:       grievance.Location,

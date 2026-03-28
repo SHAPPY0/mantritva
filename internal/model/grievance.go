@@ -12,10 +12,11 @@ type Grievance struct {
 	GrievanceID          string                  `json:"grievance_id" bson:"grievance_id"`
 	Type                 string                  `json:"type" bson:"type"`
 	SubType              string                  `json:"subtype" bson:"subtype"`
-	Level                string                  `json:"level" bson:"level"`
+	Jurisdiction         string                  `json:"jurisdiction" bson:"jurisdiction"`
 	CenterSubLevel       string                  `json:"center_sublevel" bson:"center_sublevel"`
 	CabinetMinisterID    uint                    `json:"cabinet_minister_id" bson:"cabinet_minister_id"`
 	MemberOfParliamentID uint                    `json:"member_of_parliament_id" bson:"member_of_parliament_id"`
+	EntityID             uint                    `json:"entity_id" bson:"entity_id"`
 	StateID              uint                    `json:"state_id" bson:"state_id"`
 	DistrictID           uint                    `json:"district_id" bson:"district_id"`
 	StateLeaderID        uint                    `json:"state_leader_id" bson:"state_leader_id"`

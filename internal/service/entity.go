@@ -1,17 +1,17 @@
 package service
 
 import (
-	"log"
-
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
+	"github.com/shappy0/mantritva/pkg/log"
 )
 
 type EntityService interface {
 	List() ([]dto.EntityRes, error)
 	Create(dto.EntityReq) (*model.Entity, error)
 	GetEntityByName(string) (*dto.EntityRes, error)
+	GetByID(uint) (*dto.Entity, error)
 	GetPostsByEntityID(dto.Pagination, int) (*[]dto.NewsPressPostRes, error)
 }
 
@@ -60,6 +60,23 @@ func (s *entityService) GetEntityByName(name string) (*dto.EntityRes, error) {
 	return entity, nil
 }
 
+func (s *entityService) GetByID(id uint) (*dto.Entity, error) {
+	var result dto.Entity
+	ok, entity, err := s.Repository.GetByID(int(id))
+	if err != nil {
+		log.Errorf("Error fetching entity: %v", err)
+	} else if ok && entity != nil {
+		result = dto.Entity{
+			Name:         entity.Name,
+			Abbrv:        entity.Abbrv,
+			IsCentral:    entity.IsCentral,
+			StateName:    entity.StateName,
+			DistrictName: entity.DistrictName,
+		}
+	}
+	return &result, nil
+}
+
 func (s *entityService) GetPostsByEntityID(pagination dto.Pagination, entityID int) (*[]dto.NewsPressPostRes, error) {
 	var newsPressPostRes []dto.NewsPressPostRes
 	posts, err := s.NewsPressRepository.GetPostsByEntityID(pagination, entityID)
@@ -68,19 +85,11 @@ func (s *entityService) GetPostsByEntityID(pagination dto.Pagination, entityID i
 	}
 	for _, post := range *posts {
 		dtoPost := dto.NewsPressPostRes{NewsPressPost: post}
-		ok, entity, err := s.Repository.GetEntityByID(int(post.EntityId))
+		entity, err := s.GetByID(post.EntityId)
 		if err != nil {
-			log.Println("Error fetching entity: ", err)
-		}
-		if ok {
-			dtoEntity := dto.Entity{
-				Name:         entity.Name,
-				Abbrv:        entity.Abbrv,
-				IsCentral:    entity.IsCentral,
-				StateName:    entity.StateName,
-				DistrictName: entity.DistrictName,
-			}
-			dtoPost.Entity = dtoEntity
+			log.Errorf("Error fetching entity: %v", err)
+		} else if entity != nil {
+			dtoPost.Entity = *entity
 		}
 		newsPressPostRes = append(newsPressPostRes, dtoPost)
 	}

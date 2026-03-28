@@ -9,7 +9,7 @@ import (
 type EntityRepository interface {
 	Create(*model.Entity) error
 	List() ([]dto.EntityRes, error)
-	GetEntityByID(int) (bool, *dto.EntityRes, error)
+	GetByID(int) (bool, *dto.EntityRes, error)
 	GetEntityByName(string) (bool, *dto.EntityRes, error)
 }
 
@@ -44,7 +44,7 @@ func (r *entityRepository) List() ([]dto.EntityRes, error) {
 	return results, nil
 }
 
-func (r *entityRepository) GetEntityByID(id int) (bool, *dto.EntityRes, error) {
+func (r *entityRepository) GetByID(id int) (bool, *dto.EntityRes, error) {
 	var result dto.EntityRes
 	query := `SELECT e.*, s.name as state_name, d.name as district_name
 				FROM entities e
@@ -68,7 +68,7 @@ func (r *entityRepository) GetEntityByName(name string) (bool, *dto.EntityRes, e
 				FROM entities e
 				LEFT JOIN states s ON s.id = e.state_id AND e.is_central = false
 				LEFT JOIN districts d ON d.id = e.district_id AND e.is_central = false
-				WHERE e.name = ?`
+				WHERE LOWER(e.name) = ?`
 
 	tx := r.DB.Raw(query, name).Scan(&result)
 	if tx.Error != nil {

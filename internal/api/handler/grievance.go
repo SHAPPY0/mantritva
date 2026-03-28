@@ -57,7 +57,7 @@ func (h *GrievanceHandler) Create(c *gin.Context) {
 		utils.Error(c, 500, "Failed to create grievance", err)
 		return
 	}
-	utils.Success(c, "Grievance created successfully", resp)
+	utils.Success(c, "", resp)
 }
 
 func (h *GrievanceHandler) ListByUser(c *gin.Context) {

@@ -12,10 +12,11 @@ import (
 type GrievanceReq struct {
 	Type                 string                  `json:"type" form:"type"`
 	SubType              string                  `json:"subtype" form:"subtype"`
-	Level                string                  `json:"level" form:"level"`
+	Jurisdiction         string                  `json:"jurisdiction" form:"jurisdiction"`
 	CenterSubLevel       string                  `json:"center_sublevel" form:"center_sublevel"`
 	CabinetMinisterID    uint                    `json:"cabinet_minister_id" form:"cabinet_minister_id" binding:"omitempty"`
 	MemberOfParliamentID uint                    `json:"member_of_parliament_id" form:"member_of_parliament_id" binding:"omitempty"`
+	EntityID             uint                    `json:"entity_id" form:"entity_id" binding:"omitempty"`
 	StateID              uint                    `json:"state_id" form:"state_id" binding:"omitempty"`
 	DistrictID           uint                    `json:"district_id" form:"district_id" binding:"omitempty"`
 	StateLeaderID        uint                    `json:"state_leader_id" form:"state_leader_id" binding:"omitempty"`
@@ -51,6 +52,7 @@ type GrievanceRes struct {
 	StateLeader        *Member         `json:"state_leader,omitempty"`
 	State              *model.State    `json:"state,omitempty"`
 	District           string          `json:"district,omitempty"`
+	Entity             *Entity         `json:"entity,omitempty"`
 	User               UserClaim       `json:"user,omitempty"`
 	Questionnaire      []Questionnaire `json:"questionnaire,omitempty"`
 }
@@ -68,7 +70,7 @@ type GrievanceShort struct {
 	GrievanceID    string                `json:"grievance_id,omitempty"`
 	Type           string                `json:"type,omitempty"`
 	SubType        string                `json:"subtype,omitempty"`
-	Level          string                `json:"level,omitempty"`
+	Jurisdiction   string                `json:"jurisdiction,omitempty"`
 	CenterSubLevel string                `json:"center_sublevel,omitempty"`
 	Title          string                `json:"title,omitempty"`
 	Description    string                `json:"description"`

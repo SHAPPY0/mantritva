@@ -30,6 +30,7 @@ type grievanceSerivce struct {
 	StateRepo    repository.StateRepository
 	DistrictRepo repository.DistrictRepository
 	UserRepo     repository.UserRepository
+	EntityRepo   repository.EntityRepository
 }
 
 func NewGrievanceService(repos *repository.Repos) GrievanceSerivce {
@@ -40,6 +41,7 @@ func NewGrievanceService(repos *repository.Repos) GrievanceSerivce {
 		StateRepo:    repos.State,
 		DistrictRepo: repos.District,
 		UserRepo:     repos.User,
+		EntityRepo:   repos.Entity,
 	}
 }
 
@@ -48,10 +50,11 @@ func (s *grievanceSerivce) Create(ctx *gin.Context, req dto.Grievance) (*model.G
 		GrievanceID:          generateID(5),
 		Type:                 req.Type,
 		SubType:              req.SubType,
-		Level:                req.Level,
+		Jurisdiction:         req.Jurisdiction,
 		CenterSubLevel:       req.CenterSubLevel,
 		CabinetMinisterID:    req.CabinetMinisterID,
 		MemberOfParliamentID: req.MemberOfParliamentID,
+		EntityID:             req.EntityID,
 		StateID:              req.StateID,
 		DistrictID:           req.DistrictID,
 		StateLeaderID:        req.StateLeaderID,
@@ -104,12 +107,12 @@ func generateID(n int) string {
 	// first digit 1-9 (avoid leading zero)
 	first, _ := rand.Int(rand.Reader, big.NewInt(9))
 	sb.WriteByte(byte('1' + first.Int64()))
-	for i := 1; i < n; i++ {
+	for i := 1; i < (n - 1); i++ {
 		d, _ := rand.Int(rand.Reader, big.NewInt(10))
 		sb.WriteByte(byte('0' + d.Int64()))
 	}
 	year := time.Now().Format("06")
-	return "g" + year + "-" + sb.String()
+	return "mg" + year + sb.String()
 }
 
 func (s *grievanceSerivce) ListByUser(userID string) ([]model.Grievance, error) {
@@ -177,6 +180,20 @@ func (s *grievanceSerivce) GetByGrievanceID(grievanceID string) (*dto.GrievanceR
 			grievanceRes.District = district.Name
 		}
 	}
+	if grievance.EntityID != 0 {
+		ok, entity, err := s.EntityRepo.GetByID(int(grievance.EntityID))
+		if err != nil {
+			log.Error("Error fetching district details by ID")
+		} else if ok && entity != nil {
+			grievanceRes.Entity = &dto.Entity{
+				Name:         entity.Name,
+				Abbrv:        entity.Abbrv,
+				IsCentral:    entity.IsCentral,
+				StateName:    entity.StateName,
+				DistrictName: entity.DistrictName,
+			}
+		}
+	}
 
 	if !grievance.HideIdentity && grievance.CreatedBy != "" {
 		//convert string to int
@@ -210,7 +227,7 @@ func (s *grievanceSerivce) GetByStateID(stateID int) ([]*dto.GrievanceShort, err
 			GrievanceID:    g.GrievanceID,
 			Type:           g.Type,
 			SubType:        g.SubType,
-			Level:          g.Level,
+			Jurisdiction:   g.Jurisdiction,
 			Title:          g.Title,
 			DateOfIncident: utils.DateOnly{Time: &g.DateOfIncident},
 			Location:       g.Location,

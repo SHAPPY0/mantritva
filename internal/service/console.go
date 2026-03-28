@@ -246,7 +246,7 @@ func (s *consoleService) GetNewsPressList() (*[]dto.NewsPressPostRes, error) {
 			}
 		}
 		if post.EntityId > 0 {
-			ok, entity, err := s.EntityRepository.GetEntityByID(int(post.EntityId))
+			ok, entity, err := s.EntityRepository.GetByID(int(post.EntityId))
 			if err != nil {
 				log.Errorf("Error: While getting Entity Detail %d, %v", post.EntityId, err)
 			} else if ok {
