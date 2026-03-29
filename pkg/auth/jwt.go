@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/utils"
 )
 
@@ -108,9 +109,10 @@ func AuthRequired(required bool) gin.HandlerFunc {
 				ctx.Next()
 				return
 			}
-			if bearerToken != "Bearer null" && strings.HasPrefix(bearerToken, "Bearer ") {
+			if strings.HasPrefix(bearerToken, "Bearer ") && bearerToken != "Bearer null" {
 				if err := setUserFromBearer(ctx, bearerToken); err != nil {
-					utils.Error(ctx, 401, err.Error(), nil)
+					log.Errorf("Error authenticating user: %v", err)
+					utils.Error(ctx, 401, "Unable to authenticate user", nil)
 					ctx.Abort()
 					return
 				}
@@ -118,10 +120,10 @@ func AuthRequired(required bool) gin.HandlerFunc {
 			ctx.Next()
 			return
 		}
-
-		if bearerToken != "Bearer null" && strings.HasPrefix(bearerToken, "Bearer ") {
+		if strings.HasPrefix(bearerToken, "Bearer ") && bearerToken != "Bearer null" {
 			if err := setUserFromBearer(ctx, bearerToken); err != nil {
-				utils.Error(ctx, 401, err.Error(), nil)
+				log.Errorf("Error authenticating user: %v", err)
+				utils.Error(ctx, 401, "Unable to authenticate user", nil)
 				ctx.Abort()
 				return
 			}
