@@ -339,8 +339,10 @@ func (s *feedService) GetNewsPressFeed(userID int, postID primitive.ObjectID) (d
 			}
 		}
 	}
+	log.Infof("UserID: %d, PostID: %s, Fetching reaction", userID, np.ID)
 	if userID > 0 {
 		reaction, _ := s.ReactionRepository.GetByUserIDAndPostID(userID, np.ID)
+		log.Infof("UserID: %d, PostID: %s, Reaction found: %v", userID, np.ID, reaction != nil)
 		if reaction != nil {
 			newsPressPostRes.Reaction = utils.Vote(reaction.Reaction)
 			if reaction.LockedAt != nil && time.Now().After(*reaction.LockedAt) {
