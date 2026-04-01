@@ -42,21 +42,24 @@ func (h *UserHandler) LoginUser(c *gin.Context) {
 
 	user, err := h.Service.GetByUserID(req.UserID)
 	if err != nil {
+		log.Errorf("Failed to fetch user: %v", err)
 		utils.Error(c, 500, "Failed to fetch user", err)
 		return
 	}
 	if user == nil {
+		log.Errorf("User not found: %s", req.UserID)
 		utils.Error(c, 404, "User not found", nil)
 		return
 	}
 
-	isValid := utils.ComparePassword(user.Password, req.Password)
+	isValid := utils.ComparePassword(*user.Password, req.Password)
 	if !isValid {
+		log.Errorf("Invalid credentials for user %s", user.UserID)
 		utils.Error(c, 401, "Invalid credentials", nil)
 		return
 	}
 
-	user.Password = ""
+	user.Password = nil
 	token, err := auth.CreateToken(auth.UserClaims{
 		Name:         user.Name,
 		UserName:     user.UserID,
@@ -87,6 +90,6 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 		utils.Error(c, 500, "Failed to get user profile", err)
 		return
 	}
-	user.Password = ""
+	user.Password = nil
 	utils.Success(c, "", user)
 }

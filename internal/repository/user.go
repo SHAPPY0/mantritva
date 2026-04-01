@@ -50,7 +50,7 @@ func (r *userRepository) ConsoleGetUsersList() (*[]model.User, error) {
 		return nil, err
 	}
 	for i := range users {
-		users[i].Password = ""
+		users[i].Password = nil
 	}
 	return &users, nil
 }

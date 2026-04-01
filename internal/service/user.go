@@ -34,20 +34,20 @@ func (s *userService) Create(req dto.UserReq) (*model.User, error) {
 		UserID:   req.UserID,
 		Email:    req.Email,
 		Mobile:   req.Mobile,
-		Password: req.Password,
+		Password: &req.Password,
 		Role:     req.Role,
 	}
 
-	hashedPassword, err := utils.HashAndSaltPassword(user.Password)
+	hashedPassword, err := utils.HashAndSaltPassword(*user.Password)
 	if err != nil {
 		return nil, err
 	}
-	user.Password = hashedPassword
+	user.Password = &hashedPassword
 
 	if err := s.Repository.Create(user); err != nil {
 		return nil, err
 	}
-	user.Password = ""
+	user.Password = nil
 	return user, nil
 }
 
