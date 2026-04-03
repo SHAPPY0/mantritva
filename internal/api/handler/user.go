@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"fmt"
+	"regexp"
+
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/service"
@@ -19,10 +22,46 @@ func NewUserHandler(svc service.UserService) *UserHandler {
 	}
 }
 
+func validatePassword(password string) error {
+	if len(password) < 6 {
+		return fmt.Errorf("password must be at least 6 characters")
+	}
+	if !regexp.MustCompile(`[a-z]`).MatchString(password) {
+		return fmt.Errorf("password must contain at least one lowercase letter")
+	}
+	if !regexp.MustCompile(`[A-Z]`).MatchString(password) {
+		return fmt.Errorf("password must contain at least one uppercase letter")
+	}
+	if !regexp.MustCompile(`[0-9]`).MatchString(password) {
+		return fmt.Errorf("password must contain at least one number")
+	}
+	if !regexp.MustCompile(`[@$!%*?&]`).MatchString(password) {
+		return fmt.Errorf("password must contain at least one special character")
+	}
+	return nil
+}
+
+func validateUserReq(req dto.UserReq) error {
+	if req.Name == "" || req.UserID == "" || req.Email == "" || req.Password == "" || req.Mobile == "" {
+		return fmt.Errorf("Please fill required details")
+	}
+	if len(req.Mobile) != 10 || !regexp.MustCompile(`^\d+$`).MatchString(req.Mobile) {
+		return fmt.Errorf("Invalid mobile number format")
+	}
+	if err := validatePassword(req.Password); err != nil {
+		return fmt.Errorf("Password must be at least 6-20 characters long and include at least one uppercase letter, one lowercase letter, one digit, and one special character")
+	}
+	return nil
+}
+
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	var req dto.UserReq
 	if err := c.BindJSON(&req); err != nil {
 		utils.Error(c, 400, "Invalid request data", err)
+		return
+	}
+	if err := validateUserReq(req); err != nil {
+		utils.Error(c, 400, err.Error(), nil)
 		return
 	}
 	reps, err := h.Service.Create(req)
