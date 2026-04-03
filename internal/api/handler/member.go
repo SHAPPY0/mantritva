@@ -108,7 +108,7 @@ func (h *MemberHandler) GetMemberCareer(c *gin.Context) {
 			careersDto = append(careersDto, careerDto)
 		}
 	}
-	utils.Success(c, "Member career fetched successfully", careersDto)
+	utils.Success(c, "", careersDto)
 }
 
 func (h *MemberHandler) GetGrievancesByMemberID(c *gin.Context) {
@@ -125,7 +125,7 @@ func (h *MemberHandler) GetGrievancesByMemberID(c *gin.Context) {
 		utils.Error(c, 500, "Failed to fetch grievances", err)
 		return
 	}
-	utils.Success(c, "Grievances fetched successfully", grievances)
+	utils.Success(c, "", grievances)
 }
 
 func (h *MemberHandler) ListUnaffiliatedMembers(c *gin.Context) {
@@ -140,7 +140,7 @@ func (h *MemberHandler) ListUnaffiliatedMembers(c *gin.Context) {
 func (h *MemberHandler) GetPostsByMemberID(c *gin.Context) {
 	userID, err := auth.GetKeyInCtx[int](c, "user_id")
 	if err != nil {
-		utils.Error(c, 401, "Unauthorized access", nil)
+		utils.Error(c, 401, "Unauthorized Access", nil)
 		return
 	}
 	memberID := c.Param("memberID")

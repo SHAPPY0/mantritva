@@ -47,14 +47,16 @@ type EvidenceReq struct {
 
 type GrievanceRes struct {
 	model.Grievance
-	CabinetMinister    *Member         `json:"cabinet_minister,omitempty"`
-	MemberOfParliament *Member         `json:"member_of_parliament,omitempty"`
-	StateLeader        *Member         `json:"state_leader,omitempty"`
-	State              *model.State    `json:"state,omitempty"`
-	District           string          `json:"district,omitempty"`
-	Entity             *Entity         `json:"entity,omitempty"`
-	User               UserClaim       `json:"user,omitempty"`
-	Questionnaire      []Questionnaire `json:"questionnaire,omitempty"`
+	CabinetMinister    *Member          `json:"cabinet_minister,omitempty"`
+	MemberOfParliament *Member          `json:"member_of_parliament,omitempty"`
+	StateLeader        *Member          `json:"state_leader,omitempty"`
+	State              *model.State     `json:"state,omitempty"`
+	District           string           `json:"district,omitempty"`
+	Entity             *Entity          `json:"entity,omitempty"`
+	User               UserClaim        `json:"user,omitempty"`
+	Reaction           utils.Vote       `json:"reaction"`
+	ReactionLocked     bool             `json:"reaction_locked"`
+	Questionnaire      *[]Questionnaire `json:"questionnaire,omitempty"`
 }
 
 type GrievanceStatus struct {

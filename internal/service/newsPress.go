@@ -1,6 +1,8 @@
 package service
 
 import (
+	"time"
+
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
@@ -150,6 +152,9 @@ func (s *newsPressService) GetDetailByID(userID int, id string) (*dto.NewsPressP
 		reaction, _ := s.ReactionRepo.GetByUserIDAndPostID(userID, post.ID)
 		if reaction != nil {
 			result.Reaction = utils.Vote(reaction.Reaction)
+			if reaction.LockedAt != nil && time.Now().After(*reaction.LockedAt) {
+				result.ReactionLocked = true
+			}
 		}
 	}
 

@@ -57,5 +57,8 @@ type DevelopmentWelfareShort struct {
 
 type DevelopmentWelfareDetail struct {
 	model.DevelopmentWelfare
-	Member Member `json:"member,omitempty"`
+	Member         Member           `json:"member,omitempty"`
+	Reaction       utils.Vote       `json:"reaction"`
+	ReactionLocked bool             `json:"reaction_locked"`
+	Questionnaire  *[]Questionnaire `json:"questionnaire,omitempty"`
 }

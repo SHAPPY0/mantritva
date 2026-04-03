@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"mime/multipart"
 
@@ -307,6 +308,9 @@ func (s *memberService) GetPostsByMemberID(userID int, pagination dto.Pagination
 
 			} else if reaction != nil {
 				dtoPost.Reaction = utils.Vote(reaction.Reaction)
+				if reaction.LockedAt != nil && time.Now().After(*reaction.LockedAt) {
+					dtoPost.ReactionLocked = true
+				}
 			}
 		}
 		newsPressPostRes = append(newsPressPostRes, dtoPost)

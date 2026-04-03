@@ -82,7 +82,13 @@ func (h *GrievanceHandler) GetByGrievanceID(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.Service.GetByGrievanceID(grievanceID)
+	userID, err := auth.GetKeyInCtx[int](c, "user_id")
+	if err != nil {
+		utils.Error(c, 401, "Unauthorized Access", nil)
+		return
+	}
+
+	resp, err := h.Service.GetByGrievanceID(grievanceID, userID)
 	if err != nil {
 		utils.Error(c, 500, "Failed to fetch grievance", err)
 		return

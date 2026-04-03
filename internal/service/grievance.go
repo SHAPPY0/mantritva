@@ -19,7 +19,7 @@ import (
 type GrievanceSerivce interface {
 	Create(*gin.Context, dto.Grievance) (*model.Grievance, error)
 	ListByUser(string) ([]model.Grievance, error)
-	GetByGrievanceID(string) (*dto.GrievanceRes, error)
+	GetByGrievanceID(string, int) (*dto.GrievanceRes, error)
 	GetByStateID(int) ([]*dto.GrievanceShort, error)
 }
 
@@ -31,6 +31,8 @@ type grievanceSerivce struct {
 	DistrictRepo repository.DistrictRepository
 	UserRepo     repository.UserRepository
 	EntityRepo   repository.EntityRepository
+	ReactionRepo repository.ReactionRepository
+	ReportRepo   repository.ReportRepository
 }
 
 func NewGrievanceService(repos *repository.Repos) GrievanceSerivce {
@@ -42,6 +44,8 @@ func NewGrievanceService(repos *repository.Repos) GrievanceSerivce {
 		DistrictRepo: repos.District,
 		UserRepo:     repos.User,
 		EntityRepo:   repos.Entity,
+		ReactionRepo: repos.Reaction,
+		ReportRepo:   repos.Report,
 	}
 }
 
@@ -123,7 +127,7 @@ func (s *grievanceSerivce) ListByUser(userID string) ([]model.Grievance, error) 
 	return grievances, nil
 }
 
-func (s *grievanceSerivce) GetByGrievanceID(grievanceID string) (*dto.GrievanceRes, error) {
+func (s *grievanceSerivce) GetByGrievanceID(grievanceID string, userID int) (*dto.GrievanceRes, error) {
 	var grievanceRes dto.GrievanceRes
 	grievance, err := s.Repository.GetByGrievanceID(grievanceID)
 	if err != nil {
@@ -209,6 +213,30 @@ func (s *grievanceSerivce) GetByGrievanceID(grievanceID string) (*dto.GrievanceR
 				UserID: user.UserID,
 				Name:   user.Name,
 				Email:  user.Email,
+			}
+		}
+	}
+
+	if grievance.FinalStatus == utils.CLOSED || grievance.FinalStatus == utils.RESOLVED {
+		if userID != 0 {
+			reaction, _ := s.ReactionRepo.GetByUserIDAndPostID(userID, grievance.ID)
+			if reaction != nil {
+				grievanceRes.Reaction = utils.Vote(reaction.Reaction)
+				if reaction.LockedAt != nil && time.Now().After(*reaction.LockedAt) {
+					grievanceRes.ReactionLocked = true
+				}
+			}
+		}
+
+		//Get questionnair
+		if ques, _ := s.ReportRepo.GetQuestionnairesByCategory(string(utils.GRIEVANCE)); ques != nil {
+			grievanceRes.Questionnaire = new([]dto.Questionnaire)
+			for _, q := range *ques {
+				*grievanceRes.Questionnaire = append(*grievanceRes.Questionnaire, dto.Questionnaire{
+					ID:       q.ID,
+					Title:    q.Title,
+					VoteType: &q.VoteType,
+				})
 			}
 		}
 	}

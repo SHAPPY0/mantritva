@@ -106,7 +106,12 @@ func (h *DevelopmentWelfareHandler) GetDetailByID(c *gin.Context) {
 		utils.Error(c, 500, "Invalid Development Welfare ID", nil)
 		return
 	}
-	resp, err := h.Service.GetDetailByID(id)
+	userID, err := auth.GetKeyInCtx[int](c, "user_id")
+	if err != nil {
+		utils.Error(c, 401, "Unauthorized Access", nil)
+		return
+	}
+	resp, err := h.Service.GetDetailByID(id, userID)
 	if err != nil {
 		utils.Error(c, 500, "Failed to get development welfare by id", err)
 		return

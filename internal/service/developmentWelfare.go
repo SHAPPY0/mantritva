@@ -2,6 +2,7 @@ package service
 
 import (
 	"path/filepath"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
@@ -17,18 +18,22 @@ type DevelopmentWelfareService interface {
 	Create(*gin.Context, dto.DevelopmentWelfareReq) (*model.DevelopmentWelfare, error)
 	List() ([]model.DevelopmentWelfare, error)
 	GetByID(id string) (*model.DevelopmentWelfare, error)
-	GetDetailByID(string) (*dto.DevelopmentWelfareDetail, error)
+	GetDetailByID(string, int) (*dto.DevelopmentWelfareDetail, error)
 }
 
 type developmentWelfareService struct {
 	Repository       repository.DevelopmentWelfareRepository
 	MemberRepository repository.MemberRepository
+	ReactionRepo     repository.ReactionRepository
+	ReportRepo       repository.ReportRepository
 }
 
 func NewDevelopmentWelfareService(repos *repository.Repos) DevelopmentWelfareService {
 	return &developmentWelfareService{
 		Repository:       repos.DevelopmentWelfare,
 		MemberRepository: repos.Member,
+		ReactionRepo:     repos.Reaction,
+		ReportRepo:       repos.Report,
 	}
 }
 
@@ -115,7 +120,7 @@ func (s *developmentWelfareService) GetByID(id string) (*model.DevelopmentWelfar
 	return resp, nil
 }
 
-func (s *developmentWelfareService) GetDetailByID(id string) (*dto.DevelopmentWelfareDetail, error) {
+func (s *developmentWelfareService) GetDetailByID(id string, userID int) (*dto.DevelopmentWelfareDetail, error) {
 	idd, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -135,6 +140,28 @@ func (s *developmentWelfareService) GetDetailByID(id string) (*dto.DevelopmentWe
 	} else {
 		if err := utils.MapToStruct(memberInfo, &memberDto); err != nil {
 			log.Errorf("Error Converting member map to dto.member")
+		}
+	}
+
+	if userID != 0 {
+		reaction, _ := s.ReactionRepo.GetByUserIDAndPostID(userID, idd)
+		if reaction != nil {
+			result.Reaction = utils.Vote(reaction.Reaction)
+			if reaction.LockedAt != nil && time.Now().After(*reaction.LockedAt) {
+				result.ReactionLocked = true
+			}
+		}
+	}
+
+	//Get questionnair
+	if ques, _ := s.ReportRepo.GetQuestionnairesByCategory(string(utils.DEVELOPMENT)); ques != nil {
+		result.Questionnaire = new([]dto.Questionnaire)
+		for _, q := range *ques {
+			*result.Questionnaire = append(*result.Questionnaire, dto.Questionnaire{
+				ID:       q.ID,
+				Title:    q.Title,
+				VoteType: &q.VoteType,
+			})
 		}
 	}
 	result.Member = memberDto
