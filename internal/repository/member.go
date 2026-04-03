@@ -12,6 +12,7 @@ type MemberRepository interface {
 	CreateCriminalRecord(*model.CriminalRecord) error
 	CreateCareer(*model.Career) error
 	List() ([]model.Member, error)
+	GetActiveMembers() ([]model.Member, error)
 	GetByName(name string) (*model.Member, error)
 	GetByID(id uint) (*model.Member, error)
 	ConsoleGetMembersList() (*[]model.Member, error)
@@ -56,6 +57,14 @@ func (r *memberRepository) CreateCareer(career *model.Career) error {
 func (r *memberRepository) List() ([]model.Member, error) {
 	var members []model.Member
 	if err := r.DB.Find(&members).Error; err != nil {
+		return nil, err
+	}
+	return members, nil
+}
+
+func (r *memberRepository) GetActiveMembers() ([]model.Member, error) {
+	var members []model.Member
+	if err := r.DB.Where("is_active = ?", true).Find(&members).Error; err != nil {
 		return nil, err
 	}
 	return members, nil

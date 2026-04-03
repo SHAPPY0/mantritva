@@ -62,14 +62,17 @@ func NewMemberService(repos *repository.Repos) MemberService {
 }
 
 func (s *memberService) Create(ctx *gin.Context, req dto.MemberReq, photo *multipart.FileHeader) (*model.Member, error) {
+	fileMeta := &storage.FileMeta{}
 	destinationPath := filepath.Join("members")
 	storage, err := storage.New(destinationPath)
 	if err != nil {
 		return nil, err
 	}
-	fileMeta, err := storage.Save(ctx, photo)
-	if err != nil {
-		return nil, err
+	if photo != nil {
+		fileMeta, err = storage.Save(ctx, photo)
+		if err != nil {
+			return nil, err
+		}
 	}
 	memberName := req.Name
 	if memberName != "" {

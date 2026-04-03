@@ -56,7 +56,9 @@ func SetupRouter(db *gorm.DB, mongoDB *config.MongoDB) (*gin.Engine, *cron.CronJ
 		commonRouter(v1, services)
 	}
 
-	cj := cron.NewCronJob(services.ReportService.GeneratReportCron)
+	cj := cron.NewCronJob()
+	cj.AddFunc("@hourly", services.ReportService.GeneratReportCron)
+	cj.AddFunc("@monthly", services.ReportService.MonthlySnapShotCron)
 
 	return r, cj
 }

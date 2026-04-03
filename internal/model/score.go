@@ -7,7 +7,7 @@ import (
 )
 
 type Score struct {
-	ID              primitive.ObjectID `json:"_id" bson:"_id"`
+	ID              primitive.ObjectID `json:"_id" bson:"_id,omitempty"`
 	MemberID        uint               `json:"member_id" bson:"member_id"`
 	Year            int                `json:"year" bson:"year"`
 	TotalScore      float64            `json:"total_score" bson:"total_score"`
@@ -64,4 +64,28 @@ type CALRecordScore struct {
 	CALRecordIds   []string  `json:"cal_record_ids" bson:"cal_record_ids"` //Ids of cal records, can be used to fetch details if needed
 	IsProvisional  bool      `json:"is_provisional" bson:"is_provisional"`
 	LastComputedAt time.Time `json:"last_computed_at" bson:"last_computed_at"`
+}
+
+type ScoreSnapshot struct {
+	ID              primitive.ObjectID    `json:"_id" bson:"_id,omitempty"`
+	MemberID        uint                  `json:"member_id" bson:"member_id"`
+	Year            int                   `json:"year" bson:"year"`
+	Month           int                   `json:"month" bson:"month"`
+	TotalScore      float64               `json:"total_score" bson:"total_score"`
+	MaxScore        uint                  `json:"max_score" bson:"max_score"`
+	Confidence      float64               `json:"confidence" bson:"confidence"`
+	IsProvisional   bool                  `json:"is_provisional" bson:"is_provisional"`
+	Developments    DevelopmentScore      `json:"developments_score" bson:"developments_score"`
+	Grievances      GrievanceScore        `json:"grievances_score" bson:"grievances_score"`
+	NewsPresses     NewsPressScore        `json:"news_presses_score" bson:"news_presses_score"`
+	CALRecords      CALRecordScore        `json:"cal_records_score" bson:"cal_records_score"`
+	Metadata        ScoreSnapshotMetadata `json:"metadata" bson:"metadata"`
+	AuditFieldsBSON `bson:",inline"`
+}
+
+type ScoreSnapshotMetadata struct {
+	Trigger          string             `json:"trigger" bson:"trigger"`                       // e.g., "monthly_cron", "manual_update", etc.
+	SourceScoreID    primitive.ObjectID `json:"source_score_id" bson:"source_score_id"`       // Reference to the Score document that triggered this snapshot
+	KraWeightVersion uint               `json:"kra_weight_version" bson:"kra_weight_version"` // Version of the KRA weights used for this snapshot
+	FailedKRAS       []string           `json:"failed_kra" bson:"failed_kra"`
 }

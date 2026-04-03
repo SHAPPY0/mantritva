@@ -14,11 +14,13 @@ type ReportRepository interface {
 	GetReportKRA() ([]model.KRA, error)
 	Create(*model.Score) error
 	CreateScore(*model.Score) error
+	CreateScoreSnapshot(*model.ScoreSnapshot) error
 	Upsert(*model.Score) error
 	GetMemberScore(uint, int) (*model.Score, error)
 	GetMemberScoreReports(uint, int, int) ([]*model.Score, error)
 	GetMemberOverallScore(uint) ([]*model.Score, error)
 	GetQuestionnairesByCategory(string) (*[]model.Questionnaire, error)
+	GetScoresByYear(int) ([]*model.Score, error)
 }
 
 type reportRepository struct {
@@ -62,6 +64,17 @@ func (r *reportRepository) CreateScore(scoreData *model.Score) error {
 	}
 	scoreData.ID = primitive.NewObjectID()
 	ok, err := r.MongoDB.Insert(r.MongoDB.ScoreCollection, scoreData)
+	if err != nil {
+		return err
+	}
+	if ok != nil {
+		return nil
+	}
+	return nil
+}
+
+func (r *reportRepository) CreateScoreSnapshot(scoreData *model.ScoreSnapshot) error {
+	ok, err := r.MongoDB.Insert(r.MongoDB.ScoreSnapshotCollection, scoreData)
 	if err != nil {
 		return err
 	}
@@ -148,5 +161,23 @@ func (r *reportRepository) GetMemberScoreReports(memberID uint, from, to int) ([
 	if len(scores) == 0 {
 		log.Warnf("No reports found for memberID %d", memberID)
 	}
+	return scores, nil
+}
+
+func (r *reportRepository) GetScoresByYear(year int) ([]*model.Score, error) {
+	var scores []*model.Score
+	filter := bson.M{
+		"year":       year,
+		"is_deleted": false,
+	}
+	opts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
+	err := r.MongoDB.FindMany(r.MongoDB.ScoreCollection, filter, opts, &scores)
+	if err != nil {
+		return nil, err
+	}
+	if len(scores) == 0 {
+		log.Warnf("No reports found for year %d", year)
+	}
+
 	return scores, nil
 }

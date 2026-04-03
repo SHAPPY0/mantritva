@@ -21,7 +21,7 @@ type MongoDB struct {
 	ReactionCollection      *mongo.Collection
 	GrievanceCollection     *mongo.Collection
 	ScoreCollection         *mongo.Collection
-	ScoreSnapShotCollection *mongo.Collection
+	ScoreSnapshotCollection *mongo.Collection
 	EventCollection         *mongo.Collection
 	DevelopmentWelfare      *mongo.Collection
 	AnalyticStatsCollection *mongo.Collection
@@ -108,7 +108,7 @@ func (m *MongoDB) SetupCollections(dbName string) error {
 	if err := createCollection(db, "score_snapshots"); err != nil {
 		return err
 	} else {
-		m.ScoreSnapShotCollection = db.Collection("score_snapshots")
+		m.ScoreSnapshotCollection = db.Collection("score_snapshots")
 	}
 
 	if err := createCollection(db, "events"); err != nil {

@@ -29,8 +29,12 @@ func (h *MemberHandler) CreateMember(c *gin.Context) {
 	}
 	photo, err := c.FormFile("photo")
 	if err != nil {
-		utils.Error(c, 400, "Failed to get photo from request", err)
-		return
+		if err.Error() != "http: no such file" {
+			utils.Error(c, 400, "Failed to get photo from request", err)
+			return
+		} else {
+			log.Warnf("No member photo uploaded with the request")
+		}
 	}
 	reps, err := h.Service.Create(c, req, photo)
 	if err != nil {

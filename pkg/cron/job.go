@@ -10,13 +10,16 @@ type CronJob struct {
 	Cron *rcron.Cron
 }
 
-func NewCronJob(fn func()) *CronJob {
+func NewCronJob() *CronJob {
 	cj := &CronJob{
 		Cron: rcron.New(),
 	}
-	// cj.Cron.AddFunc("@every 5s", fn)
-	cj.Cron.AddFunc("@hourly", fn)
 	return cj
+}
+
+func (cj *CronJob) AddFunc(spec string, fn func()) error {
+	_, err := cj.Cron.AddFunc(spec, fn)
+	return err
 }
 
 func (cj *CronJob) Start() {

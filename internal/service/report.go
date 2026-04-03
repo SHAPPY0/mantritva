@@ -24,6 +24,7 @@ type ReportService interface {
 	GetReport(int) (dto.MemberReport, error)
 	GetMemberReports(int, int, int) ([]dto.MemberReport, error)
 	GeneratReportCron()
+	MonthlySnapShotCron()
 	DownloadReport(string, string) ([]byte, error)
 	GetTopScorer() (*[]map[string]any, error)
 }
@@ -36,6 +37,7 @@ type reportService struct {
 	PartyRepo           repository.PartyRepository
 	ReactionRepo        repository.ReactionRepository
 	ScoreSvc            compute.Score
+	MemberRepo          repository.MemberRepository
 	AnalyticStatService AnalyticStatsService
 }
 
@@ -49,6 +51,7 @@ func NewReportService(repos *repository.Repos, svcs *Services) ReportService {
 		ReactionRepo:        repos.Reaction,
 		ScoreSvc:            compute.NewScore(repos),
 		AnalyticStatService: svcs.AnalyticStatsService,
+		MemberRepo:          repos.Member,
 	}
 }
 
@@ -244,11 +247,11 @@ func (s *reportService) GenerateReport(memberID int) (*model.Score, error) {
 }
 
 func (svc *reportService) GeneratReportCron() {
-	computeDateTime := time.Now().UTC()
-	log.Infof("GenerateReportCron: Starting run at %s", computeDateTime.Format(time.RFC3339))
+	now := time.Now().UTC()
+	log.Infof("GenerateReportCron: Starting run at %s", now.Format(time.RFC3339))
 
 	//Step1: fetch reactions that have passed their lock tim
-	lockedReactions, err := svc.ReactionRepo.GetAndLockMaturedReactions(computeDateTime)
+	lockedReactions, err := svc.ReactionRepo.GetAndLockMaturedReactions(now)
 	if err != nil {
 		log.Errorf("GenerateReportCron: Failed to fetch matured reactions: %v", err)
 		return
@@ -381,6 +384,43 @@ func prepareReport(report *model.Score, memberReportResult *dto.MemberReport) {
 			Total:      report.CALRecords.TotalCount,
 			CALRecords: report.CALRecords.CALRecordIds,
 		},
+	}
+}
+
+func (svc *reportService) MonthlySnapShotCron() {
+	now := time.Now()
+	year, month := now.Year(), int(now.Month())
+	liveScores, err := svc.ReportRepo.GetScoresByYear(year)
+	if err != nil {
+		log.Errorf("MonthlySnapShotCron: Error fetching live scores for year %d: %v", year, err)
+		return
+	}
+	log.Infof("MonthlySnapShotCron: Fetched %d live scores for year %d, month: %d", len(liveScores), year, month)
+	for _, liveScore := range liveScores {
+		scoreSnapshot := model.ScoreSnapshot{
+			MemberID:      liveScore.MemberID,
+			Year:          year,
+			Month:         month,
+			TotalScore:    liveScore.TotalScore,
+			Confidence:    liveScore.Confidence,
+			MaxScore:      liveScore.MaxScore,
+			IsProvisional: liveScore.IsProvisional,
+			Developments:  liveScore.Developments,
+			Grievances:    liveScore.Grievances,
+			NewsPresses:   liveScore.NewsPresses,
+			CALRecords:    liveScore.CALRecords,
+			Metadata: model.ScoreSnapshotMetadata{
+				Trigger:          "MONTHLY_CRON",
+				SourceScoreID:    liveScore.ID,
+				KraWeightVersion: liveScore.Version,
+				FailedKRAS:       make([]string, 0),
+			},
+			AuditFieldsBSON: model.InsertBSONAuditFields("SYSTEM"),
+		}
+		if err := svc.ReportRepo.CreateScoreSnapshot(&scoreSnapshot); err != nil {
+			log.Errorf("MonthlySnapShotCron: Error creating score snapshot: %v", err)
+			return
+		}
 	}
 }
 
