@@ -32,7 +32,8 @@ func (h *FeedHandler) GetLatestFeed(c *gin.Context) {
 		utils.Error(c, 401, "Unauthorized Access", nil)
 		return
 	}
-	feed, err := h.Service.GetLatestFeed(userID)
+	pagination := dto.NewPagination(c)
+	feed, err := h.Service.GetLatestFeed(pagination, userID)
 	if err != nil {
 		utils.Error(c, 500, "Failed to load feed", err)
 		return

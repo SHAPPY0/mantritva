@@ -15,6 +15,7 @@ type FeedRepository interface {
 	Create(*model.Feed) (any, error)
 	UpdateStatus(string, dto.FeedReq) (bool, error)
 	GetAll() ([]model.Feed, error)
+	GetByPagination(dto.Pagination) ([]model.Feed, error)
 }
 
 type feedRepository struct {
@@ -40,6 +41,18 @@ func (r *feedRepository) GetAll() ([]model.Feed, error) {
 	opts := options.Find().
 		SetSort(bson.D{{Key: "created_at", Value: -1}}).
 		SetLimit(50)
+	if err := r.DB.FindMany(r.DB.FeedCollection, bson.M{"status": utils.Published}, opts, &feeds); err != nil {
+		return nil, err
+	}
+	return feeds, nil
+}
+
+func (r *feedRepository) GetByPagination(pagination dto.Pagination) ([]model.Feed, error) {
+	var feeds []model.Feed
+	opts := options.Find().
+		SetSort(bson.D{{Key: "created_at", Value: -1}}).
+		SetSkip(int64(pagination.Offset)).
+		SetLimit(int64(pagination.Limit))
 	if err := r.DB.FindMany(r.DB.FeedCollection, bson.M{"status": utils.Published}, opts, &feeds); err != nil {
 		return nil, err
 	}

@@ -16,7 +16,7 @@ import (
 type FeedService interface {
 	Create(dto.FeedReq) (bool, error)
 	UpdateStatus(string, dto.FeedReq) (bool, error)
-	GetLatestFeed(int) (*[]dto.FeedRes, error)
+	GetLatestFeed(dto.Pagination, int) (*[]dto.FeedRes, error)
 	CreateReaction(dto.ReactionReq) (bool, error)
 }
 
@@ -74,9 +74,9 @@ func (s *feedService) Create(feed dto.FeedReq) (bool, error) {
 	return true, nil
 }
 
-func (s *feedService) GetLatestFeed(userID int) (*[]dto.FeedRes, error) {
+func (s *feedService) GetLatestFeed(pagination dto.Pagination, userID int) (*[]dto.FeedRes, error) {
 	results := make([]dto.FeedRes, 0)
-	feeds, err := s.FeedRepository.GetAll()
+	feeds, err := s.FeedRepository.GetByPagination(pagination)
 	if err != nil {
 		log.Errorf("Error while fetching feeds: %v", err)
 		return &results, err
