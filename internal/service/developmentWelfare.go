@@ -140,6 +140,8 @@ func (s *developmentWelfareService) GetDetailByID(id string, userID int) (*dto.D
 	} else {
 		if err := utils.MapToStruct(memberInfo, &memberDto); err != nil {
 			log.Errorf("Error Converting member map to dto.member")
+		} else {
+			utils.TransformPositionLabel(&memberDto.Position)
 		}
 	}
 

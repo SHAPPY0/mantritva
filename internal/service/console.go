@@ -312,6 +312,8 @@ func (s *consoleService) GetGrievanceByID(grievanceID string) (*dto.GrievanceRes
 		var memberDto dto.Member
 		if err := utils.MapToStruct(member, &memberDto); err != nil {
 			log.Errorf("Error: Error converting member map to dto.member")
+		} else {
+			utils.TransformPositionLabel(&memberDto.Position)
 		}
 		grievanceRes.CabinetMinister = &memberDto
 	}
@@ -323,6 +325,8 @@ func (s *consoleService) GetGrievanceByID(grievanceID string) (*dto.GrievanceRes
 		var memberDto dto.Member
 		if err := utils.MapToStruct(member, &memberDto); err != nil {
 			log.Errorf("Error: Error converting member map to dto.member")
+		} else {
+			utils.TransformPositionLabel(&memberDto.Position)
 		}
 		grievanceRes.MemberOfParliament = &memberDto
 	}
@@ -334,6 +338,8 @@ func (s *consoleService) GetGrievanceByID(grievanceID string) (*dto.GrievanceRes
 		var memberDto dto.Member
 		if err := utils.MapToStruct(member, &memberDto); err != nil {
 			log.Errorf("Error: Error converting member map to dto.member %+v", err)
+		} else {
+			utils.TransformPositionLabel(&memberDto.Position)
 		}
 		grievanceRes.StateLeader = &memberDto
 	}

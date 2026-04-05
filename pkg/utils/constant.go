@@ -52,18 +52,40 @@ const (
 )
 
 const (
-	PRIMEMINISTER       Position = "Prime Minister"
-	PRESIDENT           Position = "President"
-	VICEPRESIDENT       Position = "Vice President"
-	CABINETMINISTER     Position = "Cabinet Minister"
-	CHIEFMINISTER       Position = "Chief Minister"
-	DEPUTYCHIEFMINISTER Position = "Deputy Chief Minister"
-	OPPOSITIONLEADER    Position = "Opposition Leader"
-	MP                  Position = "Member Of Parliament"
-	MOS                 Position = "Member Of State"
-	MLA                 Position = "Member Of Legislative Assembly"
-	RAJYASABHAMEMEBER   Position = "Rajyasabha Member"
+	PRESIDENT                     Position = "PRESIDENT"
+	VICE_PRESIDENT                Position = "VICE_PRESIDENT"
+	PRIME_MINISTER                Position = "PRIME_MINISTER"
+	CABINET_MINISTER              Position = "CABINET_MINISTER"
+	MINISTER_OF_STATE_INDEPENDENT Position = "MINISTER_OF_STATE_INDEPENDENT"
+	MINISTER_OF_STATE             Position = "MINISTER_OF_STATE"
+	MP_LS                         Position = "MP_LS"
+	MP_RS                         Position = "MP_RS"
+	GOVERNOR                      Position = "GOVERNOR"
+	CHIEF_MINISTER                Position = "CHIEF_MINISTER"
+	DEPUTY_CHIEF_MINISTER         Position = "DEPUTY_CHIEF_MINISTER"
+	S_CABINET_MINISTER            Position = "STATE_CABINET_MINISTER"
+	S_MINISTER_OF_STATE           Position = "STATE_MINISTER_OF_STATE"
+	MLA                           Position = "MLA"
+	MLC                           Position = "MLC"
 )
+
+var postitionDisplayMap = map[Position]string{
+	PRESIDENT:                     "President of India",
+	VICE_PRESIDENT:                "Vice President of India",
+	PRIME_MINISTER:                "Prime Minister",
+	CABINET_MINISTER:              "Cabinet Minister",
+	MINISTER_OF_STATE_INDEPENDENT: "MoS-IC",
+	MINISTER_OF_STATE:             "MoS",
+	MP_LS:                         "MP",
+	MP_RS:                         "MP-RS",
+	GOVERNOR:                      "Governor",
+	CHIEF_MINISTER:                "Chief Minister",
+	DEPUTY_CHIEF_MINISTER:         "Deputy Chief Minister",
+	S_CABINET_MINISTER:            "State Cabinet Minister",
+	S_MINISTER_OF_STATE:           "State MoS",
+	MLA:                           "MLA",
+	MLC:                           "MLC",
+}
 
 const (
 	UNDERREVIEW GrievanceStatus = "UNDER_REVIEW"

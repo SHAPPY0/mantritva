@@ -105,6 +105,7 @@ func (h *MemberHandler) GetMemberCareer(c *gin.Context) {
 		if err := utils.MapToStruct(career, &careerDto); err != nil {
 			log.Errorf("Failed to parse career data. Error: %v", err)
 		} else {
+			utils.TransformPositionLabel(&careerDto.Position.Position)
 			careersDto = append(careersDto, careerDto)
 		}
 	}

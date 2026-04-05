@@ -83,11 +83,11 @@ func (s *newsPressService) GetPostsByPartyID(pagination dto.Pagination, partyID 
 						newsPresPost.Member.Position = leader.Role
 					} else {
 						position := leader.Position
-						newsPresPost.Member.Position = position
+						newsPresPost.Member.Position = position.Label()
 						if leader.StateID > 0 {
 							state, err := s.StateRepo.GetByID(int(leader.StateID))
 							if err == nil {
-								newsPresPost.Member.Position = position + ", " + state.Name
+								newsPresPost.Member.Position = position.Label() + ", " + state.Name
 							}
 						}
 					}
@@ -123,6 +123,8 @@ func (s *newsPressService) GetDetailByID(userID int, id string) (*dto.NewsPressP
 		} else {
 			if err := utils.MapToStruct(memberInfo, &result.Member); err != nil {
 				log.Errorf("Error converting member map to dto.member")
+			} else {
+				utils.TransformPositionLabel(&result.Member.Position)
 			}
 			if !utils.IsEmpty(result.Member.Party) {
 				result.Party = dto.Party{

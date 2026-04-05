@@ -314,6 +314,8 @@ func (s *feedService) GetNewsPressFeed(userID int, postID primitive.ObjectID) (d
 		} else {
 			if err := utils.MapToStruct(memberInfo, &newsPressPostRes.Member); err != nil {
 				log.Errorf("Error converting member map to dto.member")
+			} else {
+				utils.TransformPositionLabel(&newsPressPostRes.Member.Position)
 			}
 			if !utils.IsEmpty(newsPressPostRes.Member.Party) {
 				newsPressPostRes.Party = dto.Party{
@@ -447,7 +449,7 @@ func (s *feedService) GetDevelopmentWelfareShort(userID int, postID primitive.Ob
 				devWelFeed.Member.Position = leader.Role
 			} else {
 				position := leader.Position
-				devWelFeed.Member.Position = position
+				devWelFeed.Member.Position = position.Label()
 
 			}
 		}

@@ -10,6 +10,7 @@ import (
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/service"
 	"github.com/shappy0/mantritva/pkg/auth"
+	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -160,7 +161,8 @@ func (h *ConsoleHandler) GetLeadershipByRulerID(c *gin.Context) {
 	}
 	resp, err := h.Service.GetLeadershipByRulerID(rulerID, utils.StrToBool(isCentralStr))
 	if err != nil {
-		utils.Error(c, 500, "Failed to get rulers list", err)
+		log.Errorf("Failed to get leadership for rulerID %d: %v", rulerID, err)
+		utils.Error(c, 500, "Failed to get leadership for ruler", err)
 		return
 	}
 	var results []dto.LeadershipRes
@@ -168,9 +170,10 @@ func (h *ConsoleHandler) GetLeadershipByRulerID(c *gin.Context) {
 		res := dto.LeadershipRes{}
 		err = utils.MapToStruct(r, &res)
 		if err != nil {
-			utils.Error(c, 500, "Failed to parse leadership data", err)
-			return
+			log.Errorf("Failed to parse leadership data for rulerID %d: %v", rulerID, err)
+			continue
 		}
+		utils.TransformPositionLabel(&res.Position.Position)
 		results = append(results, res)
 	}
 	utils.Success(c, "", results)

@@ -100,3 +100,10 @@ func NormalizeEntityName(name string) string {
 	name = strings.ReplaceAll(name, "_", " ")
 	return strings.ReplaceAll(name, "-", " ")
 }
+
+func TransformPositionLabel(position *string) {
+	if position == nil || *position == "" {
+		return
+	}
+	*position = Position(*position).Label()
+}

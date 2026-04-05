@@ -102,6 +102,7 @@ func (h *RulerHandler) GetRajyasabhaByStateID(c *gin.Context) {
 		if err := utils.MapToStruct(leader, &leadership); err != nil {
 			log.Errorf("Failed to parse rs member: %+v", err)
 		} else {
+			utils.TransformPositionLabel(&leadership.Member.Position)
 			results = append(results, leadership)
 		}
 	}
@@ -127,6 +128,7 @@ func (h *RulerHandler) GetStateRulerLeadership(c *gin.Context) {
 		if err := utils.MapToStruct(leader, &leadership); err != nil {
 			log.Errorf("Failed to parse state leadership: %+v ", err)
 		} else {
+			utils.TransformPositionLabel(&leadership.Position.Position)
 			results = append(results, leadership)
 		}
 	}

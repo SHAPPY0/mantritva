@@ -100,7 +100,7 @@ func (s *rulerService) GetCentralRuler() (*dto.RulerRes, error) {
 			}
 		}
 		if ruler.ID > 0 {
-			positions := []string{string(utils.PRIMEMINISTER), string(utils.PRESIDENT), string(utils.VICEPRESIDENT)}
+			positions := []string{string(utils.PRIME_MINISTER), string(utils.PRESIDENT), string(utils.VICE_PRESIDENT)}
 			leadership, err := s.LeadershipRepository.GetByRulerIDAndPositions(ruler.ID, "0", positions, true)
 			if err != nil {
 				log.Printf("Failed to get leadership details by rulerID")
@@ -112,6 +112,7 @@ func (s *rulerService) GetCentralRuler() (*dto.RulerRes, error) {
 						log.Printf("Failed to parse member data from leadership")
 						continue
 					} else {
+						utils.TransformPositionLabel(&leadership.Position.Position)
 						rulerDetail.Leaders = append(rulerDetail.Leaders, dto.Leader{
 							Name:        leadership.Member.Name,
 							Designation: dto.Position{Position: leadership.Position.Position, Role: leadership.Position.Role, Departments: leadership.Position.Departments},
@@ -163,7 +164,7 @@ func (s *rulerService) GetStateRuler(stateId string) (*dto.RulerRes, error) {
 		}
 		//Fetch Leaders
 		if ruler.ID > 0 {
-			leadership, err := s.LeadershipRepository.GetByRulerIDAndPosition(ruler.ID, string(utils.CHIEFMINISTER), false)
+			leadership, err := s.LeadershipRepository.GetByRulerIDAndPosition(ruler.ID, string(utils.CHIEF_MINISTER), false)
 			if err != nil {
 				log.Printf("Failed to get leadership details by rulerID")
 			} else {
@@ -174,7 +175,7 @@ func (s *rulerService) GetStateRuler(stateId string) (*dto.RulerRes, error) {
 					} else {
 						rulerDetail.Leaders = append(rulerDetail.Leaders, dto.Leader{
 							Name:        member.Name,
-							Designation: dto.Position{Position: leader.Position, Role: leader.Role, Departments: leader.Departments},
+							Designation: dto.Position{Position: leader.Position.Label(), Role: leader.Role, Departments: leader.Departments},
 							Photo:       member.Photo,
 							TermStart:   leader.TermStart,
 							// TermEnd:   *leader.TermEnd,
@@ -194,7 +195,7 @@ func (s *rulerService) GetStateLeadership(stateId string) ([]map[string]interfac
 		return nil, err
 	}
 	if stateRuler != nil && stateRuler.ID > 0 {
-		postitons := []string{string(utils.CHIEFMINISTER), string(utils.MLA), string(utils.DEPUTYCHIEFMINISTER)}
+		postitons := []string{string(utils.CHIEF_MINISTER), string(utils.MLA), string(utils.DEPUTY_CHIEF_MINISTER)}
 		leaders, err := s.LeadershipRepository.GetByRulerIDAndPositions(stateRuler.ID, stateId, postitons, false)
 		if err != nil {
 			log.Printf("Failed to get state leadership by rulerID %d", stateRuler.ID)
@@ -211,7 +212,7 @@ func (s *rulerService) GetCenterLeadership() (map[string][]dto.Leader, error) {
 		return nil, err
 	}
 	if centerRuler != nil && centerRuler.ID > 0 {
-		leadership, err := s.LeadershipRepository.GetByRulerIDAndPosition(centerRuler.ID, string(utils.CABINETMINISTER), true)
+		leadership, err := s.LeadershipRepository.GetByRulerIDAndPosition(centerRuler.ID, string(utils.CABINET_MINISTER), true)
 		if err != nil {
 			log.Printf("Failed to get leadership details by rulerID")
 		} else {
@@ -224,7 +225,7 @@ func (s *rulerService) GetCenterLeadership() (map[string][]dto.Leader, error) {
 					item := dto.Leader{
 						ID:          member.ID,
 						Name:        member.Name,
-						Designation: dto.Position{Position: leader.Position, Role: leader.Role, Departments: leader.Departments},
+						Designation: dto.Position{Position: leader.Position.Label(), Role: leader.Role, Departments: leader.Departments},
 						Photo:       member.Photo,
 						TermStart:   leader.TermStart,
 					}
@@ -250,7 +251,7 @@ func (s *rulerService) GetCenterLeadership() (map[string][]dto.Leader, error) {
 			result["cabinet_minister"] = leaders
 		}
 
-		mpLeadership, err := s.LeadershipRepository.GetByRulerIDAndPosition(centerRuler.ID, string(utils.MP), true)
+		mpLeadership, err := s.LeadershipRepository.GetByRulerIDAndPosition(centerRuler.ID, string(utils.MP_LS), true)
 		if err != nil {
 			log.Printf("Failed to get MPs details by rulerID")
 		} else {
@@ -263,7 +264,7 @@ func (s *rulerService) GetCenterLeadership() (map[string][]dto.Leader, error) {
 					item := dto.Leader{
 						ID:          member.ID,
 						Name:        member.Name,
-						Designation: dto.Position{Position: leader.Position, Role: leader.Role, Departments: leader.Departments},
+						Designation: dto.Position{Position: leader.Position.Label(), Role: leader.Role, Departments: leader.Departments},
 						Photo:       member.Photo,
 						TermStart:   leader.TermStart,
 					}
@@ -288,7 +289,7 @@ func (s *rulerService) GetCenterLeadership() (map[string][]dto.Leader, error) {
 			}
 			result["member_of_parliament"] = leaders
 		}
-		mosLeadership, err := s.LeadershipRepository.GetByRulerIDAndPosition(centerRuler.ID, string(utils.MOS), true)
+		mosLeadership, err := s.LeadershipRepository.GetByRulerIDAndPosition(centerRuler.ID, string(utils.MINISTER_OF_STATE), true)
 		if err != nil {
 			log.Printf("Failed to get MOS details by rulerID")
 		} else {
@@ -300,7 +301,7 @@ func (s *rulerService) GetCenterLeadership() (map[string][]dto.Leader, error) {
 				} else {
 					item := dto.Leader{
 						Name:        member.Name,
-						Designation: dto.Position{Position: leader.Position, Role: leader.Role, Departments: leader.Departments},
+						Designation: dto.Position{Position: leader.Position.Label(), Role: leader.Role, Departments: leader.Departments},
 						Photo:       member.Photo,
 						TermStart:   leader.TermStart,
 					}

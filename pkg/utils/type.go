@@ -90,3 +90,10 @@ func (id MongoID) String() string {
 func (id MongoID) IsValid() bool {
 	return primitive.ObjectID(id).IsZero()
 }
+
+func (p Position) Label() string {
+	if val, ok := postitionDisplayMap[p]; ok {
+		return val
+	}
+	return string(p)
+}

@@ -176,7 +176,7 @@ func (s *memberService) GetByName(name string) (*dto.MemberRes, error) {
 	if err != nil {
 		log.Warnf("Leadership not found for member %s", memberName)
 	} else {
-		data.Position = leadership.Position
+		data.Position = leadership.Position.Label()
 		data.Departments = leadership.Departments
 	}
 	// currentYear := time.Now().Format("2006")
@@ -225,7 +225,7 @@ func (s *memberService) GetByID(id uint) (*dto.MemberRes, error) {
 	if err != nil {
 		return nil, err
 	}
-	data.Position = leadership.Position
+	data.Position = leadership.Position.Label()
 	data.Departments = leadership.Departments
 
 	var totalWeightedScore float64
@@ -288,6 +288,8 @@ func (s *memberService) GetPostsByMemberID(userID int, pagination dto.Pagination
 		}
 		if err := utils.MapToStruct(memberAndParty, &dtoPost); err != nil {
 			return nil, err
+		} else {
+			utils.TransformPositionLabel(&dtoPost.Member.Position)
 		}
 		//Get Questionnairs
 		ques, err := s.ReportRepository.GetQuestionnairesByCategory(string(utils.NEWSPRESS))
@@ -382,7 +384,7 @@ func (s *memberService) GetMemberInfo(memberID string) (*dto.Member, error) {
 		if leader.Role != "" {
 			memberInfo.Position = leader.Role
 		} else {
-			memberInfo.Position = leader.Position
+			memberInfo.Position = leader.Position.Label()
 		}
 	}
 	if leader != nil {
@@ -402,6 +404,5 @@ func (s *memberService) GetMemberInfo(memberID string) (*dto.Member, error) {
 		memberInfo.Position = memberParty.Position
 		memberInfo.Party = dto.MemberParty{Name: memberParty.Name, Abbrv: memberParty.Abbrv, Symbol: memberParty.Symbol}
 	}
-
 	return memberInfo, nil
 }

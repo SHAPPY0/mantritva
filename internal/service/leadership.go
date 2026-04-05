@@ -4,6 +4,7 @@ import (
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
+	"github.com/shappy0/mantritva/pkg/utils"
 )
 
 type LeadershipService interface {
@@ -35,7 +36,7 @@ func (s *leadershipService) Create(req dto.LeadershipReq) (*model.Leadership, er
 		RulerID:       req.RulerID,
 		MemberID:      req.MemberID,
 		PartyID:       req.PartyID,
-		Position:      req.Position,
+		Position:      utils.Position(req.Position),
 		Role:          req.Role,
 		Departments:   req.Departments,
 		IsCentral:     req.IsCentral,

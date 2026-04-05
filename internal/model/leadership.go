@@ -9,7 +9,7 @@ type Leadership struct {
 	RulerID       uint           `json:"ruler_id"`
 	MemberID      uint           `json:"member_id"`
 	PartyID       uint           `json:"party_id"`
-	Position      string         `json:"position"`
+	Position      utils.Position `json:"position"`
 	Role          string         `json:"role,omitempty"`
 	Departments   string         `json:"departments,omitempty"`
 	StateID       uint           `json:"state_id"`
