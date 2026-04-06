@@ -69,7 +69,7 @@ const (
 	MLC                           Position = "MLC"
 )
 
-var postitionDisplayMap = map[Position]string{
+var PositionDisplayMap = map[Position]string{
 	PRESIDENT:                     "President of India",
 	VICE_PRESIDENT:                "Vice President of India",
 	PRIME_MINISTER:                "Prime Minister",

@@ -92,7 +92,7 @@ func (id MongoID) IsValid() bool {
 }
 
 func (p Position) Label() string {
-	if val, ok := postitionDisplayMap[p]; ok {
+	if val, ok := PositionDisplayMap[p]; ok {
 		return val
 	}
 	return string(p)

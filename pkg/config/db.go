@@ -46,6 +46,9 @@ func SetupDatabase() *gorm.DB {
 	db.AutoMigrate(&model.KRA{})
 	db.AutoMigrate(&model.Questionnaire{})
 	db.AutoMigrate(&model.Enquiry{})
+	db.AutoMigrate(&model.ConfigMap{})
+
+	SeedLeadershipPositions(db)
 
 	return db
 }

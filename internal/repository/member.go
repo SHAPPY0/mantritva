@@ -124,7 +124,7 @@ func (r *memberRepository) GetMemberAndPartyDetails(memberID, partyID int) (map[
 			json_build_object(
 				'name', m.name,
 				'photo', m.photo,
-				'position', CASE WHEN l.role IS NOT NULL THEN l.role ELSE l.position || CASE WHEN s.name IS NOT NULL THEN ', ' || s.name || '' ELSE '' END END
+				'position', CASE WHEN l.role IS NOT NULL THEN l.role ELSE confmap.value || CASE WHEN s.name IS NOT NULL THEN ', ' || s.name || '' ELSE '' END END
 			) AS member,
 			json_build_object(
 				'name', p.name,
@@ -133,10 +133,9 @@ func (r *memberRepository) GetMemberAndPartyDetails(memberID, partyID int) (map[
 			) AS party
 		FROM
 			members m
-		LEFT JOIN leaderships l ON
-			l.member_id = m.id
-		LEFT JOIN states s ON
-			s.id = l.state_id
+		LEFT JOIN leaderships l ON l.member_id = m.id
+		LEFT JOIN config_maps confmap ON confmap.key = l.position
+		LEFT JOIN states s ON s.id = l.state_id
 		LEFT JOIN parties p ON p.id = ?
 		WHERE m.id = ?
 	`
@@ -154,9 +153,9 @@ func (r *memberRepository) GetMemberById(memberID uint) (map[string]interface{},
 			m.photo,
 			CASE
 				WHEN s.name IS NOT NULL THEN 
-					COALESCE(l.position, l.role, pm."position") || ' , ' || s.name
+					COALESCE(confmap.value, l.role, pm."position") || ' , ' || s.name
 				ELSE 
-					COALESCE(l.position, l.role, pm."position")
+					COALESCE(confmap.value, l.role, pm."position")
 			END AS position,
 			json_build_object(
 				'name', p.name,
@@ -172,6 +171,7 @@ func (r *memberRepository) GetMemberById(memberID uint) (map[string]interface{},
 			and l.term_start < now()
 			and l.term_end is null
 			and l.is_active = true
+		left join config_maps confmap on confmap.key = l."position"
 		left join states s on
 			s.id = l.state_id
 			and l.state_id is not null
