@@ -97,3 +97,10 @@ func (p Position) Label() string {
 	}
 	return string(p)
 }
+
+func (kra KRA) Label() string {
+	if val, ok := KraDisplayMap[kra]; ok {
+		return val
+	}
+	return string(kra)
+}

@@ -15,12 +15,12 @@ type KRAWeights struct {
 }
 
 type MemberReport struct {
-	MemberID   uint      `json:"member_id"`
-	TotalScore float64   `json:"total_score"`
-	Confidence float64   `json:"confidence"`
-	Year       int       `json:"year"`
-	KRAS       KRAReport `json:"kras"`
-	CreatedAt  time.Time `json:"created_at"`
+	MemberID   uint       `json:"member_id"`
+	TotalScore float64    `json:"total_score"`
+	Confidence float64    `json:"confidence"`
+	Year       int        `json:"year"`
+	KRAS       KRAReport  `json:"kras"`
+	CreatedAt  *time.Time `json:"created_at,omitempty"`
 }
 
 type KRAReport struct {

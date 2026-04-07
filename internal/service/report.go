@@ -350,10 +350,10 @@ func setDefaultScore(kraWeight uint, globalAvg float64) (float64, float64) {
 func prepareReport(report *model.Score, memberReportResult *dto.MemberReport) {
 	memberReportResult.TotalScore = utils.RoundToOneDecimal(report.TotalScore)
 	memberReportResult.Confidence = utils.RoundToOneDecimal(report.Confidence)
-	memberReportResult.CreatedAt = report.CreatedAt
+	memberReportResult.CreatedAt = &report.CreatedAt
 	memberReportResult.KRAS = dto.KRAReport{
 		Developments: dto.DevelopmentReport{
-			Name:         string(utils.KRA_DEVELOPMENTS),
+			Name:         utils.KRA_DEVELOPMENTS.Label(),
 			Score:        utils.RoundToOneDecimal(report.Developments.Score),
 			Confidence:   utils.RoundToOneDecimal(report.Developments.Confidence),
 			Weight:       report.Developments.Weight,
@@ -361,7 +361,7 @@ func prepareReport(report *model.Score, memberReportResult *dto.MemberReport) {
 			Developments: report.Developments.DevelopmentIds,
 		},
 		Grievances: dto.GrievanceReport{
-			Name:       string(utils.KRA_GRIEVANCES),
+			Name:       utils.KRA_GRIEVANCES.Label(),
 			Score:      utils.RoundToOneDecimal(report.Grievances.Score),
 			Confidence: utils.RoundToOneDecimal(report.Grievances.Confidence),
 			Weight:     report.Grievances.Weight,
@@ -369,7 +369,7 @@ func prepareReport(report *model.Score, memberReportResult *dto.MemberReport) {
 			Grievances: report.Grievances.GrievanceIds,
 		},
 		NewsPresses: dto.NewsPressesReport{
-			Name:        string(utils.KRA_NEWSPRESSES),
+			Name:        utils.KRA_NEWSPRESSES.Label(),
 			Score:       utils.RoundToOneDecimal(report.NewsPresses.Score),
 			Confidence:  utils.RoundToOneDecimal(report.NewsPresses.Confidence),
 			Weight:      report.NewsPresses.Weight,
@@ -377,7 +377,7 @@ func prepareReport(report *model.Score, memberReportResult *dto.MemberReport) {
 			NewsPresses: report.NewsPresses.NewsPressIds,
 		},
 		CALRecords: dto.CALReport{
-			Name:       string(utils.KRA_CALRECORDS),
+			Name:       utils.KRA_CALRECORDS.Label(),
 			Score:      utils.RoundToOneDecimal(report.CALRecords.Score),
 			Confidence: utils.RoundToOneDecimal(report.CALRecords.Confidence),
 			Weight:     report.CALRecords.Weight,

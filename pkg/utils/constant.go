@@ -117,6 +117,13 @@ const (
 	KRA_NEWSPRESSES  KRA = "news_and_presses"
 )
 
+var KraDisplayMap = map[KRA]string{
+	KRA_DEVELOPMENTS: "Developments & Welfare",
+	KRA_GRIEVANCES:   "Grievances",
+	KRA_CALRECORDS:   "Criminal & Legal Records",
+	KRA_NEWSPRESSES:  "News & Presses",
+}
+
 const (
 	GRIEVANCE_LOW      GrievanceSeverity = "LOW"
 	GRIEVANCE_MEDIUM   GrievanceSeverity = "MEDIUM"
