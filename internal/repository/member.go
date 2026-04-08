@@ -153,7 +153,7 @@ func (r *memberRepository) GetMemberById(memberID uint) (map[string]interface{},
 			m.photo,
 			CASE
 				WHEN s.name IS NOT NULL THEN 
-					COALESCE(confmap.value, l.role, pm."position") || ' , ' || s.name
+					COALESCE(confmap.value, l.role, pm."position") || ', ' || s.name
 				ELSE 
 					COALESCE(confmap.value, l.role, pm."position")
 			END AS position,
