@@ -49,4 +49,12 @@ func bindEnvVariables(env *viper.Viper) {
 	env.BindEnv("S3_SECRET_KEY", "AWS_SECRET_ACCESS_KEY")
 	env.BindEnv("S3_BUCKET_NAME", "AWS_S3_BUCKET_NAME")
 	env.BindEnv("S3_REGION", "AWS_DEFAULT_REGION")
+
+	//Bind SMTP Server env variables
+	env.BindEnv("SMTP_HOST", "SMTP_HOST")
+	env.BindEnv("SMTP_PORT", "SMTP_PORT")
+	env.BindEnv("SMTP_FROM", "SMTP_FROM")
+	env.BindEnv("SMTP_USERNAME", "SMTP_USERNAME")
+	env.BindEnv("SMTP_PASSWORD", "SMTP_PASSWORD")
+	env.BindEnv("OTP_SECRET", "OTP_SECRET")
 }
