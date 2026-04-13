@@ -8,6 +8,7 @@ import (
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/pkg/config"
 	emailTemplates "github.com/shappy0/mantritva/pkg/config/emailTemplates"
+	"github.com/shappy0/mantritva/pkg/log"
 )
 
 type OtpHandler interface {
@@ -39,6 +40,7 @@ func (h *EmailOtpHandler) SendOTP(otpRequest model.OtpRequest, otp string) error
 
 	smtpHost := config.Env.GetString("SMTP_HOST")
 	smtpPort := fmt.Sprintf("%d", config.Env.GetInt("SMTP_PORT"))
+	log.Infof("From %s, host %s, port %s", from, smtpHost, smtpPort)
 	msg := fmt.Sprintf("From: %s\r\n", from)
 	msg += fmt.Sprintf("To: %s\r\n", otpRequest.Identifier)
 	msg += "MIME-Version: 1.0\r\n"
@@ -47,7 +49,7 @@ func (h *EmailOtpHandler) SendOTP(otpRequest model.OtpRequest, otp string) error
 	// Use strings.Replace to avoid fmt parsing of other % characters in the HTML template
 	msg += strings.Replace(h.OtpTemplate, "{{otp}}", otp, 1)
 	auth := smtp.PlainAuth("", config.Env.GetString("SMTP_USERNAME"), config.Env.GetString("SMTP_PASSWORD"), smtpHost)
-
+	log.Infof("Body: %s, username %s, password %s", msg, config.Env.GetString("SMTP_USERNAME"), config.Env.GetString("SMTP_PASSWORD"))
 	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, []byte(msg))
 	return err
 }
