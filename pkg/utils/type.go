@@ -25,6 +25,8 @@ type GrievanceStatus string
 type KRA string
 type DevelopmentStatus string
 type GrievanceSeverity string
+type OTPMode string
+type OTPPurpose string
 
 func (d *DateOnly) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), `"`)

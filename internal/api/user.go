@@ -17,6 +17,8 @@ func userRouter(rg *gin.RouterGroup, repos *repository.Repos) *gin.RouterGroup {
 		user.POST("/register", handler.CreateUser)
 		user.POST("/login", handler.LoginUser)
 		user.GET("/profile", auth.AuthRequired(true), handler.GetProfile)
+		user.POST("/send-otp", handler.SendOTP)
+		user.POST("/verify-otp", handler.VerifyOTP)
 	}
 
 	return rg

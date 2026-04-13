@@ -1,3 +1,4 @@
 /statics
 /pkg/config/env.yaml
+/pkg/config/env.example.yaml
 /bin

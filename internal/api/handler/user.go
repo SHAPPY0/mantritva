@@ -64,6 +64,10 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		utils.Error(c, 400, err.Error(), nil)
 		return
 	}
+	if !req.AccountVerified {
+		utils.Error(c, 500, "Account is not verified, Please verifiy it.", nil)
+		return
+	}
 	reps, err := h.Service.Create(req)
 	if err != nil {
 		utils.Error(c, 500, "Failed to create state", err)
@@ -90,7 +94,9 @@ func (h *UserHandler) LoginUser(c *gin.Context) {
 		utils.Error(c, 404, "User not found", nil)
 		return
 	}
-
+	if !user.AccountVerified {
+		log.Errorf("Unverified account is loggin in: %s", req.UserID)
+	}
 	isValid := utils.ComparePassword(*user.Password, req.Password)
 	if !isValid {
 		log.Errorf("Invalid credentials for user %s", user.UserID)
@@ -131,4 +137,43 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 	}
 	user.Password = nil
 	utils.Success(c, "", user)
+}
+
+func (h *UserHandler) SendOTP(c *gin.Context) {
+	var req []dto.SendOtpReq
+	if err := c.BindJSON(&req); err != nil {
+		utils.Error(c, 400, "Invalid request data", err)
+		return
+	}
+	if len(req) == 0 {
+		utils.Error(c, 400, "Request body cannot be empty", nil)
+		return
+	}
+	userIP := utils.ClientIP(c)
+	id, err := h.Service.SendOTP(req, userIP)
+	if err != nil {
+		utils.Error(c, 500, "Failed to send OTP", err)
+		return
+	}
+	utils.Success(c, "OTP sent successfully", map[string]interface{}{
+		"otp_id": id,
+	})
+}
+
+func (h *UserHandler) VerifyOTP(c *gin.Context) {
+	var req dto.VerifyOtpReq
+	if err := c.BindJSON(&req); err != nil {
+		utils.Error(c, 400, "Invalid request data", err)
+		return
+	}
+	valid, err := h.Service.VerifyOTP(req)
+	if err != nil {
+		utils.Error(c, 500, "Error verifying OTP", err)
+		return
+	}
+	if valid {
+		utils.Success(c, "OTP verified successfully", nil)
+	} else {
+		utils.Error(c, 500, "OTP Expired", nil)
+	}
 }

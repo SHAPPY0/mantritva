@@ -1,14 +1,30 @@
 package utils
 
 import (
+	"crypto/hmac"
+	crand "crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math"
+	"math/big"
+	"net"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
+
+func NewError(message string, args ...any) error {
+	if args != nil {
+		return fmt.Errorf("%s", fmt.Sprintf(message, args...))
+	}
+	return fmt.Errorf("%s", message)
+}
 
 func CreateCurrentDateTime() string {
 	now := time.Now()
@@ -106,4 +122,66 @@ func TransformPositionLabel(position *string) {
 		return
 	}
 	*position = Position(*position).Label()
+}
+
+func IsValidEmail(email string) bool {
+	// Simple regex for email validation
+	const emailRegex = `^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`
+	return regexp.MustCompile(emailRegex).MatchString(email)
+}
+
+func IsValidMobile(mobile string) bool {
+	// Simple regex for mobile number validation (10 digits)
+	const mobileRegex = `^\d{10}$`
+	return regexp.MustCompile(mobileRegex).MatchString(mobile)
+}
+
+func GenrateOTP(n int) string {
+	if n <= 0 {
+		n = 4
+	}
+
+	max := int64(1)
+	for i := 0; i < n; i++ {
+		max *= 10
+	}
+
+	num, _ := crand.Int(crand.Reader, big.NewInt(max))
+	return fmt.Sprintf("%0*d", n, num.Int64())
+}
+
+func HashOTP(otp, secret string) string {
+	h := hmac.New(sha256.New, []byte(secret))
+	h.Write([]byte(otp))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func SecureCompare(a, b string) bool {
+	return hmac.Equal([]byte(a), []byte(b))
+}
+
+func ClientIP(c *gin.Context) string {
+	xff := c.GetHeader("X-Forwarded-For")
+	if xff != "" {
+		parts := strings.Split(xff, ",")
+		ip := strings.TrimSpace(parts[0])
+		if net.ParseIP(ip) != nil {
+			return ip
+		}
+	}
+
+	ip := c.ClientIP()
+	p := net.ParseIP(ip)
+	if p == nil {
+		return ip
+	}
+	// IPv4-mapped IPv6 (::ffff:1.2.3.4) -> return IPv4
+	if p4 := p.To4(); p4 != nil {
+		return p4.String()
+	}
+	// map IPv6 loopback to IPv4 loopback
+	if p.IsLoopback() {
+		return "127.0.0.1"
+	}
+	return p.String()
 }

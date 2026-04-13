@@ -1,8 +1,11 @@
 package repository
 
 import (
+	"time"
+
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
+	"github.com/shappy0/mantritva/pkg/utils"
 	"gorm.io/gorm"
 )
 
@@ -14,6 +17,11 @@ type UserRepository interface {
 	UpdateTokenVersion(int, int) (bool, error)
 	GetTokenVersion(int) (int, error)
 	UpdateRole(dto.UpdateUserReq) (bool, error)
+	SaveOTPRequest(*model.OtpRequest) error
+	DeleteOTPRequest(uint) error
+	GetOTPRequest(string, utils.OTPMode, utils.OTPPurpose) (*model.OtpRequest, error)
+	UpdateOTPAttempts(uint, uint) (bool, error)
+	UpdateOTPConsumed(uint, uint, time.Time) (bool, error)
 }
 
 type userRepository struct {
@@ -86,6 +94,48 @@ func (r *userRepository) GetTokenVersion(userId int) (int, error) {
 func (r *userRepository) UpdateRole(user dto.UpdateUserReq) (bool, error) {
 	query := `UPDATE users SET role = ?, updated_at = ?, updated_by = ? WHERE id = ? AND is_deleted = false`
 	if err := r.DB.Exec(query, string(user.Role), user.UpdatedAt, user.UpdatedBy, user.ID).Error; err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *userRepository) SaveOTPRequest(otpRequest *model.OtpRequest) error {
+	if err := r.DB.Create(otpRequest).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *userRepository) DeleteOTPRequest(otpID uint) error {
+	if err := r.DB.Delete(&model.OtpRequest{}, otpID).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *userRepository) GetOTPRequest(identifier string, mode utils.OTPMode, purpose utils.OTPPurpose) (*model.OtpRequest, error) {
+	var otpReq model.OtpRequest
+	if err := r.DB.Where("identifier = ? AND mode = ? AND purpose = ? AND is_deleted = ?", identifier, mode, purpose, false).
+		Order("created_at DESC").First(&otpReq).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &otpReq, nil
+}
+
+func (r *userRepository) UpdateOTPAttempts(rowId uint, attempts uint) (bool, error) {
+	query := `UPDATE otp_requests SET attempts = ?, updated_at = ?, updated_by = ? WHERE id = ? AND is_deleted = false`
+	if err := r.DB.Exec(query, attempts, time.Now(), "SYSTEM", rowId).Error; err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *userRepository) UpdateOTPConsumed(rowId uint, attempts uint, consumedAt time.Time) (bool, error) {
+	query := `UPDATE otp_requests SET attempts = ?, consumed_at = ?, updated_at = ?, updated_by = ? WHERE id = ? AND is_deleted = false`
+	if err := r.DB.Exec(query, attempts, consumedAt, consumedAt, "SYSTEM", rowId).Error; err != nil {
 		return false, err
 	}
 	return true, nil
