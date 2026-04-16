@@ -82,7 +82,7 @@ func (r *leadershipRepository) GetByRulerID(rulerID uint, isCentral bool) ([]map
 				l2.name AS loksabha
 			FROM leaderships l
 			INNER JOIN members m ON m.id = l.member_id
-			INNER JOIN party_members pm ON pm.member_id = m.id and pm.exit_code IS NULL
+			INNER JOIN party_members pm ON pm.member_id = m.id and pm.exit_date IS NULL
 			INNER JOIN parties p ON p.id = l.party_id
 			LEFT JOIN states s ON s.id = l.state_id
 			LEFT JOIN vidhansabhas v ON v.id = l.vidhansabha_id
@@ -137,28 +137,46 @@ func (r *leadershipRepository) GetByRulerIDAndPositions(rulerID uint, stateID st
 
 func (r *leadershipRepository) GetCareerByMemberID(memberID int) ([]map[string]interface{}, error) {
 	var leadership []map[string]interface{}
-	query := `SELECT l.term_start, l.term_end,
-			JSON_BUILD_OBJECT(
-				'position', l."position",
-				'role', l.role,
-				'departments', l.departments
-			) AS "position", 
- 			JSON_BUILD_OBJECT(
-				'name', p.name,
-				'abbrv', p.abbrv,
-				'symbol', p.symbol
-			) AS party,
-			JSON_BUILD_OBJECT(
-				'state', s.name,
-				'loksabha', l2.name,
-				'vidhansabha', v.name
-			) AS region
-			FROM leaderships l 
-				LEFT JOIN parties p ON p.id = l.party_id
-				LEFT JOIN states s ON s.id = l.state_id 
-				LEFT JOIN loksabhas l2 ON l2.id = l.loksabha_id
-				LEFT JOIN vidhansabhas v ON v.id = l.vidhansabha_id
-			WHERE l.member_id = ? ORDER BY l.term_start DESC, l.term_end DESC;`
+	query := `select l.term_start, l.term_end,
+				JSON_BUILD_OBJECT(
+					'position', l."position",
+					'role', l.role,
+					'departments', l.departments
+				) as "position",
+				JSON_BUILD_OBJECT(
+					'name', p.name,
+					'abbrv', p.abbrv,
+					'symbol', p.symbol
+				) as party,
+				JSON_BUILD_OBJECT(
+					'state', s.name,
+					'loksabha', l2.name,
+					'vidhansabha', v.name
+				) as region
+				from leaderships l
+				left join parties p on p.id = l.party_id
+				left join states s on s.id = l.state_id
+				left join loksabhas l2 on l2.id = l.loksabha_id
+				left join vidhansabhas v on v.id = l.vidhansabha_id
+				where l.member_id = 46
+				union all
+				select pm.joining_date as term_start,
+					pm.exit_date as term_end,
+					JSON_BUILD_OBJECT(
+						'position', pm."position",
+						'role', null,
+						'departments', null
+					) as "position", 
+					JSON_BUILD_OBJECT(
+						'name', p.name,
+						'abbrv', p.abbrv,
+						'symbol', p.symbol
+					) as party,
+					null as region
+				from party_members pm
+				left join parties p on p.id = pm.party_id
+				where pm.member_id = 46
+				order by term_start desc, term_end desc`
 	if err := r.DB.Raw(query, memberID).Scan(&leadership).Error; err != nil {
 		return nil, err
 	}
