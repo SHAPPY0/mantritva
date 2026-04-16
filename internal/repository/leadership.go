@@ -137,7 +137,7 @@ func (r *leadershipRepository) GetByRulerIDAndPositions(rulerID uint, stateID st
 
 func (r *leadershipRepository) GetCareerByMemberID(memberID int) ([]map[string]interface{}, error) {
 	var leadership []map[string]interface{}
-	query := `select l.term_start, l.term_end,
+	query := `select * fromm (select l.term_start, l.term_end,
 				JSON_BUILD_OBJECT(
 					'position', l."position",
 					'role', l.role,
@@ -175,9 +175,9 @@ func (r *leadershipRepository) GetCareerByMemberID(memberID int) ([]map[string]i
 					null as region
 				from party_members pm
 				left join parties p on p.id = pm.party_id
-				where pm.member_id = ?
+				where pm.member_id = ?) as combined
 				order by term_start desc, term_end desc`
-	if err := r.DB.Raw(query, memberID).Scan(&leadership).Error; err != nil {
+	if err := r.DB.Raw(query, memberID, memberID).Scan(&leadership).Error; err != nil {
 		return nil, err
 	}
 	return leadership, nil
