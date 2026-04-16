@@ -45,6 +45,14 @@ func (s *userService) Create(req dto.UserReq) (*model.User, error) {
 		AccountVerified: req.AccountVerified,
 	}
 
+	if userExist, err := s.Repository.UserExist(user.Mobile, user.Email); err != nil {
+		log.Errorf("Error while checking if user exist %v", err)
+		return nil, utils.NewError("Internal server error")
+	} else if userExist != nil {
+		log.Errorf("User already exist with mobile %s, email %s", userExist.Mobile, user.Email)
+		return nil, utils.NewError("User already exist with given details")
+	}
+
 	hashedPassword, err := utils.HashAndSaltPassword(*user.Password)
 	if err != nil {
 		return nil, err
@@ -135,6 +143,14 @@ func (s *userService) SendOTP(req []dto.SendOtpReq, ipAddress string) (uint, err
 				return 0, err
 			}
 			otpHandler = auth.NewSMSOtpHandler()
+		case utils.OTP_MODE_WHATSAPP:
+			if !utils.IsValidMobile(r.Identifier) {
+				return 0, utils.NewError("Invalid mobile number")
+			}
+			if err := s.Repository.SaveOTPRequest(&otpRequest); err != nil {
+				return 0, err
+			}
+			otpHandler = auth.NewWhatsappOtpHandler()
 		default:
 			return 0, utils.NewError("Invalid OTP mode")
 		}

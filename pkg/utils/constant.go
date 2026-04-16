@@ -138,6 +138,7 @@ const (
 )
 
 const (
-	OTP_MODE_EMAIL OTPMode = "EMAIL"
-	OTP_MODE_SMS   OTPMode = "SMS"
+	OTP_MODE_EMAIL    OTPMode = "EMAIL"
+	OTP_MODE_SMS      OTPMode = "SMS"
+	OTP_MODE_WHATSAPP OTPMode = "WA"
 )

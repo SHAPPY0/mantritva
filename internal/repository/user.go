@@ -13,6 +13,7 @@ type UserRepository interface {
 	Create(*model.User) error
 	GetByID(int) (*model.User, error)
 	GetByUserID(string) (*model.User, error)
+	UserExist(string, string) (*model.User, error)
 	ConsoleGetUsersList() (*[]model.User, error)
 	UpdateTokenVersion(int, int) (bool, error)
 	GetTokenVersion(int) (int, error)
@@ -44,6 +45,17 @@ func (r *userRepository) Create(user *model.User) error {
 func (r *userRepository) GetByUserID(userID string) (*model.User, error) {
 	var user model.User
 	if err := r.DB.Where("user_id = ? AND is_deleted = ?", userID, false).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *userRepository) UserExist(mobile, email string) (*model.User, error) {
+	var user model.User
+	if err := r.DB.Where("(mobile = ? OR email = ?) AND is_deleted = ?", mobile, email, false).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}

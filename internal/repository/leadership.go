@@ -82,12 +82,12 @@ func (r *leadershipRepository) GetByRulerID(rulerID uint, isCentral bool) ([]map
 				l2.name AS loksabha
 			FROM leaderships l
 			INNER JOIN members m ON m.id = l.member_id
-			INNER JOIN party_members pm ON pm.member_id = m.id
+			INNER JOIN party_members pm ON pm.member_id = m.id and pm.exit_code IS NULL
 			INNER JOIN parties p ON p.id = l.party_id
 			LEFT JOIN states s ON s.id = l.state_id
 			LEFT JOIN vidhansabhas v ON v.id = l.vidhansabha_id
 			LEFT JOIN loksabhas l2 ON l2.id = l.loksabha_id
-			WHERE l.ruler_id = ? AND l.is_active = true AND l.term_start < now() AND l.term_end IS NULL`
+			WHERE l.ruler_id = ? AND l.term_start < now()`
 	if err := r.DB.Raw(query, rulerID).Scan(&results).Error; err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (r *leadershipRepository) GetByRulerIDAndPositions(rulerID uint, stateID st
 				LEFT JOIN parties p ON p.id = l.party_id
 				LEFT JOIN states s ON s.id = l.state_id
 				LEFT JOIN vidhansabhas v ON v.id = l.vidhansabha_id
-			WHERE l.ruler_id  = ? AND l.state_id = ? AND l.position IN (?) AND l.is_central = ?`
+			WHERE l.term_end IS NULL AND l.ruler_id  = ? AND l.state_id = ? AND l.position IN (?) AND l.is_central = ?`
 	if err := r.DB.Raw(query, rulerID, stateID, positions, isCentral).Scan(&results).Error; err != nil {
 		return nil, err
 	}
