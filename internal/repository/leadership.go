@@ -158,7 +158,7 @@ func (r *leadershipRepository) GetCareerByMemberID(memberID int) ([]map[string]i
 				left join states s on s.id = l.state_id
 				left join loksabhas l2 on l2.id = l.loksabha_id
 				left join vidhansabhas v on v.id = l.vidhansabha_id
-				where l.member_id = 46
+				where l.member_id = ?
 				union all
 				select pm.joining_date as term_start,
 					pm.exit_date as term_end,
@@ -175,7 +175,7 @@ func (r *leadershipRepository) GetCareerByMemberID(memberID int) ([]map[string]i
 					null as region
 				from party_members pm
 				left join parties p on p.id = pm.party_id
-				where pm.member_id = 46
+				where pm.member_id = ?
 				order by term_start desc, term_end desc`
 	if err := r.DB.Raw(query, memberID).Scan(&leadership).Error; err != nil {
 		return nil, err
