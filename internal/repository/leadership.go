@@ -137,7 +137,7 @@ func (r *leadershipRepository) GetByRulerIDAndPositions(rulerID uint, stateID st
 
 func (r *leadershipRepository) GetCareerByMemberID(memberID int) ([]map[string]interface{}, error) {
 	var leadership []map[string]interface{}
-	query := `select * fromm (select l.term_start, l.term_end,
+	query := `select * from (select l.term_start, l.term_end,
 				JSON_BUILD_OBJECT(
 					'position', l."position",
 					'role', l.role,
