@@ -57,20 +57,19 @@ func (h *MemberHandler) BulkMemberUpload(c *gin.Context) {
 	filePath := c.PostForm("filePath")
 
 	if filePath == "" {
-		utils.Error(c, 400, "Failed to get file path from request", nil)
+		utils.Error(c, 400, "Failed to get filePath from request", nil)
 		return
 	}
 
-	ok, err := h.Service.BulkMemberUpload(c, filePath)
+	success, errored, err := h.Service.BulkMemberUpload(c, filePath)
 	if err != nil {
-		utils.Error(c, 500, "Failed to upload party symbol", err)
+		utils.Error(c, 500, "Failed to upload bulk members", err)
 		return
 	}
-	if !ok {
-		utils.Error(c, 500, "Internal server error occured while uploading party symbol", err)
-		return
-	}
-	utils.Success(c, "Party symbol uploaded successfully", nil)
+	utils.Success(c, "Members uploaded successfully", map[string]any{
+		"success": success,
+		"errored": errored,
+	})
 }
 
 func (h *MemberHandler) GetMemberByName(c *gin.Context) {

@@ -6,15 +6,15 @@ import (
 )
 
 type MemberReq struct {
-	Name             string              `form:"name" binding:"required"`
-	FullName         string              `form:"full_name" binding:"required"`
-	DOB              utils.DateOnly      `form:"dob" gorm:"type:date"`
-	Gender           string              `form:"gender" binding:"required"`
-	Qualifications   string              `form:"qualifications"`
-	MaritalStatus    string              `form:"marital_status"`
-	FinancialAssets  string              `form:"financial_assets"`
-	SocialMediaLinks map[string]string   `form:"social_media_links" binding:"required"`
-	CriminalRecords  []CriminalRecordReq `form:"criminal_records,omitempty"`
+	Name             string              `json:"name" form:"name" binding:"required"`
+	FullName         string              `json:"full_name" form:"full_name" binding:"required"`
+	DOB              utils.DateOnly      `json:"dob" form:"dob" gorm:"type:date"`
+	Gender           string              `json:"gender" form:"gender" binding:"required"`
+	Qualifications   string              `json:"qualifications" form:"qualifications"`
+	MaritalStatus    string              `json:"marital_status" form:"marital_status"`
+	FinancialAssets  string              `json:"financial_assets" form:"financial_assets"`
+	SocialMediaLinks map[string]string   `json:"social_media_links" form:"social_media_links" binding:"required"`
+	CriminalRecords  []CriminalRecordReq `json:"criminal_records,omitempty" form:"criminal_records,omitempty"`
 }
 
 type CriminalRecordReq struct {

@@ -83,6 +83,13 @@ func (d *DateOnly) IsNull() bool {
 	return d == nil || d.Time == nil || d.Time.IsZero()
 }
 
+func (d DateOnly) String() string {
+	if d.Time == nil || d.Time.IsZero() {
+		return ""
+	}
+	return d.Time.Format("2006-01-02")
+}
+
 // Method to convert CustomObjectID to string
 func (id MongoID) String() string {
 	return primitive.ObjectID(id).Hex()

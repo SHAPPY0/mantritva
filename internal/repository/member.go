@@ -71,12 +71,16 @@ func (r *memberRepository) GetActiveMembers() ([]model.Member, error) {
 }
 
 func (r *memberRepository) GetByName(name string) (*model.Member, error) {
-	var member model.Member
+	member := &model.Member{}
 	query := "SELECT * FROM members m WHERE LOWER(m.name) = ? LIMIT 1"
-	if err := r.DB.Raw(query, strings.ToLower(name)).Scan(&member).Error; err != nil {
+	if err := r.DB.Raw(query, strings.ToLower(name)).Scan(member).Error; err != nil {
 		return nil, err
 	}
-	return &member, nil
+	if member.ID > 0 {
+		return member, nil
+	} else {
+		return nil, nil
+	}
 }
 
 func (r *memberRepository) GetByID(id uint) (*model.Member, error) {

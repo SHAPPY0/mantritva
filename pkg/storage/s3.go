@@ -119,7 +119,7 @@ func (r *S3Storage) UploadFile(ctx context.Context, key string, body io.Reader, 
 }
 
 func (r *S3Storage) Delete(filePath string) error {
-	if filePath != "" {
+	if filePath == "" {
 		return fmt.Errorf("Invalid filepath to delete")
 	}
 	_, err := r.Client.DeleteObject(context.TODO(), &s3.DeleteObjectInput{

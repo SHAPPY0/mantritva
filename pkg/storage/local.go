@@ -49,7 +49,7 @@ func (l *LocalStorage) Save(c *gin.Context, file *multipart.FileHeader) (*FileMe
 }
 
 func (l *LocalStorage) Delete(filePath string) error {
-	if filePath != "" {
+	if filePath == "" {
 		return fmt.Errorf("Invalid filepath to delete")
 	}
 	if err := os.Remove(filePath); err != nil {

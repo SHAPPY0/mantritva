@@ -23,7 +23,7 @@ import (
 type MemberService interface {
 	List() ([]dto.MemberRes, error)
 	Create(c *gin.Context, req dto.MemberReq, photo *multipart.FileHeader) (*model.Member, error)
-	BulkMemberUpload(c *gin.Context, filePath string) (bool, error)
+	BulkMemberUpload(c *gin.Context, filePath string) (map[string]string, map[string]string, error)
 	GetByName(name string) (*dto.MemberRes, error)
 	GetByID(id uint) (*dto.MemberRes, error)
 	ListUnaffiliatedMembers() ([]dto.MemberRes, error)
@@ -89,6 +89,18 @@ func (s *memberService) Create(ctx *gin.Context, req dto.MemberReq, photo *multi
 		FinancialAssets:  req.FinancialAssets,
 		SocialMediaLinks: req.SocialMediaLinks,
 		Photo:            fileMeta.DownloadURL,
+		AuditFields: model.AuditFields{
+			CreatedBy: "SYSTEM",
+		},
+	}
+	exist, err := s.Repository.GetByName(strings.ToLower(member.Name))
+	if err != nil {
+		storage.Delete(fileMeta.AbsolutePath)
+		return nil, err
+	}
+	if exist != nil {
+		storage.Delete(fileMeta.AbsolutePath)
+		return nil, utils.NewError("Member already exist")
 	}
 	if err := s.Repository.Create(member); err != nil {
 		storage.Delete(fileMeta.AbsolutePath)
@@ -139,7 +151,7 @@ func (s *memberService) List() ([]dto.MemberRes, error) {
 	return result, nil
 }
 
-func (s *memberService) BulkMemberUpload(c *gin.Context, filePath string) (bool, error) {
+func (s *memberService) BulkMemberUpload(c *gin.Context, filePath string) (map[string]string, map[string]string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		panic(err)
@@ -147,11 +159,21 @@ func (s *memberService) BulkMemberUpload(c *gin.Context, filePath string) (bool,
 	defer file.Close()
 
 	// Decode JSON into struct
-	var memberReq dto.MemberReq
-	if err := json.NewDecoder(file).Decode(&memberReq); err != nil {
+	var membersReq []dto.MemberReq
+	if err := json.NewDecoder(file).Decode(&membersReq); err != nil {
 		panic(err)
 	}
-	return true, nil
+	createSuccess := map[string]string{}
+	createError := map[string]string{}
+	for _, member := range membersReq {
+		mem, err := s.Create(c, member, nil)
+		if err != nil {
+			createError[member.Name] = err.Error()
+		} else if mem != nil {
+			createSuccess[mem.Name] = "Success"
+		}
+	}
+	return createSuccess, createError, nil
 }
 
 func (s *memberService) GetByName(name string) (*dto.MemberRes, error) {
