@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"net/http"
+	"path/filepath"
+
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/service"
@@ -54,14 +57,26 @@ func (h *MemberHandler) ListMember(c *gin.Context) {
 }
 
 func (h *MemberHandler) BulkMemberUpload(c *gin.Context) {
-	filePath := c.PostForm("filePath")
-
-	if filePath == "" {
-		utils.Error(c, 400, "Failed to get filePath from request", nil)
+	fh, err := c.FormFile("file")
+	if err != nil {
+		utils.Error(c, http.StatusBadRequest, "Failed to get uploaded file", err)
 		return
 	}
 
-	success, errored, err := h.Service.BulkMemberUpload(c, filePath)
+	f, err := fh.Open()
+	if err != nil {
+		utils.Error(c, http.StatusInternalServerError, "Failed to open uploaded file", err)
+		return
+	}
+	defer f.Close()
+
+	ext := filepath.Ext(fh.Filename)
+	if ext != ".json" {
+		utils.Error(c, http.StatusBadRequest, "Oly .json file accepted", err)
+		return
+	}
+
+	success, errored, err := h.Service.BulkMemberUpload(c, f)
 	if err != nil {
 		utils.Error(c, 500, "Failed to upload bulk members", err)
 		return

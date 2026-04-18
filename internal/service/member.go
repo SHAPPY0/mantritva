@@ -4,7 +4,6 @@ import (
 
 	// "path/filepath"
 	"encoding/json"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -23,7 +22,7 @@ import (
 type MemberService interface {
 	List() ([]dto.MemberRes, error)
 	Create(c *gin.Context, req dto.MemberReq, photo *multipart.FileHeader) (*model.Member, error)
-	BulkMemberUpload(c *gin.Context, filePath string) (map[string]string, map[string]string, error)
+	BulkMemberUpload(c *gin.Context, file multipart.File) (map[string]string, map[string]string, error)
 	GetByName(name string) (*dto.MemberRes, error)
 	GetByID(id uint) (*dto.MemberRes, error)
 	ListUnaffiliatedMembers() ([]dto.MemberRes, error)
@@ -151,13 +150,7 @@ func (s *memberService) List() ([]dto.MemberRes, error) {
 	return result, nil
 }
 
-func (s *memberService) BulkMemberUpload(c *gin.Context, filePath string) (map[string]string, map[string]string, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
+func (s *memberService) BulkMemberUpload(c *gin.Context, file multipart.File) (map[string]string, map[string]string, error) {
 	// Decode JSON into struct
 	var membersReq []dto.MemberReq
 	if err := json.NewDecoder(file).Decode(&membersReq); err != nil {
