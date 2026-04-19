@@ -18,6 +18,7 @@ type LeadershipRepository interface {
 	GetCareerByMemberID(int) ([]map[string]interface{}, error)
 	GetRajyaSabhMembersByStateID(string) ([]map[string]interface{}, error)
 	ExitLeadership(dto.LeadershipExitReq) error
+	LeaderExist(uint, uint, uint, string) (bool, error)
 }
 
 type leadershipRepository struct {
@@ -231,4 +232,17 @@ func (r *leadershipRepository) ExitLeadership(req dto.LeadershipExitReq) error {
 		return gorm.ErrRecordNotFound
 	}
 	return nil
+}
+
+func (r *leadershipRepository) LeaderExist(rulerID, memberID, stateID uint, position string) (bool, error) {
+	leader := &model.Leadership{}
+	query := "SELECT * FROM leaderships l WHERE l.ruler_id = ? AND l.member_id = ? AND l.position = ? AND l.state_id = ? AND l.term_end IS NULL AND l.is_active = ? AND l.is_deleted = ? LIMIT 1"
+	if err := r.DB.Raw(query, rulerID, memberID, position, stateID, true, false).Scan(leader).Error; err != nil {
+		return false, err
+	}
+	if leader.ID > 0 {
+		return true, nil
+	} else {
+		return false, nil
+	}
 }

@@ -1,6 +1,10 @@
 package service
 
 import (
+	"encoding/json"
+	"fmt"
+	"mime/multipart"
+
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
@@ -9,6 +13,7 @@ import (
 
 type LeadershipService interface {
 	Create(dto.LeadershipReq) (*model.Leadership, error)
+	CreateBulk(file multipart.File) (map[string]string, map[string]string, error)
 }
 
 type leadershipService struct {
@@ -50,8 +55,37 @@ func (s *leadershipService) Create(req dto.LeadershipReq) (*model.Leadership, er
 	if !req.TermEnd.IsNull() {
 		leadership.TermEnd = req.TermEnd
 	}
+	if !leadership.IsCentral {
+		exist, err := s.Repository.LeaderExist(leadership.RulerID, leadership.MemberID, leadership.StateID, string(leadership.Position))
+		if err != nil {
+			return nil, err
+		}
+		if exist {
+			return nil, utils.NewError("Leadership already exist")
+		}
+	}
+
 	if err := s.Repository.Create(leadership); err != nil {
 		return nil, err
 	}
 	return leadership, nil
+}
+
+func (s *leadershipService) CreateBulk(file multipart.File) (map[string]string, map[string]string, error) {
+	var leadersReq []dto.LeadershipReq
+	if err := json.NewDecoder(file).Decode(&leadersReq); err != nil {
+		panic(err)
+	}
+	createSuccess := map[string]string{}
+	createError := map[string]string{}
+	for _, leader := range leadersReq {
+		memberID := fmt.Sprintf("%d", leader.MemberID)
+		mem, err := s.Create(leader)
+		if err != nil {
+			createError[memberID] = err.Error()
+		} else if mem != nil {
+			createSuccess[string(memberID)] = "Success"
+		}
+	}
+	return createSuccess, createError, nil
 }

@@ -15,6 +15,7 @@ func leadershipRouter(rg *gin.RouterGroup, repos *repository.Repos) *gin.RouterG
 	{
 		// leadership.GET("/", handler.List)
 		leadership.POST("/", handler.Create)
+		leadership.POST("/create-bulk", handler.CreateBulkLeaders)
 	}
 	return leadership
 }
