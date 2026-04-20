@@ -83,5 +83,5 @@ func (h *CommonHandler) GetWAWebhook(c *gin.Context) {
 		return
 	}
 	log.Infof("GET WA webhook %v", response)
-	c.JSON(http.StatusOK, c.Query("isCentral"))
+	c.JSON(http.StatusOK, c.Query("hub_challenge"))
 }
