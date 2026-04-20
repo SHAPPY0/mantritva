@@ -75,3 +75,13 @@ func (h *CommonHandler) WAWebhook(c *gin.Context) {
 	log.Infof("WA webhook %v", response)
 	utils.Success(c, "", nil)
 }
+
+func (h *CommonHandler) GetWAWebhook(c *gin.Context) {
+	var response map[any]any
+	if err := c.ShouldBind(&response); err != nil {
+		utils.Error(c, 400, "Invalid request data", err)
+		return
+	}
+	log.Infof("GET WA webhook %v", response)
+	utils.Success(c, "", nil)
+}
