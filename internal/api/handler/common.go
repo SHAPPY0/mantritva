@@ -68,7 +68,7 @@ func (h *CommonHandler) CreateEnquiry(c *gin.Context) {
 
 func (h *CommonHandler) WAWebhook(c *gin.Context) {
 	var response map[any]any
-	if err := c.ShouldBind(&response); err != nil {
+	if err := c.ShouldBindJSON(&response); err != nil {
 		utils.Error(c, 400, "Invalid request data", err)
 		return
 	}
