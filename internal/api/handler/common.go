@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"bytes"
+	"io"
 	"net/http"
 	"path"
 	"strings"
@@ -67,9 +69,15 @@ func (h *CommonHandler) CreateEnquiry(c *gin.Context) {
 }
 
 func (h *CommonHandler) WAWebhook(c *gin.Context) {
-	var response map[any]any
-	if err := c.BindJSON(&response); err != nil {
-		log.Errorf("Error parsing WA webhook %v", err)
+	var response map[string]any
+	if err := c.ShouldBindJSON(&response); err != nil {
+		log.Errorf("Error parsing WA webhook json: %v", err)
+		// optional: log raw body for debugging
+		if data, err2 := c.GetRawData(); err2 == nil {
+			log.Infof("raw body: %s", string(data))
+			// restore body if you need to bind again
+			c.Request.Body = io.NopCloser(bytes.NewBuffer(data))
+		}
 		utils.Error(c, 400, "Invalid request data", err)
 		return
 	}
