@@ -245,6 +245,10 @@ func (s *memberService) GetByID(id uint) (*dto.MemberRes, error) {
 		data.Departments = leadership.Departments
 	}
 
+	if data.Position == "" {
+		data.Position = party.Position
+	}
+
 	var totalWeightedScore float64
 	var totalConfidence float64
 	memberScore := &dto.MemberScore{MaxScore: 100}
