@@ -238,10 +238,12 @@ func (s *memberService) GetByID(id uint) (*dto.MemberRes, error) {
 	//Get position from leadership table
 	leadership, err := s.LeadershipRepository.GetByMemberID(member.ID)
 	if err != nil {
-		return nil, err
+		log.Errorf("Error fetching leadership for member %d", member.ID)
 	}
-	data.Position = leadership.Position.Label()
-	data.Departments = leadership.Departments
+	if leadership != nil {
+		data.Position = leadership.Position.Label()
+		data.Departments = leadership.Departments
+	}
 
 	var totalWeightedScore float64
 	var totalConfidence float64
