@@ -118,7 +118,7 @@ func (s *userService) SendOTP(req []dto.SendOtpReq, ipAddress string) (uint, err
 			Purpose:    r.Purpose,
 			Mode:       r.Mode,
 			OtpHash:    utils.HashOTP(otp, config.Env.GetString("OTP_SECRET")),
-			ExpiresAt:  now.Add(time.Minute * 5),
+			ExpiresAt:  now.Add(time.Minute * 10),
 			IpAddress:  ipAddress,
 			AuditFields: model.AuditFields{
 				CreatedAt: now,
@@ -160,11 +160,11 @@ func (s *userService) SendOTP(req []dto.SendOtpReq, ipAddress string) (uint, err
 		}
 
 		if err := otpHandler.SendOTP(otpRequest, otp); err != nil {
-			log.Errorf("Failed to send OTP: %v", err)
+			log.Errorf("Error: %v", err)
 			s.deleteOtpRequest(otpRequest.ID)
 			return 0, err
 		} else {
-			log.Infof("OTP sent successfully to %s for purpose %s", r.Identifier, r.Purpose)
+			log.Infof("OTP sent successfully to %s for purpose %s, request ID: %d", r.Identifier, r.Purpose, otpRequest.ID)
 			return otpRequest.ID, nil
 		}
 	}

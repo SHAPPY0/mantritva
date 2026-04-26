@@ -48,6 +48,8 @@ func SetupDatabase() *gorm.DB {
 	db.AutoMigrate(&model.Enquiry{})
 	db.AutoMigrate(&model.ConfigMap{})
 	db.AutoMigrate(&model.OtpRequest{})
+	db.AutoMigrate(&model.ULB{})
+	db.AutoMigrate(&model.Ward{})
 
 	SeedLeadershipPositions(db)
 

@@ -18,6 +18,7 @@ type Services struct {
 	CommonService             CommonService
 	CronJob                   *cron.CronJob
 	AnalyticStatsService      AnalyticStatsService
+	UlbService                *UlbService
 }
 
 func NewServices(repos *repository.Repos) *Services {
@@ -32,6 +33,7 @@ func NewServices(repos *repository.Repos) *Services {
 		DevelopmentWelfareService: NewDevelopmentWelfareService(repos),
 		CommonService:             NewCommonService(repos),
 		AnalyticStatsService:      NewAnalyticStatService(repos),
+		UlbService:                NewULBService(repos),
 	}
 	svcs.ReportService = NewReportService(repos, svcs)
 	return svcs

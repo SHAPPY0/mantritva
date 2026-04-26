@@ -42,12 +42,12 @@ type UpdateUserReq struct {
 type SendOtpReq struct {
 	Identifier string           `json:"identifier" binding:"required"`
 	Purpose    utils.OTPPurpose `json:"purpose" binding:"required"`
-	Mode       utils.OTPMode    `json:"mode" binding:"required,oneof=EMAIL SMS"`
+	Mode       utils.OTPMode    `json:"mode" binding:"required"`
 }
 
 type VerifyOtpReq struct {
 	Identifier string           `json:"identifier" binding:"required"`
 	Otp        string           `json:"otp" binding:"required"`
-	Mode       utils.OTPMode    `json:"mode" binding:"required,oneof=EMAIL SMS"`
+	Mode       utils.OTPMode    `json:"mode" binding:"required"`
 	Purpose    utils.OTPPurpose `json:"purpose"`
 }

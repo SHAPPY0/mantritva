@@ -67,17 +67,19 @@ func (h *SMSOtpHandler) SendOTP(otpRequest model.OtpRequest, otp string) error {
 }
 
 func (h *WhatsAppOtpHandler) SendOTP(otpRequest model.OtpRequest, otp string) error {
-	authorization := ""
-	variables := fmt.Sprintf("%s|%s", otp, "REGISTRATION")
-	url := ""
-	otpUrl := fmt.Sprintf(url, authorization, otpRequest.Identifier, variables)
+	url := config.Env.GetString("OTP_URL")
+	if url == "" {
+		log.Errorf("OTP_URL is not configured")
+		return utils.NewError("Failed to send WA OTP")
+	}
+	otpUrl := fmt.Sprintf(url, otpRequest.Identifier, otp)
 	ctx := context.Background()
 
 	apiClient := utils.NewAPIClient(nil)
 	_, err := apiClient.Call(ctx, "GET", otpUrl, nil)
 	if err != nil {
 		log.Errorf("Error while sending WA OTP %v", err)
-		return err
+		return utils.NewError("Failed to send WA OTP")
 	} else {
 		return nil
 	}

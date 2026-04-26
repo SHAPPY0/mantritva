@@ -44,7 +44,7 @@ func (r *userRepository) Create(user *model.User) error {
 
 func (r *userRepository) GetByUserID(userID string) (*model.User, error) {
 	var user model.User
-	if err := r.DB.Where("user_id = ? AND is_deleted = ?", userID, false).First(&user).Error; err != nil {
+	if err := r.DB.Where("user_id = ? AND account_verified = ? AND is_deleted = ?", userID, true, false).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}

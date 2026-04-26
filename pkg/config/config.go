@@ -57,4 +57,6 @@ func bindEnvVariables(env *viper.Viper) {
 	env.BindEnv("SMTP_USERNAME", "SMTP_USERNAME")
 	env.BindEnv("SMTP_PASSWORD", "SMTP_PASSWORD")
 	env.BindEnv("OTP_SECRET", "OTP_SECRET")
+	env.BindEnv("OTP_URL", "OTP_URL")
+	env.BindEnv("OTP_EXPIRY_MINUTES", "OTP_EXPIRY_MINUTES")
 }
