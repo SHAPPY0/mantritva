@@ -149,3 +149,15 @@ const (
 	ULB_NAGAR_PANCHAYAT ULBType = "NAGAR_PANCHAYAT"
 	ULB_OTHER           ULBType = "OTHER"
 )
+
+var ULBTypeDisplayMap = map[ULBType]string{
+	ULB_NAGAR_NIGAM:     "Nagar Nigam",
+	ULB_NAGAR_PALIKA:    "Nagar Panchayat",
+	ULB_NAGAR_PANCHAYAT: "Nagar Panchayat",
+	ULB_OTHER:           "Other",
+}
+
+const (
+	LOCAL_BODY_TYPE_URBAN LocalBodyType = "URBAN"
+	LOCAL_BODY_TYPE_RURAL LocalBodyType = "RURAL"
+)

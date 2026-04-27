@@ -13,6 +13,7 @@ func ulbRouter(rg *gin.RouterGroup, services *service.Services) *gin.RouterGroup
 	ulb := rg.Group("/ulb")
 	{
 		ulb.POST("/create", auth.AuthRequired(true), handler.CreateULB)
+		ulb.POST("/bulk-create", auth.AuthRequired(true), handler.BulkCreateULB)
 		ulb.GET("/by-district/:districtId", handler.ListULBsByDistrict)
 	}
 	return rg

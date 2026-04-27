@@ -72,7 +72,7 @@ func (h *MemberHandler) BulkMemberUpload(c *gin.Context) {
 
 	ext := filepath.Ext(fh.Filename)
 	if ext != ".json" {
-		utils.Error(c, http.StatusBadRequest, "Oly .json file accepted", err)
+		utils.Error(c, http.StatusBadRequest, "Only .json file accepted", err)
 		return
 	}
 

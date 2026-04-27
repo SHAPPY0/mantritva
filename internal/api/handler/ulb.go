@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
@@ -43,12 +44,61 @@ func (h *UlbHandler) CreateULB(c *gin.Context) {
 	}
 }
 
+func (h *UlbHandler) BulkCreateULB(c *gin.Context) {
+	username, err := auth.GetKeyInCtx[string](c, "user_name")
+	if err != nil {
+		utils.Error(c, 401, "Unauthorized Access", nil)
+		return
+	}
+	if username == "" {
+		utils.Error(c, 401, "Unauthorized Access", nil)
+		return
+	}
+	fh, err := c.FormFile("file")
+	if err != nil {
+		utils.Error(c, http.StatusBadRequest, "Failed to get uploaded file", err)
+		return
+	}
+
+	f, err := fh.Open()
+	if err != nil {
+		utils.Error(c, http.StatusInternalServerError, "Failed to open uploaded file", err)
+		return
+	}
+	defer f.Close()
+
+	ext := filepath.Ext(fh.Filename)
+	if ext != ".json" {
+		utils.Error(c, http.StatusBadRequest, "Only .json file accepted", err)
+		return
+	}
+
+	success, errored, err := h.services.BulkCreateULB(username, c, f)
+	if err != nil {
+		utils.Error(c, http.StatusInternalServerError, "Error while creating ULBs", err)
+		return
+	} else {
+		utils.Success(c, "ULBs Created Successfully", map[string]any{
+			"success": success,
+			"errored": errored,
+		})
+	}
+}
+
 func (h *UlbHandler) ListULBsByDistrict(c *gin.Context) {
 	districtId := c.Param("districtId")
 	if ulbs, err := h.services.ListULBsByDistrict(districtId); err != nil {
 		utils.Error(c, http.StatusInternalServerError, "Error while fetching ULBs by district", err)
 		return
 	} else {
-		utils.Success(c, "ULBs fetched successfully", ulbs)
+		result := make([]dto.LocalBodyRes, len(ulbs))
+		for i, ulb := range ulbs {
+			result[i] = dto.LocalBodyRes{
+				ULB: ulb,
+			}
+			result[i].LocalBodyType = utils.LOCAL_BODY_TYPE_URBAN
+			result[i].DisplayType = ulb.BodyType.Label()
+		}
+		utils.Success(c, "ULBs fetched successfully", result)
 	}
 }

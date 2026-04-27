@@ -5,7 +5,7 @@ import "github.com/shappy0/mantritva/pkg/utils"
 type ULB struct {
 	ID          uint          `json:"id,omitempty" gorm:"primaryKey"`
 	Name        string        `json:"name"`
-	ShortName   string        `json:"short_name,omitempty"`
+	Area        string        `json:"area,omitempty"`
 	Code        string        `json:"code,omitempty"`
 	DistrictID  uint          `json:"district_id"`
 	BodyType    utils.ULBType `json:"type"`

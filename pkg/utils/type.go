@@ -27,6 +27,7 @@ type DevelopmentStatus string
 type GrievanceSeverity string
 type OTPMode string
 type OTPPurpose string
+type LocalBodyType string
 type ULBType string
 
 func (d *DateOnly) UnmarshalJSON(b []byte) error {
@@ -113,4 +114,11 @@ func (kra KRA) Label() string {
 		return val
 	}
 	return string(kra)
+}
+
+func (ulb ULBType) Label() string {
+	if val, ok := ULBTypeDisplayMap[ulb]; ok {
+		return val
+	}
+	return string(ulb)
 }
