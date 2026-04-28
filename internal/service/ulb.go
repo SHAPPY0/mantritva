@@ -8,6 +8,7 @@ import (
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
+	"github.com/shappy0/mantritva/pkg/utils"
 )
 
 type UlbService struct {
@@ -32,6 +33,11 @@ func (s *UlbService) CreateULB(userName string, ulbDto *dto.ULBReq) (*model.ULB,
 			CreatedBy: userName,
 		},
 	}
+	if exist, err := s.repo.IsExist(ulb.Name, ulb.DistrictID); err != nil {
+		return nil, err
+	} else if exist {
+		return nil, utils.NewError("Already exists")
+	}
 	if err := s.repo.CreateULB(ulb); err != nil {
 		return nil, err
 	}
@@ -48,16 +54,16 @@ func (s *UlbService) ListULBsByDistrict(districtId string) ([]model.ULB, error) 
 }
 
 func (s *UlbService) BulkCreateULB(userName string, c *gin.Context, f multipart.File) (map[string]string, map[string]string, error) {
-	var ulbReq []dto.ULBReq
-	if err := json.NewDecoder(f).Decode(&ulbReq); err != nil {
+	var ulbReqList []dto.ULBReq
+	if err := json.NewDecoder(f).Decode(&ulbReqList); err != nil {
 		panic(err)
 	}
 	createSuccess := map[string]string{}
 	createError := map[string]string{}
-	for _, ulb := range ulbReq {
-		ulb, err := s.CreateULB(userName, &ulb)
+	for _, ulbReq := range ulbReqList {
+		ulb, err := s.CreateULB(userName, &ulbReq)
 		if err != nil {
-			createError[ulb.Name] = err.Error()
+			createError[ulbReq.Name] = err.Error()
 		} else {
 			createSuccess[ulb.Name] = "Created successfully"
 		}

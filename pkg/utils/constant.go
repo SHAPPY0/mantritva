@@ -152,7 +152,7 @@ const (
 
 var ULBTypeDisplayMap = map[ULBType]string{
 	ULB_NAGAR_NIGAM:     "Nagar Nigam",
-	ULB_NAGAR_PALIKA:    "Nagar Panchayat",
+	ULB_NAGAR_PALIKA:    "Nagar Palika",
 	ULB_NAGAR_PANCHAYAT: "Nagar Panchayat",
 	ULB_OTHER:           "Other",
 }

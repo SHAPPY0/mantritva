@@ -15,6 +15,14 @@ func NewULBRepository(db *gorm.DB) UlbRepository {
 	}
 }
 
+func (r *UlbRepository) IsExist(name string, districtId uint) (bool, error) {
+	var count int64
+	if err := r.DB.Model(&model.ULB{}).Where("name = ? AND district_id = ? AND deleted_at IS NULL", name, districtId).Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func (r *UlbRepository) CreateULB(ulb *model.ULB) error {
 	if err := r.DB.Create(ulb).Error; err != nil {
 		return err
