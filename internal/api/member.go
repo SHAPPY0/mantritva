@@ -13,8 +13,8 @@ func memberRouter(rg *gin.RouterGroup, services *service.Services) *gin.RouterGr
 	member := rg.Group("/member")
 	{
 		member.GET("/", handler.ListMember)
-		member.POST("/", handler.CreateMember)
-		member.POST("/bulkUpload", handler.BulkMemberUpload)
+		member.POST("/", auth.AuthRequired(true), handler.CreateMember)
+		member.POST("/bulkUpload", auth.AuthRequired(true), handler.BulkMemberUpload)
 		member.GET("/:name", handler.GetMemberByName)
 		member.GET("/id/:memberID/career", handler.GetMemberCareer)
 		member.GET("/id/:memberID/news-press", auth.AuthRequired(false), handler.GetPostsByMemberID)

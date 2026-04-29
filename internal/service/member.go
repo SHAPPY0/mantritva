@@ -21,8 +21,8 @@ import (
 
 type MemberService interface {
 	List() ([]dto.MemberRes, error)
-	Create(c *gin.Context, req dto.MemberReq, photo *multipart.FileHeader) (*model.Member, error)
-	BulkMemberUpload(c *gin.Context, file multipart.File) (map[string]string, map[string]string, error)
+	Create(c *gin.Context, username string, req dto.MemberReq, photo *multipart.FileHeader) (*model.Member, error)
+	BulkMemberUpload(c *gin.Context, username string, file multipart.File) (map[string]string, map[string]string, error)
 	GetByName(name string) (*dto.MemberRes, error)
 	GetByID(id uint) (*dto.MemberRes, error)
 	ListUnaffiliatedMembers() ([]dto.MemberRes, error)
@@ -61,7 +61,7 @@ func NewMemberService(repos *repository.Repos) MemberService {
 	}
 }
 
-func (s *memberService) Create(ctx *gin.Context, req dto.MemberReq, photo *multipart.FileHeader) (*model.Member, error) {
+func (s *memberService) Create(ctx *gin.Context, username string, req dto.MemberReq, photo *multipart.FileHeader) (*model.Member, error) {
 	fileMeta := &storage.FileMeta{}
 	destinationPath := filepath.Join("members")
 	storage, err := storage.New(destinationPath)
@@ -89,7 +89,7 @@ func (s *memberService) Create(ctx *gin.Context, req dto.MemberReq, photo *multi
 		SocialMediaLinks: req.SocialMediaLinks,
 		Photo:            fileMeta.DownloadURL,
 		AuditFields: model.AuditFields{
-			CreatedBy: "SYSTEM",
+			CreatedBy: username,
 		},
 	}
 	exist, err := s.Repository.GetByName(strings.ToLower(member.Name))
@@ -150,7 +150,7 @@ func (s *memberService) List() ([]dto.MemberRes, error) {
 	return result, nil
 }
 
-func (s *memberService) BulkMemberUpload(c *gin.Context, file multipart.File) (map[string]string, map[string]string, error) {
+func (s *memberService) BulkMemberUpload(c *gin.Context, username string, file multipart.File) (map[string]string, map[string]string, error) {
 	// Decode JSON into struct
 	var membersReq []dto.MemberReq
 	if err := json.NewDecoder(file).Decode(&membersReq); err != nil {
@@ -159,7 +159,7 @@ func (s *memberService) BulkMemberUpload(c *gin.Context, file multipart.File) (m
 	createSuccess := map[string]string{}
 	createError := map[string]string{}
 	for _, member := range membersReq {
-		mem, err := s.Create(c, member, nil)
+		mem, err := s.Create(c, username, member, nil)
 		if err != nil {
 			createError[member.Name] = err.Error()
 		} else if mem != nil {

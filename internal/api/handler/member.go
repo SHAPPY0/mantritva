@@ -25,6 +25,15 @@ func NewMemberHandler(svc *service.Services) *MemberHandler {
 }
 
 func (h *MemberHandler) CreateMember(c *gin.Context) {
+	username, err := auth.GetKeyInCtx[string](c, "user_name")
+	if err != nil {
+		utils.Error(c, 401, "Unauthorized Access", nil)
+		return
+	}
+	if username == "" {
+		utils.Error(c, 401, "Unauthorized Access", nil)
+		return
+	}
 	var req dto.MemberReq
 	if err := c.ShouldBind(&req); err != nil {
 		utils.Error(c, 400, "Invalid request data", err)
@@ -39,7 +48,7 @@ func (h *MemberHandler) CreateMember(c *gin.Context) {
 			log.Warnf("No member photo uploaded with the request")
 		}
 	}
-	reps, err := h.Service.Create(c, req, photo)
+	reps, err := h.Service.Create(c, username, req, photo)
 	if err != nil {
 		utils.Error(c, 500, "Failed to create member", err)
 		return
@@ -57,6 +66,15 @@ func (h *MemberHandler) ListMember(c *gin.Context) {
 }
 
 func (h *MemberHandler) BulkMemberUpload(c *gin.Context) {
+	username, err := auth.GetKeyInCtx[string](c, "user_name")
+	if err != nil {
+		utils.Error(c, 401, "Unauthorized Access", nil)
+		return
+	}
+	if username == "" {
+		utils.Error(c, 401, "Unauthorized Access", nil)
+		return
+	}
 	fh, err := c.FormFile("file")
 	if err != nil {
 		utils.Error(c, http.StatusBadRequest, "Failed to get uploaded file", err)
@@ -76,7 +94,7 @@ func (h *MemberHandler) BulkMemberUpload(c *gin.Context) {
 		return
 	}
 
-	success, errored, err := h.Service.BulkMemberUpload(c, f)
+	success, errored, err := h.Service.BulkMemberUpload(c, username, f)
 	if err != nil {
 		utils.Error(c, 500, "Failed to upload bulk members", err)
 		return
