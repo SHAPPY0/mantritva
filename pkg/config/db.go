@@ -42,6 +42,8 @@ func SetupDatabase() *gorm.DB {
 	db.AutoMigrate(&model.PartyMembers{})
 	db.AutoMigrate(&model.Leadership{})
 	db.AutoMigrate(&model.User{})
+	db.AutoMigrate(&model.Roles{})
+	db.AutoMigrate(&model.UserRole{})
 	db.AutoMigrate(&model.Entity{})
 	db.AutoMigrate(&model.KRA{})
 	db.AutoMigrate(&model.Questionnaire{})
@@ -51,7 +53,6 @@ func SetupDatabase() *gorm.DB {
 	db.AutoMigrate(&model.ULB{})
 	db.AutoMigrate(&model.Ward{})
 
-	SeedLeadershipPositions(db)
-
+	SeedData(db)
 	return db
 }

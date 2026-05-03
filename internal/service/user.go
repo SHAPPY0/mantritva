@@ -15,20 +15,24 @@ import (
 type UserService interface {
 	Create(dto.UserReq) (*model.User, error)
 	GetByID(int) (*model.User, error)
-	GetByUserID(string) (*model.User, error)
+	GetByUserID(string) (*dto.UserRes, error)
 	UpdateTokenVersion(int, int) (bool, error)
 	ValidateTokenVersion(int, int) (bool, error)
 	SendOTP([]dto.SendOtpReq, string) (uint, error)
 	VerifyOTP(dto.VerifyOtpReq) (bool, error)
+	ListRoles() ([]model.Roles, error)
+	GetUserRoles(userID uint) ([]model.UserRole, error)
 }
 
 type userService struct {
-	Repository repository.UserRepository
+	Repository         repository.UserRepository
+	UserRoleRepository repository.UserRoleRepository
 }
 
 func NewUserService(repos *repository.Repos) UserService {
 	return &userService{
-		Repository: repos.User,
+		Repository:         repos.User,
+		UserRoleRepository: repos.UserRole,
 	}
 }
 
@@ -36,12 +40,12 @@ var _ auth.TokenVersionValidator = (*userService)(nil)
 
 func (s *userService) Create(req dto.UserReq) (*model.User, error) {
 	user := &model.User{
-		Name:            req.Name,
-		UserID:          req.UserID,
-		Email:           req.Email,
-		Mobile:          req.Mobile,
-		Password:        &req.Password,
-		Role:            req.Role,
+		Name:     req.Name,
+		UserID:   req.UserID,
+		Email:    req.Email,
+		Mobile:   req.Mobile,
+		Password: &req.Password,
+		// Role:            req.Role,
 		AccountVerified: req.AccountVerified,
 	}
 
@@ -63,6 +67,32 @@ func (s *userService) Create(req dto.UserReq) (*model.User, error) {
 		return nil, err
 	}
 	user.Password = nil
+
+	// Creating Default USER role
+	userRoleID := uint(0)
+	//get available roles list
+	roles, err := s.Repository.ListRoles()
+	if err != nil {
+		log.Errorf("Error fetching roles list: %v", err)
+	} else {
+		for _, role := range roles {
+			if role.Name == string(utils.USER) {
+				userRoleID = role.ID
+				break
+			}
+		}
+	}
+	addRoleDTO := dto.AddRoleReq{
+		UserID: user.ID,
+		RoleID: userRoleID,
+		Role:   utils.USER,
+		Scope:  utils.ROLE_SCOPE_USER,
+	}
+	_, err = s.UserRoleRepository.AddRole("SYSTEM", addRoleDTO)
+	if err != nil {
+		log.Errorf("Error adding user %d role: %v", user.ID, err)
+		return nil, err
+	}
 	return user, nil
 }
 
@@ -74,12 +104,28 @@ func (s *userService) GetByID(id int) (*model.User, error) {
 	return user, nil
 }
 
-func (s *userService) GetByUserID(userID string) (*model.User, error) {
+func (s *userService) GetByUserID(userID string) (*dto.UserRes, error) {
+	result := dto.UserRes{Roles: make([]dto.RoleRes, 0)}
 	user, err := s.Repository.GetByUserID(userID)
 	if err != nil {
 		return nil, err
+	} else if user != nil {
+		roles, err := s.GetUserRoles(user.ID)
+		if err != nil {
+			log.Errorf("Error fetching user roles for user %s: %v", userID, err)
+		} else {
+			for _, role := range roles {
+				userRole := dto.RoleRes{
+					Role:    role.Role,
+					Scope:   role.Scope,
+					ScopeID: role.ScopeID,
+				}
+				result.Roles = append(result.Roles, userRole)
+			}
+		}
 	}
-	return user, nil
+	result.User = *user
+	return &result, nil
 }
 
 func (s *userService) UpdateTokenVersion(userId, version int) (bool, error) {
@@ -209,4 +255,20 @@ func (s *userService) VerifyOTP(req dto.VerifyOtpReq) (bool, error) {
 	} else {
 		return false, utils.NewError("Invalid otp verification request")
 	}
+}
+
+func (s *userService) ListRoles() ([]model.Roles, error) {
+	roles, err := s.Repository.ListRoles()
+	if err != nil {
+		return nil, err
+	}
+	return roles, nil
+}
+
+func (s *userService) GetUserRoles(userID uint) ([]model.UserRole, error) {
+	userRoles, err := s.UserRoleRepository.GetRoleByUserIDs([]uint{userID})
+	if err != nil {
+		return nil, err
+	}
+	return userRoles, nil
 }

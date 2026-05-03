@@ -2,6 +2,8 @@ package auth
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/shappy0/mantritva/internal/dto"
+	"github.com/shappy0/mantritva/pkg/utils"
 )
 
 type AuthUser struct {
@@ -10,6 +12,7 @@ type AuthUser struct {
 	UserName  string
 	Email     string
 	Role      string
+	Roles     []dto.RoleRes
 	Found     bool
 	Anonymous bool
 }
@@ -32,13 +35,34 @@ func GetAuthUser(ctx *gin.Context) AuthUser {
 		authUser.UserName = userClaim.UserName
 		authUser.Email = userClaim.Email
 		authUser.Role = userClaim.Role
+		authUser.Roles = userClaim.Roles
 		authUser.Found = true
 	}
 	return authUser
 }
 
+func (au *AuthUser) IsSuperAdmin() bool {
+	return au.HasRole(utils.SUPERADMIN)
+}
+
+func (au *AuthUser) HasRole(roleName utils.Roles) bool {
+	if roleName == "" {
+		return false
+	}
+	for _, role := range au.Roles {
+		if role.Role == roleName {
+			return true
+		}
+	}
+	return false
+}
+
 func (au *AuthUser) IsAdmin() bool {
-	return au.Role == "ADMIN"
+	return au.HasRole(utils.ADMIN)
+}
+
+func (au *AuthUser) IsAdminOrSuperAdmin() bool {
+	return au.HasRole(utils.ADMIN) || au.HasRole(utils.SUPERADMIN)
 }
 
 func (au *AuthUser) IsModerator() bool {
@@ -46,7 +70,7 @@ func (au *AuthUser) IsModerator() bool {
 }
 
 func (au *AuthUser) IsUser() bool {
-	return au.Role == "USER"
+	return au.HasRole(utils.USER)
 }
 
 func (au *AuthUser) IsAnonymous() bool {

@@ -23,6 +23,14 @@ func (r *UlbRepository) IsExist(name string, districtId uint) (bool, error) {
 	return count > 0, nil
 }
 
+func (r *UlbRepository) GetByID(id uint) (*model.ULB, error) {
+	var ulb model.ULB
+	if err := r.DB.Where("id = ? AND deleted_at IS NULL", id).First(&ulb).Error; err != nil {
+		return nil, err
+	}
+	return &ulb, nil
+}
+
 func (r *UlbRepository) CreateULB(ulb *model.ULB) error {
 	if err := r.DB.Create(ulb).Error; err != nil {
 		return err

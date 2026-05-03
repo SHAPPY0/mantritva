@@ -8,6 +8,14 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+func SeedData(db *gorm.DB) error {
+	log.Infof("Seeding initial data...")
+	var err error
+	err = SeedLeadershipPositions(db)
+	err = SeedRoles(db)
+	return err
+}
+
 func SeedLeadershipPositions(db *gorm.DB) error {
 	log.Infof("Seeding leadership positions...")
 	var positions []model.ConfigMap
@@ -26,6 +34,28 @@ func SeedLeadershipPositions(db *gorm.DB) error {
 			Columns:   []clause.Column{{Name: "key"}, {Name: "category"}},
 			DoNothing: true,
 		}).Create(&position).Error; err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func SeedRoles(db *gorm.DB) error {
+	log.Infof("Seeding roles...")
+	var roles []model.Roles
+
+	for _, roleName := range utils.RolesMap {
+		roles = append(roles, model.Roles{
+			Name:        roleName,
+			AuditFields: model.AuditFields{CreatedBy: "SYSTEM"},
+		})
+	}
+
+	for _, role := range roles {
+		if err := db.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "name"}},
+			DoNothing: true,
+		}).Create(&role).Error; err != nil {
 			return err
 		}
 	}

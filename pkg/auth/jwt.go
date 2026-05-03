@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/utils"
 )
@@ -17,17 +18,18 @@ var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 var issuerName = "mantritva"
 
 type UserClaims struct {
-	Name         string `json:"name"`
-	UserID       uint   `json:"user_id"`
-	UserName     string `json:"user_name"`
-	Email        string `json:"email"`
-	Role         string `json:"role"`
-	TokenVersion int    `json:"token_version"`
+	Name         string        `json:"name"`
+	UserID       uint          `json:"user_id"`
+	UserName     string        `json:"user_name"`
+	Email        string        `json:"email"`
+	Role         string        `json:"role"`
+	Roles        []dto.RoleRes `json:"roles"`
+	TokenVersion int           `json:"token_version"`
 	jwt.RegisteredClaims
 }
 
 func CreateToken(claims UserClaims) (string, error) {
-	if claims.UserID == 0 || claims.Name == "" || claims.UserName == "" || claims.Role == "" {
+	if claims.UserID == 0 || claims.Name == "" || claims.UserName == "" || len(claims.Roles) == 0 {
 		return "", fmt.Errorf("Invalid userClaims to create token")
 	}
 
@@ -97,7 +99,6 @@ func setUserFromBearer(ctx *gin.Context, bearerToken string) error {
 		ctx.Set("user", jwtClaim)
 	}
 	return nil
-
 }
 
 func AuthRequired(required bool) gin.HandlerFunc {

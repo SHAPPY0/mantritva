@@ -319,7 +319,7 @@ func (h *ConsoleHandler) ExitLeadership(c *gin.Context) {
 
 func (h *ConsoleHandler) UpdateRole(c *gin.Context) {
 	authUser := auth.GetAuthUser(c)
-	if !authUser.Found || !authUser.IsAdmin() {
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
 		utils.Error(c, 401, "Access Denied", nil)
 		return
 	}
@@ -338,6 +338,53 @@ func (h *ConsoleHandler) UpdateRole(c *gin.Context) {
 	if ok {
 		utils.Success(c, "Role updated successfully", nil)
 	}
+}
+
+func (h *ConsoleHandler) AddRole(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
+	var req dto.AddRoleReq
+	if err := c.BindJSON(&req); err != nil {
+		utils.Error(c, 400, "Invalid request data", err)
+		return
+	}
+	role, err := h.Service.AddRole(authUser.UserName, req)
+	if err != nil {
+		utils.Error(c, 500, "Failed to add user role", err)
+		return
+	}
+	if role != nil {
+		utils.Success(c, "Role added successfully", role)
+	} else {
+		utils.Error(c, 500, "Failed to add user role", nil)
+	}
+}
+
+func (h *ConsoleHandler) GetUserRoles(c *gin.Context) {
+	userID := c.Param("userID")
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
+	resp, err := h.Service.GetUserRoles(userID)
+	if err != nil {
+		utils.Error(c, 500, "Failed to get user roles", err)
+		return
+	}
+	utils.Success(c, "", resp)
+}
+
+func (h *ConsoleHandler) ListRoleScopes(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
+	utils.Success(c, "RoleScopes fetched successfully", utils.RoleRoleScopeMap)
 }
 
 func (h *ConsoleHandler) GetEnquiriesList(c *gin.Context) {

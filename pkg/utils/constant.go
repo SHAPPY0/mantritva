@@ -1,10 +1,10 @@
 package utils
 
-const (
-	ADMIN     UserRole = "ADMIN"
-	MODERATOR UserRole = "MODERATOR"
-	USER      UserRole = "USER"
-)
+// const (
+// 	ADMIN     UserRole = "ADMIN"
+// 	MODERATOR UserRole = "MODERATOR"
+// 	USER      UserRole = "USER"
+// )
 
 const (
 	PolicyAnnouncement StatementType = "PolicyAnnouncement"
@@ -161,3 +161,51 @@ const (
 	LOCAL_BODY_TYPE_URBAN LocalBodyType = "URBAN"
 	LOCAL_BODY_TYPE_RURAL LocalBodyType = "RURAL"
 )
+
+const (
+	USER              Roles = "USER"
+	SUPERADMIN        Roles = "SUPER_ADMIN"
+	ADMIN             Roles = "ADMIN"
+	STATE_ADMIN       Roles = "STATE_ADMIN"
+	LOKSABHA_ADMIN    Roles = "LOKSABHA_ADMIN"
+	VIDHANSABHA_ADMIN Roles = "VIDHANSABHA_ADMIN"
+	DISTRICT_ADMIN    Roles = "DISTRICT_ADMIN"
+	LOCALBODY_ADMIN   Roles = "LOCALBODY_ADMIN"
+	WARD_ADMIN        Roles = "WARD_ADMIN"
+)
+
+var RolesMap = map[Roles]string{
+	USER:              "USER",
+	SUPERADMIN:        "SUPER_ADMIN",
+	ADMIN:             "ADMIN",
+	STATE_ADMIN:       "STATE_ADMIN",
+	LOKSABHA_ADMIN:    "LOKSABHA_ADMIN",
+	VIDHANSABHA_ADMIN: "VIDHANSABHA_ADMIN",
+	DISTRICT_ADMIN:    "DISTRICT_ADMIN",
+	LOCALBODY_ADMIN:   "LOCALBODY_ADMIN",
+	WARD_ADMIN:        "WARD_ADMIN",
+}
+
+const (
+	ROLE_SCOPE_SUPERADMIN  RoleScope = "GLOBAL"
+	ROLE_SCOPE_COUNTRY     RoleScope = "COUNTRY"
+	ROLE_SCOPE_STATE       RoleScope = "STATE"
+	ROLE_SCOPE_DISTRICT    RoleScope = "DISTRICT"
+	ROLE_SCOPE_LOCALBODY   RoleScope = "LOCALBODY"
+	ROLE_SCOPE_WARD        RoleScope = "WARD"
+	ROLE_SCOPE_LOKSABHA    RoleScope = "LOKSABHA"
+	ROLE_SCOPE_VIDHANSABHA RoleScope = "VIDHANSABHA"
+	ROLE_SCOPE_USER        RoleScope = "GLOBAL"
+)
+
+var RoleRoleScopeMap = map[Roles]RoleScope{
+	USER:              ROLE_SCOPE_USER,
+	SUPERADMIN:        ROLE_SCOPE_SUPERADMIN,
+	ADMIN:             ROLE_SCOPE_COUNTRY,
+	STATE_ADMIN:       ROLE_SCOPE_STATE,
+	LOKSABHA_ADMIN:    ROLE_SCOPE_LOKSABHA,
+	VIDHANSABHA_ADMIN: ROLE_SCOPE_VIDHANSABHA,
+	DISTRICT_ADMIN:    ROLE_SCOPE_DISTRICT,
+	LOCALBODY_ADMIN:   ROLE_SCOPE_LOCALBODY,
+	WARD_ADMIN:        ROLE_SCOPE_WARD,
+}

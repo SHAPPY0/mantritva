@@ -21,6 +21,7 @@ type Repos struct {
 	Leadership         LeadershipRepository
 	NewsPressPost      NewsPressPostRepository
 	User               UserRepository
+	UserRole           UserRoleRepository
 	Feed               FeedRepository
 	Entity             EntityRepository
 	Grievance          GrievanceRepository
@@ -60,5 +61,6 @@ func NewRepos(db *gorm.DB, mongoDB *config.MongoDB) *Repos {
 		Reaction:           NewReactionRepository(mongoDB),
 		AnalyticStat:       NewAnalyticStat(mongoDB),
 		Ulb:                NewULBRepository(db),
+		UserRole:           NewUserRoleRepository(db),
 	}
 }

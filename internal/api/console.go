@@ -14,6 +14,9 @@ func consoleRouter(rg *gin.RouterGroup, services *service.Services) *gin.RouterG
 	{
 		console.GET("/users", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), handler.GetUsersList)
 		console.PUT("/user/updateRole", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), handler.UpdateRole)
+		console.POST("/user/addRole", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), handler.AddRole)
+		console.GET("/user/:userID/roles", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), handler.GetUserRoles)
+		console.GET("/role-scopes", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), handler.ListRoleScopes)
 		console.GET("/states", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), handler.GetStatesList)
 		console.GET("/parties", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), handler.GetPartiesList)
 		console.GET("/alliances", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), handler.GetAlliancesList)

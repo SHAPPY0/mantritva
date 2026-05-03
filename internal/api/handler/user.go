@@ -70,7 +70,12 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	}
 	reps, err := h.Service.Create(req)
 	if err != nil {
-		utils.Error(c, 500, "Failed to create state", err)
+		log.Errorf("Error while creating user: %v", err)
+		if err.Error() == "User already exist with given details" {
+			utils.Error(c, 400, err.Error(), nil)
+			return
+		}
+		utils.Error(c, 500, "Error while creating user", err)
 		return
 	}
 	utils.Success(c, "User created successfully", reps)
@@ -104,15 +109,30 @@ func (h *UserHandler) LoginUser(c *gin.Context) {
 		return
 	}
 
+	userRoles, err := h.Service.GetUserRoles(user.ID)
+	if err != nil {
+		log.Errorf("Error fetching user roles: %v", err)
+	}
+
 	user.Password = nil
-	token, err := auth.CreateToken(auth.UserClaims{
+	userClaim := auth.UserClaims{
 		Name:         user.Name,
 		UserName:     user.UserID,
 		UserID:       user.ID,
 		Email:        user.Email,
-		Role:         user.Role,
+		Roles:        make([]dto.RoleRes, 0),
 		TokenVersion: user.TokenVersion,
-	})
+	}
+	if len(userRoles) > 0 {
+		for _, ur := range userRoles {
+			userClaim.Roles = append(userClaim.Roles, dto.RoleRes{
+				Role:    ur.Role,
+				Scope:   ur.Scope,
+				ScopeID: ur.ScopeID,
+			})
+		}
+	}
+	token, err := auth.CreateToken(userClaim)
 	if err != nil {
 		log.Errorf("Error while creating token %v", err)
 		utils.Error(c, 500, "Failed to login, Please try again.", err)
@@ -176,4 +196,13 @@ func (h *UserHandler) VerifyOTP(c *gin.Context) {
 	} else {
 		utils.Error(c, 500, "OTP Expired", nil)
 	}
+}
+
+func (h *UserHandler) ListRoles(c *gin.Context) {
+	roles, err := h.Service.ListRoles()
+	if err != nil {
+		utils.Error(c, 500, "Error fetching roles", err)
+		return
+	}
+	utils.Success(c, "", roles)
 }

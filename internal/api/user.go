@@ -21,5 +21,10 @@ func userRouter(rg *gin.RouterGroup, repos *repository.Repos) *gin.RouterGroup {
 		user.POST("/verify-otp", handler.VerifyOTP)
 	}
 
+	role := rg.Group("/role")
+	{
+		role.GET("/list", handler.ListRoles)
+	}
+
 	return rg
 }

@@ -23,6 +23,7 @@ type UserRepository interface {
 	GetOTPRequest(string, utils.OTPMode, utils.OTPPurpose) (*model.OtpRequest, error)
 	UpdateOTPAttempts(uint, uint) (bool, error)
 	UpdateOTPConsumed(uint, uint, time.Time) (bool, error)
+	ListRoles() ([]model.Roles, error)
 }
 
 type userRepository struct {
@@ -151,4 +152,12 @@ func (r *userRepository) UpdateOTPConsumed(rowId uint, attempts uint, consumedAt
 		return false, err
 	}
 	return true, nil
+}
+
+func (r *userRepository) ListRoles() ([]model.Roles, error) {
+	var roles []model.Roles
+	if err := r.DB.Where("is_deleted = ?", false).Find(&roles).Error; err != nil {
+		return nil, err
+	}
+	return roles, nil
 }

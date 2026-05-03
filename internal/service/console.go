@@ -16,7 +16,7 @@ import (
 
 type ConsoleService interface {
 	// Create(dto.NewsPressReq) (*model.NewsPressPost, error)
-	GetUsersList() (*[]model.User, error)
+	GetUsersList() ([]dto.UserRes, error)
 	GetStatesList() (*[]model.State, error)
 	GetPartiesList() (*[]model.Party, error)
 	GetAlliancesList() (*[]model.Alliance, error)
@@ -35,50 +35,127 @@ type ConsoleService interface {
 	UpdateMemberByID(*gin.Context, uint, map[string]interface{}, *multipart.FileHeader) (bool, error)
 	UpdateRole(dto.UpdateUserReq) (bool, error)
 	GetEnquiriesList() ([]*model.Enquiry, error)
+	AddRole(string, dto.AddRoleReq) (*model.UserRole, error)
+	GetUserRoles(string) ([]model.UserRole, error)
 }
 
 type consoleService struct {
-	UserRepository       repository.UserRepository
-	StateRepository      repository.StateRepository
-	PartyRepository      repository.PartyRepository
-	AllianceRepository   repository.AllianceRepository
-	MemberRepository     repository.MemberRepository
-	RulerRepository      repository.RulerRepository
-	LeadershipRepository repository.LeadershipRepository
-	NewsPressRepository  repository.NewsPressPostRepository
-	EntityRepository     repository.EntityRepository
-	GrievanceRepository  repository.GrievanceRepository
-	DistrictRepository   repository.DistrictRepository
-	ReportRepository     repository.ReportRepository
-	EnquiryRepository    repository.EnquiryRepository
+	UserRepository        repository.UserRepository
+	UserRoleRepository    repository.UserRoleRepository
+	StateRepository       repository.StateRepository
+	PartyRepository       repository.PartyRepository
+	AllianceRepository    repository.AllianceRepository
+	MemberRepository      repository.MemberRepository
+	RulerRepository       repository.RulerRepository
+	LeadershipRepository  repository.LeadershipRepository
+	NewsPressRepository   repository.NewsPressPostRepository
+	EntityRepository      repository.EntityRepository
+	GrievanceRepository   repository.GrievanceRepository
+	DistrictRepository    repository.DistrictRepository
+	ReportRepository      repository.ReportRepository
+	EnquiryRepository     repository.EnquiryRepository
+	LoksabhaRepository    repository.LoksabhaRepository
+	VidhansabhaRepository repository.VidhansabhaRepository
+	LocalBodyRepository   repository.UlbRepository
 }
 
 func NewConsoleService(repos *repository.Repos) ConsoleService {
 	return &consoleService{
-		UserRepository:       repos.User,
-		StateRepository:      repos.State,
-		PartyRepository:      repos.Party,
-		AllianceRepository:   repos.Alliance,
-		MemberRepository:     repos.Member,
-		RulerRepository:      repos.Ruler,
-		LeadershipRepository: repos.Leadership,
-		NewsPressRepository:  repos.NewsPressPost,
-		EntityRepository:     repos.Entity,
-		GrievanceRepository:  repos.Grievance,
-		DistrictRepository:   repos.District,
-		ReportRepository:     repos.Report,
-		EnquiryRepository:    repos.Enquiry,
+		UserRepository:        repos.User,
+		UserRoleRepository:    repos.UserRole,
+		StateRepository:       repos.State,
+		PartyRepository:       repos.Party,
+		AllianceRepository:    repos.Alliance,
+		MemberRepository:      repos.Member,
+		RulerRepository:       repos.Ruler,
+		LeadershipRepository:  repos.Leadership,
+		NewsPressRepository:   repos.NewsPressPost,
+		EntityRepository:      repos.Entity,
+		GrievanceRepository:   repos.Grievance,
+		DistrictRepository:    repos.District,
+		ReportRepository:      repos.Report,
+		EnquiryRepository:     repos.Enquiry,
+		LoksabhaRepository:    repos.Loksabha,
+		VidhansabhaRepository: repos.VidhanSabha,
+		LocalBodyRepository:   repos.Ulb,
 	}
 }
 
-func (s *consoleService) GetUsersList() (*[]model.User, error) {
+func (s *consoleService) GetUsersList() ([]dto.UserRes, error) {
+	result := make([]dto.UserRes, 0)
 	var users *[]model.User
 	var err error
 	users, err = s.UserRepository.ConsoleGetUsersList()
 	if err != nil {
 		return nil, err
 	}
-	return users, nil
+	var userIds []uint
+	for _, user := range *users {
+		userIds = append(userIds, user.ID)
+	}
+	roles, err := s.UserRoleRepository.GetRoleByUserIDs(userIds)
+	if err != nil {
+		return nil, err
+	}
+	roleMap := make(map[uint][]model.UserRole)
+	for _, role := range roles {
+		roleMap[role.UserID] = append(roleMap[role.UserID], role)
+	}
+	for _, user := range *users {
+		var userRes dto.UserRes
+		userRes.User = user
+		userRes.Roles = make([]dto.RoleRes, 0)
+		if userRoles, ok := roleMap[user.ID]; ok {
+			for _, role := range userRoles {
+				roleRes := dto.RoleRes{
+					Role:    role.Role,
+					Scope:   role.Scope,
+					ScopeID: role.ScopeID,
+				}
+				if roleRes.Scope == utils.ROLE_SCOPE_STATE {
+					state, err := s.StateRepository.GetByID(int(role.ScopeID))
+					if err != nil {
+						log.Errorf("Error while getting State detail %d, %v", role.ScopeID, err)
+					} else if state != nil {
+						roleRes.State = state.Name
+					}
+				} else if roleRes.Scope == utils.ROLE_SCOPE_DISTRICT {
+					district, err := s.DistrictRepository.GetByID(role.ScopeID)
+					if err != nil {
+						log.Errorf("Error while getting District detail %d, %v", role.ScopeID, err)
+					} else if district != nil {
+						roleRes.District = district.Name
+					}
+				} else if roleRes.Scope == utils.ROLE_SCOPE_LOKSABHA {
+					loksabha, err := s.LoksabhaRepository.GetByID(int(role.ScopeID))
+					if err != nil {
+						log.Errorf("Error while getting Loksabha detail %d, %v", role.ScopeID, err)
+					} else if loksabha != nil {
+						roleRes.Loksabha = loksabha.Name
+					}
+				} else if roleRes.Scope == utils.ROLE_SCOPE_VIDHANSABHA {
+					vidhansabha, err := s.VidhansabhaRepository.GetByID(int(role.ScopeID))
+					if err != nil {
+						log.Errorf("Error while getting Vidhansabha detail %d, %v", role.ScopeID, err)
+					} else if vidhansabha != nil {
+						roleRes.Vidhansabha = vidhansabha.Name
+					}
+				} else if roleRes.Scope == utils.ROLE_SCOPE_LOCALBODY {
+					localBody, err := s.LocalBodyRepository.GetByID(role.ScopeID)
+					if err != nil {
+						log.Errorf("Error while getting LocalBody detail %d, %v", role.ScopeID, err)
+					} else if localBody != nil {
+						roleRes.LocalBody = localBody.Name
+					}
+				} else if roleRes.Scope == utils.ROLE_SCOPE_WARD {
+					// roleRes.Ward, _ = s.ReportRepository.GetWardByID(int(role.ScopeID))
+				}
+				userRes.Roles = append(userRes.Roles, roleRes)
+			}
+		}
+		result = append(result, userRes)
+	}
+	return result, nil
 }
 
 func (s *consoleService) GetStatesList() (*[]model.State, error) {
@@ -419,4 +496,27 @@ func (s *consoleService) GetEnquiriesList() ([]*model.Enquiry, error) {
 		return nil, err
 	}
 	return enquiries, nil
+}
+
+func (s *consoleService) AddRole(createdBy string, req dto.AddRoleReq) (*model.UserRole, error) {
+	isExist, err := s.UserRoleRepository.IsRoleExist(req.UserID, req.RoleID, req.Scope, &req.ScopeID)
+	if err != nil {
+		return nil, err
+	}
+	if isExist {
+		return nil, utils.NewError("Role already assigned for user %d", req.UserID)
+	}
+	role, err := s.UserRoleRepository.AddRole(createdBy, req)
+	if err != nil {
+		return nil, err
+	}
+	return role, nil
+}
+
+func (s *consoleService) GetUserRoles(userID string) ([]model.UserRole, error) {
+	roles, err := s.UserRoleRepository.GetUserRoles(userID)
+	if err != nil {
+		return nil, err
+	}
+	return roles, nil
 }

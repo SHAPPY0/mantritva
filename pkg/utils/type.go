@@ -29,6 +29,8 @@ type OTPMode string
 type OTPPurpose string
 type LocalBodyType string
 type ULBType string
+type Roles string
+type RoleScope string
 
 func (d *DateOnly) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), `"`)
