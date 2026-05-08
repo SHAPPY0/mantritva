@@ -13,7 +13,7 @@ type UserRepository interface {
 	Create(*model.User) error
 	GetByID(int) (*model.User, error)
 	GetByUserID(string) (*model.User, error)
-	UserExist(string, string) (*model.User, error)
+	UserExist(*model.User) (*model.User, error)
 	ConsoleGetUsersList() (*[]model.User, error)
 	UpdateTokenVersion(int, int) (bool, error)
 	GetTokenVersion(int) (int, error)
@@ -24,6 +24,7 @@ type UserRepository interface {
 	UpdateOTPAttempts(uint, uint) (bool, error)
 	UpdateOTPConsumed(uint, uint, time.Time) (bool, error)
 	ListRoles() ([]model.Roles, error)
+	GetBotUsers(uint) ([]model.User, error)
 }
 
 type userRepository struct {
@@ -54,9 +55,9 @@ func (r *userRepository) GetByUserID(userID string) (*model.User, error) {
 	return &user, nil
 }
 
-func (r *userRepository) UserExist(mobile, email string) (*model.User, error) {
+func (r *userRepository) UserExist(userReq *model.User) (*model.User, error) {
 	var user model.User
-	if err := r.DB.Where("(mobile = ? OR email = ?) AND is_deleted = ?", mobile, email, false).First(&user).Error; err != nil {
+	if err := r.DB.Where("(user_id = ? OR mobile = ? OR email = ?) AND is_deleted = ?", userReq.UserID, userReq.Mobile, userReq.Email, false).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -160,4 +161,13 @@ func (r *userRepository) ListRoles() ([]model.Roles, error) {
 		return nil, err
 	}
 	return roles, nil
+}
+
+func (r *userRepository) GetBotUsers(limit uint) ([]model.User, error) {
+	var users []model.User
+	query := `SELECT * FROM users WHERE user_id like 'mntvBot%' AND is_deleted = false LIMIT ?`
+	if err := r.DB.Raw(query, limit).Scan(&users).Error; err != nil {
+		return nil, err
+	}
+	return users, nil
 }

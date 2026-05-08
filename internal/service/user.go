@@ -22,6 +22,7 @@ type UserService interface {
 	VerifyOTP(dto.VerifyOtpReq) (bool, error)
 	ListRoles() ([]model.Roles, error)
 	GetUserRoles(userID uint) ([]model.UserRole, error)
+	GetBotUsers(uint) ([]model.User, error)
 }
 
 type userService struct {
@@ -49,7 +50,7 @@ func (s *userService) Create(req dto.UserReq) (*model.User, error) {
 		AccountVerified: req.AccountVerified,
 	}
 
-	if userExist, err := s.Repository.UserExist(user.Mobile, user.Email); err != nil {
+	if userExist, err := s.Repository.UserExist(user); err != nil {
 		log.Errorf("Error while checking if user exist %v", err)
 		return nil, utils.NewError("Internal server error")
 	} else if userExist != nil {
@@ -271,4 +272,12 @@ func (s *userService) GetUserRoles(userID uint) ([]model.UserRole, error) {
 		return nil, err
 	}
 	return userRoles, nil
+}
+
+func (s *userService) GetBotUsers(limit uint) ([]model.User, error) {
+	users, err := s.Repository.GetBotUsers(limit)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }

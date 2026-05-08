@@ -77,3 +77,10 @@ type VerifyOtpReq struct {
 	Mode       utils.OTPMode    `json:"mode" binding:"required"`
 	Purpose    utils.OTPPurpose `json:"purpose"`
 }
+
+type FeedBotReactionReq struct {
+	FeedID               string `json:"feed_id"`
+	TotalUsers           uint   `json:"total_users"`
+	PositiveUsersPortion uint   `json:"positive_users_portion"`
+	NegativeUsersPortion uint   `json:"negative_users_portion"`
+}

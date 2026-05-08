@@ -8,6 +8,7 @@ import (
 	"github.com/shappy0/mantritva/pkg/config"
 	"github.com/shappy0/mantritva/pkg/utils"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -15,6 +16,7 @@ type FeedRepository interface {
 	Create(*model.Feed) (any, error)
 	UpdateStatus(string, dto.FeedReq) (bool, error)
 	GetAll() ([]model.Feed, error)
+	GetByID(string) (*model.Feed, error)
 	GetByPagination(dto.Pagination) ([]model.Feed, error)
 }
 
@@ -67,4 +69,17 @@ func (r *feedRepository) UpdateStatus(updatedBy string, feed dto.FeedReq) (bool,
 		return false, err
 	}
 	return true, nil
+}
+
+func (r *feedRepository) GetByID(feedID string) (*model.Feed, error) {
+	var feed model.Feed
+	id, err := primitive.ObjectIDFromHex(feedID)
+	if err != nil {
+		return nil, err
+	}
+	filter := bson.M{"_id": id, "status": utils.Published, "is_deleted": false}
+	if _, err := r.DB.FindOne(r.DB.FeedCollection, filter, nil, &feed); err != nil {
+		return nil, err
+	}
+	return &feed, nil
 }

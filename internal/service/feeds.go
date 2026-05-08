@@ -18,6 +18,8 @@ type FeedService interface {
 	UpdateStatus(string, dto.FeedReq) (bool, error)
 	GetLatestFeed(dto.Pagination, int) (*[]dto.FeedRes, error)
 	CreateReaction(dto.ReactionReq) (bool, error)
+	GetPostByFeedID(string) (string, any, error)
+	GetQuestionnairesByFeedType(string) (*[]model.Questionnaire, error)
 }
 
 type feedService struct {
@@ -528,4 +530,50 @@ func getWeight(questionnaires *[]model.Questionnaire, reaction model.Reaction) i
 		}
 	}
 	return weight
+}
+
+func (s *feedService) GetPostByFeedID(feedID string) (string, any, error) {
+	var post any
+	var feedType string
+	feed, err := s.FeedRepository.GetByID(feedID)
+	if err != nil {
+		return feedType, nil, err
+	}
+	if feed != nil {
+		feedType = feed.Type
+		switch feed.Type {
+		case string(utils.NEWSPRESS):
+			np, err := s.GetNewsPressFeed(0, feed.PostID)
+			if err != nil {
+				log.Errorf("Error while getting newsPress feed by %s: %v", feed.PostID, err)
+			} else {
+				post = np
+			}
+		case string(utils.GRIEVANCE):
+			g, err := s.GetGrievanceFeed(0, feed.PostID)
+			if err != nil {
+				log.Errorf("Error while getting grievance feed by %s: %v", feed.PostID, err)
+			} else {
+				post = g
+			}
+		case string(utils.DEVELOPMENT):
+			dw, err := s.GetDevelopmentWelfareShort(0, feed.PostID)
+			if err != nil {
+				log.Errorf("Error while getting development welfare feed by %s: %v", feed.PostID, err)
+			} else {
+				post = dw
+			}
+		default:
+			log.Info("No Valid Feed Type Found")
+		}
+	}
+	return feedType, post, nil
+}
+
+func (h *feedService) GetQuestionnairesByFeedType(feedType string) (*[]model.Questionnaire, error) {
+	ques, err := h.ReportRepository.GetQuestionnairesByCategory(feedType)
+	if err != nil {
+		return nil, err
+	}
+	return ques, nil
 }
