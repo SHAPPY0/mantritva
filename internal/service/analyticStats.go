@@ -63,6 +63,17 @@ func (svc *analyticStatService) ComputeTopScorer(report *model.Score) error {
 	}
 	inserted := false
 	for i, entry := range existingStat.Data {
+		// Check if memberID already exists
+		if mID, ok := entry["member_id"]; ok {
+			if memberID, ok := mID.(uint); ok && memberID == report.MemberID {
+				if s, ok := toFloat(entry["score"]); ok && report.TotalScore > s {
+					existingStat.Data[i] = rankData
+				}
+				inserted = true
+				break
+			}
+		}
+		// Check score if memberID doesn't match
 		if s, ok := toFloat(entry["score"]); ok {
 			if report.TotalScore > s {
 				newSlice := make([]map[string]any, 0, len(existingStat.Data)+1)

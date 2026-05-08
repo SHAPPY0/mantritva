@@ -101,6 +101,8 @@ func (h *UserHandler) LoginUser(c *gin.Context) {
 	}
 	if !user.AccountVerified {
 		log.Errorf("Unverified account is loggin in: %s", req.UserID)
+		utils.Error(c, 401, "Account is not verified, Please reach out to admin", nil)
+		return
 	}
 	isValid := utils.ComparePassword(*user.Password, req.Password)
 	if !isValid {
@@ -109,28 +111,14 @@ func (h *UserHandler) LoginUser(c *gin.Context) {
 		return
 	}
 
-	userRoles, err := h.Service.GetUserRoles(user.ID)
-	if err != nil {
-		log.Errorf("Error fetching user roles: %v", err)
-	}
-
 	user.Password = nil
 	userClaim := auth.UserClaims{
 		Name:         user.Name,
 		UserName:     user.UserID,
 		UserID:       user.ID,
 		Email:        user.Email,
-		Roles:        make([]dto.RoleRes, 0),
+		Roles:        user.Roles,
 		TokenVersion: user.TokenVersion,
-	}
-	if len(userRoles) > 0 {
-		for _, ur := range userRoles {
-			userClaim.Roles = append(userClaim.Roles, dto.RoleRes{
-				Role:    ur.Role,
-				Scope:   ur.Scope,
-				ScopeID: ur.ScopeID,
-			})
-		}
 	}
 	token, err := auth.CreateToken(userClaim)
 	if err != nil {

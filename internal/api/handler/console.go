@@ -28,6 +28,11 @@ func NewConsoleHandler(services *service.Services) *ConsoleHandler {
 }
 
 func (h *ConsoleHandler) GetUsersList(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
 	resp, err := h.Service.GetUsersList()
 	if err != nil {
 		utils.Error(c, 500, "Failed to get users list", err)
@@ -37,6 +42,11 @@ func (h *ConsoleHandler) GetUsersList(c *gin.Context) {
 }
 
 func (h *ConsoleHandler) GetStatesList(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
 	resp, err := h.Service.GetStatesList()
 	if err != nil {
 		utils.Error(c, 500, "Failed to get states list", err)
@@ -46,6 +56,11 @@ func (h *ConsoleHandler) GetStatesList(c *gin.Context) {
 }
 
 func (h *ConsoleHandler) GetPartiesList(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
 	resp, err := h.Service.GetPartiesList()
 	if err != nil {
 		utils.Error(c, 500, "Failed to get parties list", err)
@@ -55,6 +70,11 @@ func (h *ConsoleHandler) GetPartiesList(c *gin.Context) {
 }
 
 func (h *ConsoleHandler) GetAlliancesList(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
 	resp, err := h.Service.GetAlliancesList()
 	if err != nil {
 		utils.Error(c, 500, "Failed to get alliances list", err)
@@ -64,6 +84,11 @@ func (h *ConsoleHandler) GetAlliancesList(c *gin.Context) {
 }
 
 func (h *ConsoleHandler) GetMembersList(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
 	resp, err := h.Service.GetMembersList()
 	if err != nil {
 		utils.Error(c, 500, "Failed to get members list", err)
@@ -73,6 +98,11 @@ func (h *ConsoleHandler) GetMembersList(c *gin.Context) {
 }
 
 func (h *ConsoleHandler) GetMemberByID(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
 	id := c.Param("id")
 	idInt, err := utils.StrToInt(id)
 	if err != nil {
@@ -88,6 +118,11 @@ func (h *ConsoleHandler) GetMemberByID(c *gin.Context) {
 }
 
 func (h *ConsoleHandler) UpdateMemberByID(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
 	updatedBy, err := auth.GetKeyInCtx[string](c, "name")
 	if err != nil {
 		utils.Error(c, 401, "Unauthorized Access", nil)
@@ -133,6 +168,11 @@ func (h *ConsoleHandler) UpdateMemberByID(c *gin.Context) {
 }
 
 func (h *ConsoleHandler) GetRulersList(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
 	resp, err := h.Service.GetRulersList()
 	if err != nil {
 		utils.Error(c, 500, "Failed to get rulers list", err)
@@ -142,6 +182,11 @@ func (h *ConsoleHandler) GetRulersList(c *gin.Context) {
 }
 
 func (h *ConsoleHandler) GetCurrentRulersList(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
 	resp, err := h.Service.GetCurrentRulersList()
 	if err != nil {
 		utils.Error(c, 500, "Failed to get current rulers list", err)
@@ -151,6 +196,11 @@ func (h *ConsoleHandler) GetCurrentRulersList(c *gin.Context) {
 }
 
 func (h *ConsoleHandler) GetLeadershipByRulerID(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
 	rulerIDStr := c.Param("rulerID")
 	isCentralStr := c.Query("isCentral")
 	// Convert string to int
@@ -180,6 +230,11 @@ func (h *ConsoleHandler) GetLeadershipByRulerID(c *gin.Context) {
 }
 
 func (h *ConsoleHandler) GetNewsPressList(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
 	resp, err := h.Service.GetNewsPressList()
 	if err != nil {
 		utils.Error(c, 500, "Failed to get news press list", err)
@@ -189,6 +244,11 @@ func (h *ConsoleHandler) GetNewsPressList(c *gin.Context) {
 }
 
 func (h *ConsoleHandler) GetNewsPressPostByID(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
 	id := c.Param("id")
 	resp, err := h.Service.GetNewsPressPostByID(id)
 	if err != nil {
@@ -199,11 +259,13 @@ func (h *ConsoleHandler) GetNewsPressPostByID(c *gin.Context) {
 }
 
 func (h *ConsoleHandler) UpdateNewsPressPost(c *gin.Context) {
-	updatedBy, err := auth.GetKeyInCtx[string](c, "name")
-	if err != nil {
-		utils.Error(c, 401, "Unauthorized Access", nil)
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
 		return
 	}
+	updatedBy := authUser.Name
+
 	id := c.Param("id")
 	if id == "" {
 		utils.Error(c, 400, "Invalid newsPressPost ID", nil)
@@ -245,6 +307,11 @@ func (h *ConsoleHandler) UpdateNewsPressPost(c *gin.Context) {
 }
 
 func (h *ConsoleHandler) GetGrievancesList(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
 	resp, err := h.Service.GetGrievancesList()
 	if err != nil {
 		utils.Error(c, 500, "Failed to get grievances list", err)
@@ -254,6 +321,11 @@ func (h *ConsoleHandler) GetGrievancesList(c *gin.Context) {
 }
 
 func (h *ConsoleHandler) GetGrievanceByID(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
 	grievanceID := c.Param("grievanceID")
 	resp, err := h.Service.GetGrievanceByID(grievanceID)
 	if err != nil {
@@ -264,6 +336,12 @@ func (h *ConsoleHandler) GetGrievanceByID(c *gin.Context) {
 }
 
 func (h *ConsoleHandler) GrievanceUpdateStatus(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
+
 	grievanceID := c.Param("grievanceID")
 	var req dto.GrievanceStatus
 	if err := c.BindJSON(&req); err != nil {
@@ -297,6 +375,11 @@ func (h *ConsoleHandler) GrievanceUpdateStatus(c *gin.Context) {
 }
 
 func (h *ConsoleHandler) ExitLeadership(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
 	leadershipIDStr := c.Param("id")
 	var req dto.LeadershipExitReq
 	if err := c.BindJSON(&req); err != nil {
@@ -388,6 +471,11 @@ func (h *ConsoleHandler) ListRoleScopes(c *gin.Context) {
 }
 
 func (h *ConsoleHandler) GetEnquiriesList(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
 	resp, err := h.Service.GetEnquiriesList()
 	if err != nil {
 		utils.Error(c, 500, "Failed to get enquiries list", err)

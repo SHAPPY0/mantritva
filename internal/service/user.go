@@ -123,8 +123,8 @@ func (s *userService) GetByUserID(userID string) (*dto.UserRes, error) {
 				result.Roles = append(result.Roles, userRole)
 			}
 		}
+		result.User = *user
 	}
-	result.User = *user
 	return &result, nil
 }
 

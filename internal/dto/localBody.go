@@ -19,3 +19,9 @@ type ULBReq struct {
 	BodyType   utils.ULBType `json:"type"`
 	TotalWards uint          `json:"total_wards"`
 }
+
+type ULBShort struct {
+	ID       uint          `json:"id"`
+	Name     string        `json:"name"`
+	BodyType utils.ULBType `json:"type"`
+}

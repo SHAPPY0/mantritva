@@ -33,6 +33,7 @@ type grievanceSerivce struct {
 	EntityRepo   repository.EntityRepository
 	ReactionRepo repository.ReactionRepository
 	ReportRepo   repository.ReportRepository
+	UlbRepo      repository.UlbRepository
 }
 
 func NewGrievanceService(repos *repository.Repos) GrievanceSerivce {
@@ -46,6 +47,7 @@ func NewGrievanceService(repos *repository.Repos) GrievanceSerivce {
 		EntityRepo:   repos.Entity,
 		ReactionRepo: repos.Reaction,
 		ReportRepo:   repos.Report,
+		UlbRepo:      repos.Ulb,
 	}
 }
 
@@ -59,6 +61,7 @@ func (s *grievanceSerivce) Create(ctx *gin.Context, req dto.Grievance) (*model.G
 		CabinetMinisterID:    req.CabinetMinisterID,
 		MemberOfParliamentID: req.MemberOfParliamentID,
 		EntityID:             req.EntityID,
+		UlbID:                req.UlbID,
 		StateID:              req.StateID,
 		DistrictID:           req.DistrictID,
 		StateLeaderID:        req.StateLeaderID,
@@ -201,6 +204,18 @@ func (s *grievanceSerivce) GetByGrievanceID(grievanceID string, userID int) (*dt
 				IsCentral:    entity.IsCentral,
 				StateName:    entity.StateName,
 				DistrictName: entity.DistrictName,
+			}
+		}
+	}
+	if grievance.UlbID != 0 {
+		ulb, err := s.UlbRepo.GetByID(grievance.UlbID)
+		if err != nil {
+			log.Error("Error fetching ulb details by ID")
+		} else if ulb != nil {
+			grievanceRes.Ulb = &dto.ULBShort{
+				ID:       ulb.ID,
+				Name:     ulb.Name,
+				BodyType: ulb.BodyType,
 			}
 		}
 	}
