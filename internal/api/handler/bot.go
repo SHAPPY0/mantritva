@@ -124,7 +124,7 @@ func (h *BotHandler) ReactFeeds(c *gin.Context) {
 		}
 		//Get postID
 		switch v := feed.(type) {
-		case dto.DevelopmentWelfareShort:
+		case *dto.DevelopmentWelfareShort:
 			id, _ := primitive.ObjectIDFromHex(v.ID)
 			postID = id
 		case *dto.GrievanceShort:
