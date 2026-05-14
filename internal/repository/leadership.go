@@ -43,6 +43,9 @@ func (r *leadershipRepository) GetByMemberID(id uint) (*model.Leadership, error)
 	if err := r.DB.Where("member_id = ? AND term_end IS NULL", id).First(&leadership).Error; err != nil {
 		return nil, err
 	}
+	if leadership.ID <= 0 {
+		return nil, nil
+	}
 	return &leadership, nil
 }
 

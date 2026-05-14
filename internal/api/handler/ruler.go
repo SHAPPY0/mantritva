@@ -53,6 +53,8 @@ func (h *RulerHandler) GetCentralRuler(c *gin.Context) {
 	}
 	if val == nil {
 		log.Errorf("Central ruler not found")
+		utils.Error(c, 500, "Failed to fetch central ruler", nil)
+		return
 	}
 	utils.Success(c, "Central ruler fetched successfully", val)
 }

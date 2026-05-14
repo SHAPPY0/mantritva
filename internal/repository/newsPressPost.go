@@ -66,7 +66,7 @@ func (r *newsPressPostRepository) GetByID(postID primitive.ObjectID) (*model.New
 		return nil, err
 	}
 	if !rowFound {
-		return nil, fmt.Errorf("no newspress post found for postID %s", postID)
+		return nil, fmt.Errorf("No newspress post found for postID %s", postID)
 	}
 	return &newsPressPost, nil
 }

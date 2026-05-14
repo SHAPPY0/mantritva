@@ -1,11 +1,10 @@
 package service
 
 import (
-	"log"
-
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
+	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/utils"
 )
 
@@ -78,7 +77,7 @@ func (s *rulerService) GetCentralRuler() (*dto.RulerRes, error) {
 		if ruler.PartyID > 0 {
 			party, err := s.PartyRepository.GetByID(ruler.PartyID)
 			if err != nil {
-				log.Printf("Failed to get party details by partyID")
+				log.Errorf("Failed to get party details by partyID %d", ruler.PartyID)
 			} else {
 				rulerDetail.Party = dto.Party{
 					Name:   party.Name,
@@ -91,7 +90,7 @@ func (s *rulerService) GetCentralRuler() (*dto.RulerRes, error) {
 			rulerDetail.IsAlliance = true
 			alliance, err := s.AllianceRepository.GetByID(ruler.AllianceID)
 			if err != nil {
-				log.Printf("Failed to get alliance details by allianceID")
+				log.Errorf("Failed to get alliance details by allianceID %d", ruler.AllianceID)
 			} else {
 				rulerDetail.Alliance = dto.AllianceName{
 					Name:  alliance.Name,
@@ -103,13 +102,13 @@ func (s *rulerService) GetCentralRuler() (*dto.RulerRes, error) {
 			positions := []string{string(utils.PRIME_MINISTER), string(utils.PRESIDENT), string(utils.VICE_PRESIDENT)}
 			leadership, err := s.LeadershipRepository.GetByRulerIDAndPositions(ruler.ID, "0", positions, true)
 			if err != nil {
-				log.Printf("Failed to get leadership details by rulerID")
+				log.Errorf("Failed to get leadership details by rulerID %d", ruler.ID)
 			} else {
 				for _, leader := range leadership {
 					var leadership dto.LeadershipRes
 					err := utils.MapToStruct(leader, &leadership)
 					if err != nil {
-						log.Printf("Failed to parse member data from leadership")
+						log.Errorf("Failed to parse member data from leadership", nil)
 						continue
 					} else {
 						utils.TransformPositionLabel(&leadership.Position.Position)
@@ -140,7 +139,7 @@ func (s *rulerService) GetStateRuler(stateId string) (*dto.RulerRes, error) {
 		if ruler.PartyID > 0 {
 			party, err := s.PartyRepository.GetByID(ruler.PartyID)
 			if err != nil {
-				log.Printf("Failed to get party details by partyID")
+				log.Errorf("Failed to get party details by partyID %d", ruler.PartyID)
 			} else {
 				rulerDetail.Party = dto.Party{
 					Name:   party.Name,
@@ -154,7 +153,7 @@ func (s *rulerService) GetStateRuler(stateId string) (*dto.RulerRes, error) {
 			rulerDetail.IsAlliance = true
 			alliance, err := s.AllianceRepository.GetByID(ruler.AllianceID)
 			if err != nil {
-				log.Printf("Failed to get alliance details by allianceID")
+				log.Errorf("Failed to get alliance details by allianceID %d", ruler.AllianceID)
 			} else {
 				rulerDetail.Alliance = dto.AllianceName{
 					Name:  alliance.Name,
@@ -166,12 +165,12 @@ func (s *rulerService) GetStateRuler(stateId string) (*dto.RulerRes, error) {
 		if ruler.ID > 0 {
 			leadership, err := s.LeadershipRepository.GetByRulerIDAndPosition(ruler.ID, string(utils.CHIEF_MINISTER), false)
 			if err != nil {
-				log.Printf("Failed to get leadership details by rulerID")
+				log.Errorf("Failed to get leadership details by rulerID %d", ruler.ID)
 			} else {
 				for _, leader := range leadership {
 					member, err := s.MemberRepository.GetByID(leader.MemberID)
 					if err != nil {
-						log.Printf("Failed to get member details by memberID %d", leader.MemberID)
+						log.Errorf("Failed to get member details by memberID %d", leader.MemberID)
 					} else {
 						rulerDetail.Leaders = append(rulerDetail.Leaders, dto.Leader{
 							Name:        member.Name,
@@ -198,7 +197,7 @@ func (s *rulerService) GetStateLeadership(stateId string) ([]map[string]interfac
 		postitons := []string{string(utils.CHIEF_MINISTER), string(utils.MLA), string(utils.DEPUTY_CHIEF_MINISTER)}
 		leaders, err := s.LeadershipRepository.GetByRulerIDAndPositions(stateRuler.ID, stateId, postitons, false)
 		if err != nil {
-			log.Printf("Failed to get state leadership by rulerID %d", stateRuler.ID)
+			log.Errorf("Failed to get state leadership by rulerID %d", stateRuler.ID)
 		}
 		return leaders, nil
 	}
@@ -214,38 +213,48 @@ func (s *rulerService) GetCenterLeadership() (map[string][]dto.Leader, error) {
 	if centerRuler != nil && centerRuler.ID > 0 {
 		leadership, err := s.LeadershipRepository.GetByRulerIDAndPosition(centerRuler.ID, string(utils.CABINET_MINISTER), true)
 		if err != nil {
-			log.Printf("Failed to get leadership details by rulerID")
+			log.Errorf("Failed to get leadership details by rulerID %d", centerRuler.ID)
 		} else {
 			var leaders []dto.Leader
 			for _, leader := range leadership {
-				member, err := s.MemberRepository.GetByID(leader.MemberID)
+				var member dto.Member
+				memberInfo, err := s.MemberRepository.GetMemberById(leader.MemberID)
 				if err != nil {
-					log.Printf("Failed to get member details by memberID %d", leader.MemberID)
+					log.Errorf("Error fetching member info by id %d", leader.MemberID)
 				} else {
-					item := dto.Leader{
-						ID:          member.ID,
-						Name:        member.Name,
-						Designation: dto.Position{Position: leader.Position.Label(), Role: leader.Role, Departments: leader.Departments},
-						Photo:       member.Photo,
-						TermStart:   leader.TermStart,
-					}
-					if leader.StateID > 0 {
-						state, err := s.StateRepository.GetByID(int(leader.StateID))
-						if err == nil {
-							item.State = state.Name
+					if err := utils.MapToStruct(memberInfo, &member); err != nil {
+						log.Errorf("Error converting member map to dto.member")
+						continue
+					} else {
+						utils.TransformPositionLabel(&member.Position)
+						item := dto.Leader{
+							ID:          leader.MemberID,
+							Name:        member.Name,
+							Designation: dto.Position{Position: leader.Position.Label(), Role: leader.Role, Departments: leader.Departments},
+							Photo:       member.Photo,
+							TermStart:   leader.TermStart,
 						}
-					}
-					if leader.LoksabhaID > 0 {
-						loksabha, err := s.LoksabhRepository.GetByID(int(leader.LoksabhaID))
-						if err == nil {
-							item.Loksabha = loksabha.Name
+						if !utils.IsEmpty(member.Party) {
+							item.Party = dto.Party{
+								Name:   member.Party.Name,
+								Abbrv:  member.Party.Abbrv,
+								Symbol: member.Party.Symbol,
+							}
 						}
+						if leader.StateID > 0 {
+							state, err := s.StateRepository.GetByID(int(leader.StateID))
+							if err == nil {
+								item.State = state.Name
+							}
+						}
+						if leader.LoksabhaID > 0 {
+							loksabha, err := s.LoksabhRepository.GetByID(int(leader.LoksabhaID))
+							if err == nil {
+								item.Loksabha = loksabha.Name
+							}
+						}
+						leaders = append(leaders, item)
 					}
-
-					// if !leader.TermEnd.IsNull() {
-					// 	cabMinLeader.TermEnd = *leader.TermEnd
-					// }
-					leaders = append(leaders, item)
 				}
 			}
 			result["cabinet_minister"] = leaders
@@ -253,76 +262,97 @@ func (s *rulerService) GetCenterLeadership() (map[string][]dto.Leader, error) {
 
 		mpLeadership, err := s.LeadershipRepository.GetByRulerIDAndPosition(centerRuler.ID, string(utils.MP_LS), true)
 		if err != nil {
-			log.Printf("Failed to get MPs details by rulerID")
+			log.Errorf("Failed to get MPs details by rulerID %d", centerRuler.ID)
 		} else {
 			var leaders []dto.Leader
 			for _, leader := range mpLeadership {
-				member, err := s.MemberRepository.GetByID(leader.MemberID)
+				var member dto.Member
+				memberInfo, err := s.MemberRepository.GetMemberById(leader.MemberID)
 				if err != nil {
-					log.Printf("Failed to get member details by memberID %d", leader.MemberID)
+					log.Errorf("Failed to get member details by memberID %d", leader.MemberID)
 				} else {
-					item := dto.Leader{
-						ID:          member.ID,
-						Name:        member.Name,
-						Designation: dto.Position{Position: leader.Position.Label(), Role: leader.Role, Departments: leader.Departments},
-						Photo:       member.Photo,
-						TermStart:   leader.TermStart,
-					}
-					if leader.StateID > 0 {
-						state, err := s.StateRepository.GetByID(int(leader.StateID))
-						if err == nil {
-							item.State = state.Name
+					if err := utils.MapToStruct(memberInfo, &member); err != nil {
+						log.Errorf("Error converting member map to dto.member")
+						continue
+					} else {
+						item := dto.Leader{
+							ID:          leader.MemberID,
+							Name:        member.Name,
+							Designation: dto.Position{Position: leader.Position.Label(), Role: leader.Role, Departments: leader.Departments},
+							Photo:       member.Photo,
+							TermStart:   leader.TermStart,
 						}
-					}
-					if leader.LoksabhaID > 0 {
-						loksabha, err := s.LoksabhRepository.GetByID(int(leader.LoksabhaID))
-						if err == nil {
-							item.Loksabha = loksabha.Name
+						if !utils.IsEmpty(member.Party) {
+							item.Party = dto.Party{
+								Name:   member.Party.Name,
+								Abbrv:  member.Party.Abbrv,
+								Symbol: member.Party.Symbol,
+							}
 						}
+						if leader.StateID > 0 {
+							state, err := s.StateRepository.GetByID(int(leader.StateID))
+							if err == nil {
+								item.State = state.Name
+							}
+						}
+						if leader.LoksabhaID > 0 {
+							loksabha, err := s.LoksabhRepository.GetByID(int(leader.LoksabhaID))
+							if err == nil {
+								item.Loksabha = loksabha.Name
+							}
+						}
+						leaders = append(leaders, item)
 					}
-
-					// if !leader.TermEnd.IsNull() {
-					// 	cabMinLeader.TermEnd = *leader.TermEnd
-					// }
-					leaders = append(leaders, item)
 				}
 			}
 			result["member_of_parliament"] = leaders
 		}
+
 		mosLeadership, err := s.LeadershipRepository.GetByRulerIDAndPosition(centerRuler.ID, string(utils.MINISTER_OF_STATE), true)
 		if err != nil {
-			log.Printf("Failed to get MOS details by rulerID")
+			log.Errorf("Failed to get MOS details by rulerID %d", centerRuler.ID)
 		} else {
 			var leaders []dto.Leader
 			for _, leader := range mosLeadership {
-				member, err := s.MemberRepository.GetByID(leader.MemberID)
+				var member dto.Member
+				// member, err := s.MemberRepository.GetByID(leader.MemberID)
+				memberInfo, err := s.MemberRepository.GetMemberById(leader.MemberID)
 				if err != nil {
-					log.Printf("Failed to get member details by memberID %d", leader.MemberID)
+					log.Errorf("Failed to get member details by memberID %d", leader.MemberID)
 				} else {
-					item := dto.Leader{
-						Name:        member.Name,
-						Designation: dto.Position{Position: leader.Position.Label(), Role: leader.Role, Departments: leader.Departments},
-						Photo:       member.Photo,
-						TermStart:   leader.TermStart,
-					}
-					if leader.StateID > 0 {
-						state, err := s.StateRepository.GetByID(int(leader.StateID))
-						if err == nil {
-							item.State = state.Name
+					if err := utils.MapToStruct(memberInfo, &member); err != nil {
+						log.Errorf("Error converting member map to dto.member")
+						continue
+					} else {
+						item := dto.Leader{
+							Name:        member.Name,
+							Designation: dto.Position{Position: leader.Position.Label(), Role: leader.Role, Departments: leader.Departments},
+							Photo:       member.Photo,
+							TermStart:   leader.TermStart,
 						}
-					}
-					if leader.LoksabhaID > 0 {
-						loksabha, err := s.LoksabhRepository.GetByID(int(leader.LoksabhaID))
-						log.Printf("Loksabha fetch error: %v", err)
-						if err == nil {
-							item.Loksabha = loksabha.Name
+						if !utils.IsEmpty(member.Party) {
+							item.Party = dto.Party{
+								Name:   member.Party.Name,
+								Abbrv:  member.Party.Abbrv,
+								Symbol: member.Party.Symbol,
+							}
 						}
-					}
+						if leader.StateID > 0 {
+							state, err := s.StateRepository.GetByID(int(leader.StateID))
+							if err == nil {
+								item.State = state.Name
+							}
+						}
+						if leader.LoksabhaID > 0 {
+							loksabha, err := s.LoksabhRepository.GetByID(int(leader.LoksabhaID))
+							log.Errorf("Loksabha fetch error: %v", err)
+							if err == nil {
+								item.Loksabha = loksabha.Name
+							}
+						}
 
-					// if !leader.TermEnd.IsNull() {
-					// 	cabMinLeader.TermEnd = *leader.TermEnd
-					// }
-					leaders = append(leaders, item)
+						leaders = append(leaders, item)
+					}
 				}
 			}
 			result["member_of_state"] = leaders

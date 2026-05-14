@@ -33,6 +33,7 @@ type Leader struct {
 	Rajyasabha  string         `json:"rajyasabha,omitempty"`
 	TermStart   utils.DateOnly `json:"term_start"`
 	TermEnd     utils.DateOnly `json:"term_end,omitempty"`
+	Party       Party          `json:"party"`
 }
 
 type Position struct {

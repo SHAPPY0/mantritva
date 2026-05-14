@@ -66,6 +66,7 @@ func (svc *analyticStatService) ComputeTopScorer(report *model.Score) error {
 		// Check if memberID already exists
 		if mID, ok := entry["member_id"]; ok {
 			if memberID, ok := mID.(uint); ok && memberID == report.MemberID {
+				log.Infof("Member exist in TopScorer list %d", memberID)
 				if s, ok := toFloat(entry["score"]); ok && report.TotalScore > s {
 					existingStat.Data[i] = rankData
 				}
