@@ -329,6 +329,7 @@ func (s *feedService) GetNewsPressFeed(userID int, postID primitive.ObjectID) (d
 		}
 	}
 	if np.EntityId > 0 {
+		newsPressPostRes.IsEntity = true
 		ok, entity, err := s.EntityRepository.GetByID(int(np.EntityId))
 		if err != nil {
 			return newsPressPostRes, err

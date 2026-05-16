@@ -43,6 +43,7 @@ type NewsPressShort struct {
 	UpvoteCount    uint               `json:"upvote_count"`
 	DownvoteCount  uint               `json:"downvote_count"`
 	Member         Member             `json:"member,omitempty"`
+	IsEntity       bool               `json:"is_entity"`
 	Entity         Entity             `json:"entity,omitempty"`
 	Party          Party              `json:"party,omitempty"`
 	Reaction       utils.Vote         `json:"reaction"`
