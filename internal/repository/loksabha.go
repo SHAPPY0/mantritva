@@ -10,6 +10,7 @@ type LoksabhaRepository interface {
 	List() ([]model.Loksabha, error)
 	GetByID(id int) (*model.Loksabha, error)
 	GetByStateID(stateId int) ([]model.Loksabha, error)
+	GetByStateIDAndName(int, string) (*model.Loksabha, error)
 }
 
 type loksabhaRepository struct {
@@ -54,4 +55,15 @@ func (r *loksabhaRepository) GetByStateID(stateId int) ([]model.Loksabha, error)
 		return nil, nil
 	}
 	return loksabhas, nil
+}
+
+func (r *loksabhaRepository) GetByStateIDAndName(stateId int, name string) (*model.Loksabha, error) {
+	var loksabha model.Loksabha
+	if err := r.DB.Where("state_id = ? AND name = ?", stateId, name).Find(&loksabha).Error; err != nil {
+		return nil, err
+	}
+	if loksabha.ID <= 0 {
+		return nil, nil
+	}
+	return &loksabha, nil
 }

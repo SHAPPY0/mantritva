@@ -5,6 +5,7 @@ import (
 	"github.com/shappy0/mantritva/internal/api/handler"
 	"github.com/shappy0/mantritva/internal/repository"
 	"github.com/shappy0/mantritva/internal/service"
+	"github.com/shappy0/mantritva/pkg/auth"
 	"gorm.io/gorm"
 )
 
@@ -16,7 +17,8 @@ func vidhanSabhaRouter(rg *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 	vs := rg.Group("/vidhansabha")
 	{
 		vs.GET("/", handler.ListVidhanSabha)
-		vs.POST("/", handler.CreateVidhanSabha)
+		vs.POST("/", auth.AuthRequired(true), handler.CreateVidhanSabha)
+		vs.POST("/bulk-create", auth.AuthRequired(true), handler.CreateBulkVidhanSabha)
 		vs.GET("/getByStateId/:id", handler.GetByStateID)
 
 	}

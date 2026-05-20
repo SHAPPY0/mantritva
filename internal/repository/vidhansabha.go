@@ -11,6 +11,7 @@ type VidhansabhaRepository interface {
 	List() ([]model.Vidhansabha, error)
 	GetByID(id int) (*model.Vidhansabha, error)
 	GetByStateID(int) (*[]dto.VidhanSabhaRes, error)
+	GetByStateIDAndDistrictIDAndName(int, int, string) (*model.Vidhansabha, error)
 }
 
 type vidhansabhaRepository struct {
@@ -64,6 +65,17 @@ func (r *vidhansabhaRepository) GetByStateID(id int) (*[]dto.VidhanSabhaRes, err
 			ORDER BY vs.name ASC`
 	if err := r.DB.Raw(query, id).Scan(&vidhanSabha).Error; err != nil {
 		return nil, err
+	}
+	return &vidhanSabha, nil
+}
+
+func (r *vidhansabhaRepository) GetByStateIDAndDistrictIDAndName(stateId, districtId int, name string) (*model.Vidhansabha, error) {
+	var vidhanSabha model.Vidhansabha
+	if err := r.DB.Where("state_id = ? AND district_id = ? AND name = ?", stateId, districtId, name).First(&vidhanSabha).Error; err != nil {
+		return nil, err
+	}
+	if vidhanSabha.ID <= 0 {
+		return nil, nil
 	}
 	return &vidhanSabha, nil
 }
