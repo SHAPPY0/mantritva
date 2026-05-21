@@ -194,7 +194,13 @@ func (s *rulerService) GetStateLeadership(stateId string) ([]map[string]interfac
 		return nil, err
 	}
 	if stateRuler != nil && stateRuler.ID > 0 {
-		postitons := []string{string(utils.CHIEF_MINISTER), string(utils.MLA), string(utils.DEPUTY_CHIEF_MINISTER)}
+		postitons := []string{
+			string(utils.CHIEF_MINISTER),
+			string(utils.MLA),
+			string(utils.DEPUTY_CHIEF_MINISTER),
+			string(utils.CABINET_MINISTER),
+			string(utils.S_MINISTER_OF_STATE),
+		}
 		leaders, err := s.LeadershipRepository.GetByRulerIDAndPositions(stateRuler.ID, stateId, postitons, false)
 		if err != nil {
 			log.Errorf("Failed to get state leadership by rulerID %d", stateRuler.ID)

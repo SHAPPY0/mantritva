@@ -63,7 +63,6 @@ const (
 	GOVERNOR                      Position = "GOVERNOR"
 	CHIEF_MINISTER                Position = "CHIEF_MINISTER"
 	DEPUTY_CHIEF_MINISTER         Position = "DEPUTY_CHIEF_MINISTER"
-	S_CABINET_MINISTER            Position = "STATE_CABINET_MINISTER"
 	S_MINISTER_OF_STATE           Position = "STATE_MINISTER_OF_STATE"
 	MLA                           Position = "MLA"
 	MLC                           Position = "MLC"
@@ -81,7 +80,6 @@ var PositionDisplayMap = map[Position]string{
 	GOVERNOR:                      "Governor",
 	CHIEF_MINISTER:                "Chief Minister",
 	DEPUTY_CHIEF_MINISTER:         "Deputy Chief Minister",
-	S_CABINET_MINISTER:            "State Cabinet Minister",
 	S_MINISTER_OF_STATE:           "State MoS",
 	MLA:                           "MLA",
 	MLC:                           "MLC",
