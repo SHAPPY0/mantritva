@@ -35,6 +35,7 @@ func consoleRouter(rg *gin.RouterGroup, services *service.Services) *gin.RouterG
 		console.PUT("/grievance/:grievanceID/updateStatus", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.GrievanceUpdateStatus)
 		console.POST("/leadership/exit/:id", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.ExitLeadership)
 		console.GET("/enquiries", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.GetEnquiriesList)
+		console.POST("/setup-bulk-leader", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.SetupBulkLeader)
 	}
 	bot := rg.Group("/bot")
 	{

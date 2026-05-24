@@ -1,8 +1,11 @@
 package service
 
 import (
+	"encoding/json"
+	"fmt"
 	"mime/multipart"
 	"path/filepath"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
@@ -37,6 +40,7 @@ type ConsoleService interface {
 	GetEnquiriesList() ([]*model.Enquiry, error)
 	AddRole(string, dto.AddRoleReq) (*model.UserRole, error)
 	GetUserRoles(string) ([]model.UserRole, error)
+	SetupBulkLeader(string, multipart.File) (map[string]string, map[string]string, error)
 }
 
 type consoleService struct {
@@ -519,4 +523,144 @@ func (s *consoleService) GetUserRoles(userID string) ([]model.UserRole, error) {
 		return nil, err
 	}
 	return roles, nil
+}
+
+func (s *consoleService) SetupBulkLeader(username string, file multipart.File) (map[string]string, map[string]string, error) {
+	var leaderReqs []dto.BulkLeader
+	if err := json.NewDecoder(file).Decode(&leaderReqs); err != nil {
+		panic(err)
+	}
+	createSuccess := map[string]string{}
+	createError := map[string]string{}
+	for i, leader := range leaderReqs {
+		if leader.Member.Name == "" {
+			log.Errorf("No valid member info at position %d", i)
+			continue
+		}
+		//Member
+		memberName := leader.Member.Name
+		if memberName != "" {
+			memberName = strings.ToUpper(string(leader.Member.Name[0])) + leader.Member.Name[1:]
+		}
+		memberModel := &model.Member{
+			Name:             memberName,
+			FullName:         leader.Member.FullName,
+			DOB:              leader.Member.DOB,
+			Gender:           leader.Member.Gender,
+			Qualifications:   leader.Member.Qualifications,
+			MaritalStatus:    leader.Member.MaritalStatus,
+			FinancialAssets:  leader.Member.FinancialAssets,
+			SocialMediaLinks: leader.Member.SocialMediaLinks,
+			Photo:            "",
+			AuditFields: model.AuditFields{
+				CreatedBy: username,
+			},
+		}
+		if err := s.MemberRepository.Create(memberModel); err != nil {
+			createError[leader.Member.Name] = utils.NewError(fmt.Sprintf("Error at position %d Error: %s", i, err.Error())).Error()
+			continue
+		}
+		member, err := s.MemberRepository.GetByName(memberName)
+		if err != nil {
+			createError[leader.Member.Name] = utils.NewError(fmt.Sprintf("Error at position %d Error: %s", i, err.Error())).Error()
+			continue
+		}
+
+		var party *model.Party
+
+		// Party
+		if leader.Party.Setup {
+			party, err = s.PartyRepository.GetByAbbrv(leader.Party.Name)
+			if err != nil {
+				createError[leader.Member.Name] = utils.NewError(fmt.Sprintf("Error member %s  while getting party info: %s", memberName, err.Error())).Error()
+				continue
+			}
+			if party == nil {
+				createError[leader.Member.Name] = utils.NewError(fmt.Sprintf("No party info found by name %s", leader.Party.Name)).Error()
+				continue
+			}
+
+			partyMember := &model.PartyMembers{
+				PartyID:     party.ID,
+				MemberID:    member.ID,
+				Position:    leader.Party.Position,
+				JoiningDate: leader.Party.JoiningDate,
+				ExitDate:    leader.Party.ExitDate,
+				AuditFields: model.AuditFields{
+					CreatedBy: username,
+				},
+			}
+			if err := s.PartyRepository.AddMember(partyMember); err != nil {
+				createError[leader.Member.Name] = utils.NewError(fmt.Sprintf("No party info found by name %s", leader.Party.Name)).Error()
+				continue
+			}
+		}
+
+		//=======Leadership========
+
+		if leader.Party.Setup && leader.Leadership.Setup {
+			// Get Ruler
+			var ruler *model.Ruler
+
+			if leader.Leadership.IsCentral {
+				ruler, err = s.RulerRepository.GetCentralRuler()
+				if err != nil {
+					log.Errorf("Error while getting ruler info %v", err)
+					createError[leader.Member.Name] = utils.NewError(fmt.Sprintf("Error setting up leadership for member %s, %v", leader.Member.Name, err)).Error()
+					continue
+				}
+			} else if leader.Leadership.State != "" {
+				stateRow, err := s.StateRepository.Get(leader.Leadership.State)
+				if err != nil {
+					log.Errorf("Error while getting state info %v", err)
+					createError[leader.Member.Name] = utils.NewError(fmt.Sprintf("Error setting up leadership for member %s, %v", leader.Member.Name, err)).Error()
+					continue
+				} else if stateRow != nil {
+					ruler, err = s.RulerRepository.GetStateRuler(fmt.Sprintf("%d", stateRow.ID))
+					if err != nil {
+						log.Errorf("Error while getting state info %v", err)
+						createError[leader.Member.Name] = utils.NewError(fmt.Sprintf("Error setting up leadership for member %s, %v", leader.Member.Name, err)).Error()
+						continue
+					}
+				} else {
+					log.Errorf("No state info found %s", leader.Leadership.State)
+					createError[leader.Member.Name] = utils.NewError(fmt.Sprintf("Error setting up leadership for member %s, %v", leader.Member.Name, err)).Error()
+					continue
+				}
+
+			}
+
+			leadership := &model.Leadership{
+				RulerID:     ruler.ID,
+				MemberID:    member.ID,
+				PartyID:     party.ID,
+				Position:    utils.Position(leader.Leadership.Position),
+				Role:        leader.Leadership.Role,
+				Departments: leader.Leadership.Departments,
+				IsCentral:   leader.Leadership.IsCentral,
+				StateID:     uint(ruler.StateID),
+				// LoksabhaID:    req.LoksabhaID,
+				// VidhansabhaID: req.VidhansabhaID,
+				// RajyasabhaID:  req.RajyasabhaID,
+				TermStart: leader.Leadership.TermStart,
+				IsActive:  true,
+				AuditFields: model.AuditFields{
+					CreatedBy: username,
+				},
+			}
+			log.Infof("leadership:: %v", leadership)
+			// if !leader.Leadership.TermEnd.IsNull() || !leader.Leadership.TermEnd.IsZero() {
+			// 	leadership.TermEnd = leader.Leadership.TermEnd
+			// }
+			if err := s.LeadershipRepository.Create(leadership); err != nil {
+				createError[leader.Member.Name] = utils.NewError(fmt.Sprintf("Error setting up leadership for member %s, %v", leader.Member.Name, err)).Error()
+			} else {
+				createSuccess[leader.Member.Name] = "Leader setup successfully"
+			}
+		} else {
+			createSuccess[leader.Member.Name] = "Leader setup successfully"
+		}
+
+	}
+	return createSuccess, createError, nil
 }

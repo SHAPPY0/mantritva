@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -482,4 +483,40 @@ func (h *ConsoleHandler) GetEnquiriesList(c *gin.Context) {
 		return
 	}
 	utils.Success(c, "", resp)
+}
+
+func (h *ConsoleHandler) SetupBulkLeader(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
+	fh, err := c.FormFile("file")
+	if err != nil {
+		utils.Error(c, http.StatusBadRequest, "Failed to get uploaded file", err)
+		return
+	}
+
+	f, err := fh.Open()
+	if err != nil {
+		utils.Error(c, http.StatusInternalServerError, "Failed to open uploaded file", err)
+		return
+	}
+	defer f.Close()
+
+	ext := filepath.Ext(fh.Filename)
+	if ext != ".json" {
+		utils.Error(c, http.StatusBadRequest, "Only .json file accepted", err)
+		return
+	}
+
+	success, errored, err := h.Service.SetupBulkLeader(authUser.UserName, f)
+	if err != nil {
+		utils.Error(c, 500, "Failed to upload bulk leaders", err)
+		return
+	}
+	utils.Success(c, "Leaders uploaded successfully", map[string]any{
+		"success": success,
+		"errored": errored,
+	})
 }
