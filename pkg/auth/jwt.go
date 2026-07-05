@@ -133,7 +133,7 @@ func AuthRequired(required bool) gin.HandlerFunc {
 	}
 }
 
-func ValidateVersion(validator TokenVersionValidator) gin.HandlerFunc {
+func ValidateVersion(userAuthr UserAuthorization) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		claim, err := GetJWTClaim(ctx)
 		if err != nil {
@@ -141,7 +141,7 @@ func ValidateVersion(validator TokenVersionValidator) gin.HandlerFunc {
 			ctx.Abort()
 			return
 		}
-		valid, err := validator.ValidateTokenVersion(int(claim.UserID), claim.TokenVersion)
+		valid, err := userAuthr.ValidateTokenVersion(int(claim.UserID), claim.TokenVersion)
 		if err != nil {
 			utils.Error(ctx, 401, "Internal server error", nil)
 			ctx.Abort()
@@ -153,6 +153,47 @@ func ValidateVersion(validator TokenVersionValidator) gin.HandlerFunc {
 			return
 		}
 		ctx.Next()
+	}
+}
+
+func RequiredRoles(userAuthr UserAuthorization, roles []utils.Roles) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		roles = append(roles, utils.SUPERADMIN, utils.ADMIN)
+		claim, err := GetJWTClaim(ctx)
+		if err != nil {
+			utils.Error(ctx, 401, err.Error(), nil)
+			ctx.Abort()
+			return
+		}
+
+		userRoles, err := userAuthr.GetUserRoles(claim.UserID)
+		log.Infof("User %d has roles: %v", claim.UserID, userRoles)
+		if err != nil {
+			log.Errorf("Error fetching userRoles for user %d, err: %v", claim.UserID, err)
+			utils.Error(ctx, 403, "Access Denied", nil)
+			ctx.Abort()
+			return
+		}
+
+		if len(roles) > 0 && len(userRoles) == 0 {
+			log.Errorf("No roles assigned to user, user %d cannot access", claim.UserID)
+			utils.Error(ctx, 403, "Access Denied", nil)
+			ctx.Abort()
+			return
+		}
+
+		for _, userRole := range userRoles {
+			for _, requiredRole := range roles {
+				if userRole.Role == requiredRole {
+					ctx.Next()
+					return
+				}
+			}
+		}
+
+		log.Errorf("User %d does not have required role to access this route", claim.UserID)
+		utils.Error(ctx, 403, "Access Denied", nil)
+		ctx.Abort()
 	}
 }
 

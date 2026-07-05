@@ -11,6 +11,7 @@ import (
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
+	"github.com/shappy0/mantritva/pkg/auth"
 	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/storage"
 	"github.com/shappy0/mantritva/pkg/utils"
@@ -21,11 +22,16 @@ type ConsoleService interface {
 	// Create(dto.NewsPressReq) (*model.NewsPressPost, error)
 	GetUsersList() ([]dto.UserRes, error)
 	GetStatesList() (*[]model.State, error)
+	GetStatesByUser(auth.AuthUser) (*[]model.State, error)
+	GetDistrictsByStateByUser(auth.AuthUser) (*[]model.District, error)
+	GetLocalBodiesByDistrictByUser(auth.AuthUser, string) (*[]model.ULB, error)
+	GetStatesByID([]uint) (*[]model.State, error)
 	GetPartiesList() (*[]model.Party, error)
 	GetAlliancesList() (*[]model.Alliance, error)
 	GetMembersList() (*[]dto.MemberRes, error)
 	GetByID(id uint) (*dto.MemberRes, error)
 	GetRulersList() (*[]dto.RulerRes, error)
+	GetRulersListByUser(auth.AuthUser) (*[]dto.RulerRes, error)
 	GetCurrentRulersList() ([]map[string]interface{}, error)
 	GetLeadershipByRulerID(int, bool) ([]map[string]interface{}, error)
 	GetNewsPressList() (*[]dto.NewsPressPostRes, error)
@@ -172,6 +178,76 @@ func (s *consoleService) GetStatesList() (*[]model.State, error) {
 	return states, nil
 }
 
+func (s *consoleService) GetStatesByUser(user auth.AuthUser) (*[]model.State, error) {
+	var states *[]model.State
+	var err error
+	if user.IsAdminOrSuperAdmin() {
+		states, err = s.StateRepository.ConsoleGetStateList()
+	} else if user.IsStateAdmin() {
+		stateIDs := user.GetAssignedStates()
+		states, err = s.StateRepository.ConsoleGetStateListByID(stateIDs)
+	} else if user.IsDistrictAdmin() {
+		districtIDs := user.GetAssignedDistricts()
+		states, err = s.StateRepository.ConsoleGetStateListByDistrictIDs(districtIDs)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return states, nil
+}
+
+func (s *consoleService) GetDistrictsByStateByUser(user auth.AuthUser) (*[]model.District, error) {
+	var districts *[]model.District
+	var err error
+	if user.IsAdminOrSuperAdmin() {
+		districts, err = s.DistrictRepository.ConsoleGetDistrictList()
+	} else if user.IsStateAdmin() {
+		stateIDs := user.GetAssignedStates()
+		districts, err = s.DistrictRepository.ConsoleGetDistrictListByStateIDs(stateIDs)
+	} else if user.IsDistrictAdmin() {
+		districtIDs := user.GetAssignedDistricts()
+		districts, err = s.DistrictRepository.ConsoleGetDistrictListByID(districtIDs)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return districts, nil
+}
+
+func (s *consoleService) GetLocalBodiesByDistrictByUser(user auth.AuthUser, districtID string) (*[]model.ULB, error) {
+	var localBodies []model.ULB
+	var err error
+	if user.IsAdminOrSuperAdmin() {
+		localBodies, err = s.LocalBodyRepository.ListULBsByDistrict(districtID)
+	} else if user.IsStateAdmin() {
+		stateIDs := user.GetAssignedStates()
+		localBodies, err = s.LocalBodyRepository.ListULBsByStateAndDistrict(stateIDs, districtID)
+	} else if user.IsDistrictAdmin() {
+		districtIDs := user.GetAssignedDistricts()
+		if !utils.Contains(districtIDs, utils.StrToUint(districtID)) {
+			return nil, utils.NewError("Unauthorized access to district %s", districtID)
+		}
+		localBodies, err = s.LocalBodyRepository.ListULBsByDistrict(districtID)
+	} else if user.IsLocalBodyAdmin() {
+		localBodyIDs := user.GetAssignedLocalBodies()
+		localBodies, err = s.LocalBodyRepository.ListLocalBodiesByIDAndDistrict(localBodyIDs, districtID)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &localBodies, nil
+}
+
+func (s *consoleService) GetStatesByID(stateIDs []uint) (*[]model.State, error) {
+	var states *[]model.State
+	var err error
+	states, err = s.StateRepository.ConsoleGetStateListByID(stateIDs)
+	if err != nil {
+		return nil, err
+	}
+	return states, nil
+}
+
 func (s *consoleService) GetPartiesList() (*[]model.Party, error) {
 	var parties *[]model.Party
 	var err error
@@ -250,13 +326,39 @@ func (s *consoleService) UpdateMemberByID(ctx *gin.Context, id uint, data map[st
 }
 
 func (s *consoleService) GetRulersList() (*[]dto.RulerRes, error) {
-	var rulersList []dto.RulerRes
 	var rulers *[]model.Ruler
 	var err error
 	rulers, err = s.RulerRepository.ConsoleGetRulersList()
 	if err != nil {
 		return nil, err
 	}
+	rulersRes, err := s.PrepareRulerRes(rulers)
+	if err != nil {
+		return nil, err
+	}
+	return rulersRes, nil
+}
+
+func (s *consoleService) GetRulersListByUser(user auth.AuthUser) (*[]dto.RulerRes, error) {
+	var rulers *[]model.Ruler
+	var err error
+	if user.IsAdminOrSuperAdmin() {
+		rulers, err = s.RulerRepository.ConsoleGetRulersList()
+	} else if user.IsStateAdmin() {
+		stateIDs := user.GetAssignedStates()
+		rulers, err = s.RulerRepository.ConsoleGetRulersListByStateIDs(stateIDs)
+	} else if user.IsDistrictAdmin() {
+		districtIDs := user.GetAssignedDistricts()
+		rulers, err = s.RulerRepository.ConsoleGetRulersListByDistrictIDs(districtIDs)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return s.PrepareRulerRes(rulers)
+}
+
+func (s *consoleService) PrepareRulerRes(rulers *[]model.Ruler) (*[]dto.RulerRes, error) {
+	var rulersList []dto.RulerRes
 	for _, ruler := range *rulers {
 		rulerItem := dto.RulerRes{Ruler: ruler}
 		if ruler.StateID > 0 {

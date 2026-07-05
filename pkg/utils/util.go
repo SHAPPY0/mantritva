@@ -40,6 +40,15 @@ func StrToInt(val string) (int, error) {
 	return intValue, nil
 }
 
+func StrToUint(val string) uint {
+	var uintValue uint
+	_, err := fmt.Sscanf(val, "%d", &uintValue)
+	if err != nil {
+		return 0
+	}
+	return uintValue
+}
+
 func MapToStruct(m map[string]interface{}, result interface{}) error {
 	for k, v := range m {
 		if str, ok := v.(string); ok {
@@ -199,4 +208,13 @@ func ClientIP(c *gin.Context) string {
 		return "127.0.0.1"
 	}
 	return p.String()
+}
+
+func Contains[T comparable](slice []T, target T) bool {
+	for _, item := range slice {
+		if item == target {
+			return true
+		}
+	}
+	return false
 }

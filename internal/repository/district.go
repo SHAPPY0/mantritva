@@ -8,8 +8,11 @@ import (
 type DistrictRepository interface {
 	Create(*model.District) error
 	List() ([]model.District, error)
-	GetByState(stateId string) ([]model.District, error)
-	GetByID(id uint) (*model.District, error)
+	GetByState(string) ([]model.District, error)
+	GetByID(uint) (*model.District, error)
+	ConsoleGetDistrictList() (*[]model.District, error)
+	ConsoleGetDistrictListByStateIDs([]uint) (*[]model.District, error)
+	ConsoleGetDistrictListByID([]uint) (*[]model.District, error)
 }
 
 type districtRepository struct {
@@ -54,4 +57,28 @@ func (r *districtRepository) GetByID(id uint) (*model.District, error) {
 		return nil, err
 	}
 	return &district, nil
+}
+
+func (r *districtRepository) ConsoleGetDistrictList() (*[]model.District, error) {
+	var districts []model.District
+	if err := r.DB.Find(&districts).Error; err != nil {
+		return nil, err
+	}
+	return &districts, nil
+}
+
+func (r *districtRepository) ConsoleGetDistrictListByStateIDs(stateIDs []uint) (*[]model.District, error) {
+	var districts []model.District
+	if err := r.DB.Where("state_id IN ?", stateIDs).Find(&districts).Error; err != nil {
+		return nil, err
+	}
+	return &districts, nil
+}
+
+func (r *districtRepository) ConsoleGetDistrictListByID(districtIDs []uint) (*[]model.District, error) {
+	var districts []model.District
+	if err := r.DB.Where("id IN ?", districtIDs).Find(&districts).Error; err != nil {
+		return nil, err
+	}
+	return &districts, nil
 }

@@ -21,7 +21,7 @@ type UserService interface {
 	SendOTP([]dto.SendOtpReq, string) (uint, error)
 	VerifyOTP(dto.VerifyOtpReq) (bool, error)
 	ListRoles() ([]model.Roles, error)
-	GetUserRoles(userID uint) ([]model.UserRole, error)
+	GetUserRoles(uint) ([]model.UserRole, error)
 	GetBotUsers(uint) ([]model.User, error)
 }
 
@@ -37,7 +37,7 @@ func NewUserService(repos *repository.Repos) UserService {
 	}
 }
 
-var _ auth.TokenVersionValidator = (*userService)(nil)
+var _ auth.UserAuthorization = (*userService)(nil)
 
 func (s *userService) Create(req dto.UserReq) (*model.User, error) {
 	user := &model.User{

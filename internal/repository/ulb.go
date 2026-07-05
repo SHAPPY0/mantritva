@@ -40,7 +40,31 @@ func (r *UlbRepository) CreateULB(ulb *model.ULB) error {
 
 func (r *UlbRepository) ListULBsByDistrict(districtId string) ([]model.ULB, error) {
 	var ulbs []model.ULB
-	if err := r.DB.Where("district_id = ? AND deleted_at IS NULL", districtId).Find(&ulbs).Error; err != nil {
+	if err := r.DB.Where("district_id = ?", districtId).Find(&ulbs).Error; err != nil {
+		return nil, err
+	}
+	return ulbs, nil
+}
+
+func (r *UlbRepository) ListULBsByStateAndDistrict(stateIds []uint, districtId string) ([]model.ULB, error) {
+	var ulbs []model.ULB
+	if err := r.DB.Where("district_id IN (select id from districts where state_id IN ? and id = ?)", stateIds, districtId).Find(&ulbs).Error; err != nil {
+		return nil, err
+	}
+	return ulbs, nil
+}
+
+func (r *UlbRepository) ListLocalBodiesByDistrictIDs(districtIds []uint) ([]model.ULB, error) {
+	var ulbs []model.ULB
+	if err := r.DB.Where("district_id IN ?", districtIds).Find(&ulbs).Error; err != nil {
+		return nil, err
+	}
+	return ulbs, nil
+}
+
+func (r *UlbRepository) ListLocalBodiesByIDAndDistrict(localBodyIDs []uint, districtId string) ([]model.ULB, error) {
+	var ulbs []model.ULB
+	if err := r.DB.Where("id IN ? AND district_id = ?", localBodyIDs, districtId).Find(&ulbs).Error; err != nil {
 		return nil, err
 	}
 	return ulbs, nil

@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
+	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/service"
 	"github.com/shappy0/mantritva/pkg/auth"
 	"github.com/shappy0/mantritva/pkg/log"
@@ -44,13 +45,62 @@ func (h *ConsoleHandler) GetUsersList(c *gin.Context) {
 
 func (h *ConsoleHandler) GetStatesList(c *gin.Context) {
 	authUser := auth.GetAuthUser(c)
-	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+	if !authUser.Found {
 		utils.Error(c, 401, "Access Denied", nil)
 		return
 	}
 	resp, err := h.Service.GetStatesList()
 	if err != nil {
 		utils.Error(c, 500, "Failed to get states list", err)
+		return
+	}
+	utils.Success(c, "", resp)
+}
+
+func (h *ConsoleHandler) GetStatesByUser(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
+	var resp *[]model.State
+	var err error
+	resp, err = h.Service.GetStatesByUser(authUser)
+	if err != nil {
+		utils.Error(c, 500, "Failed to get states list", err)
+		return
+	}
+	utils.Success(c, "", resp)
+}
+
+func (h *ConsoleHandler) GetDistrictsByStateByUser(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
+	var resp *[]model.District
+	var err error
+	resp, err = h.Service.GetDistrictsByStateByUser(authUser)
+	if err != nil {
+		utils.Error(c, 500, "Failed to get districts list", err)
+		return
+	}
+	utils.Success(c, "", resp)
+}
+
+func (h *ConsoleHandler) GetLocalBodiesByDistrictByUser(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
+	var resp *[]model.ULB
+	var err error
+	districtId := c.Param("districtId")
+	resp, err = h.Service.GetLocalBodiesByDistrictByUser(authUser, districtId)
+	if err != nil {
+		utils.Error(c, 500, "Failed to get local bodies list", err)
 		return
 	}
 	utils.Success(c, "", resp)
@@ -170,11 +220,13 @@ func (h *ConsoleHandler) UpdateMemberByID(c *gin.Context) {
 
 func (h *ConsoleHandler) GetRulersList(c *gin.Context) {
 	authUser := auth.GetAuthUser(c)
-	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+	if !authUser.Found || !authUser.IsAnyAdmin() {
 		utils.Error(c, 401, "Access Denied", nil)
 		return
 	}
-	resp, err := h.Service.GetRulersList()
+	var resp *[]dto.RulerRes
+	var err error
+	resp, err = h.Service.GetRulersListByUser(authUser)
 	if err != nil {
 		utils.Error(c, 500, "Failed to get rulers list", err)
 		return
@@ -198,7 +250,7 @@ func (h *ConsoleHandler) GetCurrentRulersList(c *gin.Context) {
 
 func (h *ConsoleHandler) GetLeadershipByRulerID(c *gin.Context) {
 	authUser := auth.GetAuthUser(c)
-	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+	if !authUser.Found || !authUser.IsAnyAdmin() {
 		utils.Error(c, 401, "Access Denied", nil)
 		return
 	}

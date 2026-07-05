@@ -13,6 +13,8 @@ type StateRepository interface {
 	Get(name string) (*model.StateDetail, error)
 	GetByID(id int) (*model.State, error)
 	ConsoleGetStateList() (*[]model.State, error)
+	ConsoleGetStateListByID([]uint) (*[]model.State, error)
+	ConsoleGetStateListByDistrictIDs([]uint) (*[]model.State, error)
 }
 
 type stateRepository struct {
@@ -69,6 +71,22 @@ func (r *stateRepository) GetByID(id int) (*model.State, error) {
 func (r *stateRepository) ConsoleGetStateList() (*[]model.State, error) {
 	var states []model.State
 	if err := r.DB.Order("name asc").Find(&states).Error; err != nil {
+		return nil, err
+	}
+	return &states, nil
+}
+
+func (r *stateRepository) ConsoleGetStateListByID(stateIDs []uint) (*[]model.State, error) {
+	var states []model.State
+	if err := r.DB.Where("id IN ?", stateIDs).Find(&states).Error; err != nil {
+		return nil, err
+	}
+	return &states, nil
+}
+
+func (r *stateRepository) ConsoleGetStateListByDistrictIDs(districtIDs []uint) (*[]model.State, error) {
+	var states []model.State
+	if err := r.DB.Where("id IN (SELECT state_id FROM districts WHERE id IN ?)", districtIDs).Find(&states).Error; err != nil {
 		return nil, err
 	}
 	return &states, nil
