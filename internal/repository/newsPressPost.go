@@ -27,6 +27,7 @@ type NewsPressPostRepository interface {
 	GetPostsByEntityID(pagination dto.Pagination, entityID int) (*[]model.NewsPressPost, error)
 	GetByMemberIDAndYear(dto.Pagination, int, int) (*[]model.NewsPressPost, error)
 	UpdatePost(string, map[string]interface{}) (bool, error)
+	GetByUserID(userID int, pagination dto.Pagination) (*[]model.NewsPressPost, error)
 }
 
 type newsPressPostRepository struct {
@@ -206,4 +207,18 @@ func (r *newsPressPostRepository) GetByMemberIDAndYear(pagination dto.Pagination
 		return &newsPressList, err
 	}
 	return &newsPressList, nil
+}
+
+func (r *newsPressPostRepository) GetByUserID(userID int, pagination dto.Pagination) (*[]model.NewsPressPost, error) {
+	newsPressPosts := make([]model.NewsPressPost, 0)
+	filter := bson.M{"created_by": fmt.Sprintf("%d", userID)}
+	opts := options.Find().
+		SetSort(bson.D{{Key: "created_at", Value: -1}}).
+		SetLimit(int64(pagination.Limit)).
+		SetSkip(int64(pagination.Offset))
+	if err := r.DB.FindMany(r.DB.NewsPressPostCollection, filter, opts, &newsPressPosts); err != nil {
+		log.Infof("Error fetching newsPress posts for userID %d: %v", userID, err)
+		return nil, err
+	}
+	return &newsPressPosts, nil
 }

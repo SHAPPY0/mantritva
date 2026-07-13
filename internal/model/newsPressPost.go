@@ -21,5 +21,12 @@ type NewsPressPost struct {
 	Source          *string            `json:"source" bson:"source"`
 	UpvoteCount     uint               `json:"upvote_count" bson:"upvote_count"`
 	DownvoteCount   uint               `json:"downvote_count" bson:"downvote_count"`
+	Media           []NewsPressMedia   `json:"media" bson:"media"`
 	AuditFieldsBSON `bson:",inline"`
+}
+
+type NewsPressMedia struct {
+	Type   string `json:"type" bson:"type"`
+	URL    string `json:"url" bson:"url"`
+	IsMain bool   `json:"is_main" bson:"is_main"`
 }

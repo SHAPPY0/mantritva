@@ -95,6 +95,7 @@ func (r *S3Storage) Save(c *gin.Context, fileObj *multipart.FileHeader) (*FileMe
 		Extenstion:   extension,
 		// DownloadURL:  conf.GetConfig().GetString("S3_ENDPOINT") + "/" + r.Bucket + "/" + objectKey,
 		DownloadURL: getDownloadableUrl(objectKey),
+		Type:        fileObj.Header.Get("Content-Type"),
 	}
 	log.Info("File uploaded successfully: " + fileMeta.DownloadURL)
 	return fileMeta, nil

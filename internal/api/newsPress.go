@@ -14,8 +14,10 @@ func newsPressRouter(rg *gin.RouterGroup, services *service.Services) *gin.Route
 	{
 		// npStatement.GET("/", handler.ListState)
 		npStatement.POST("/", handler.CreateNewsPress)
+		npStatement.POST("/with-media", auth.AuthRequired(true), handler.CreateNewsPressWithMedia)
 		npStatement.GET("/party/:partyID", handler.GetPostsByPartyID)
 		npStatement.GET("/:id/detail", auth.AuthRequired(false), handler.GetDetailByID)
+		npStatement.GET("/by-user", auth.AuthRequired(true), handler.GetByUserID)
 	}
 	return npStatement
 }

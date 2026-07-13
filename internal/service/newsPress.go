@@ -1,20 +1,27 @@
 package service
 
 import (
+	"fmt"
+	"path/filepath"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/internal/repository"
+	"github.com/shappy0/mantritva/pkg/auth"
 	"github.com/shappy0/mantritva/pkg/log"
+	"github.com/shappy0/mantritva/pkg/storage"
 	"github.com/shappy0/mantritva/pkg/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type NewsPressService interface {
 	Create(dto.NewsPressReq) (*model.NewsPressPost, error)
+	CreateWithMedia(*gin.Context, dto.NewsPressReq, auth.AuthUser) (*model.NewsPressPost, error)
 	GetPostsByPartyID(dto.Pagination, int) (*[]dto.NewsPressPostRes, error)
 	GetDetailByID(int, string) (*dto.NewsPressPostRes, error)
+	GetByUserID(int, dto.Pagination) (*[]dto.NewsPressShort, error)
 }
 
 type newsPressService struct {
@@ -27,6 +34,7 @@ type newsPressService struct {
 	FeedRepo       repository.FeedRepository
 	ReactionRepo   repository.ReactionRepository
 	ReportRepo     repository.ReportRepository
+	EventRepo      repository.EventRepository
 }
 
 func NewNewsPressService(repos *repository.Repos) NewsPressService {
@@ -40,6 +48,7 @@ func NewNewsPressService(repos *repository.Repos) NewsPressService {
 		FeedRepo:       repos.Feed,
 		ReactionRepo:   repos.Reaction,
 		ReportRepo:     repos.Report,
+		EventRepo:      repos.Event,
 	}
 }
 
@@ -47,16 +56,60 @@ func (s *newsPressService) Create(req dto.NewsPressReq) (*model.NewsPressPost, e
 	np := &model.NewsPressPost{
 		ID:              primitive.NewObjectID(),
 		Event:           &req.Event,
-		MemberID:        req.MemberID,
-		PartyId:         req.PartyID,
-		Subject:         string(req.Subject),
-		Type:            string(req.Type),
-		Tone:            string(req.Tone),
+		MemberID:        *req.MemberID,
+		PartyId:         *req.PartyID,
+		Subject:         string(*req.Subject),
+		Type:            string(*req.Type),
+		Tone:            string(*req.Tone),
 		Statement:       req.Statement,
 		StatementDate:   *req.StatementDate.Time,
 		Status:          string(req.Status),
 		Source:          req.Source,
 		AuditFieldsBSON: model.InsertBSONAuditFields(""),
+	}
+	if err := s.Repository.Create(np); err != nil {
+		return nil, err
+	}
+	return np, nil
+}
+
+func (s *newsPressService) CreateWithMedia(ctx *gin.Context, req dto.NewsPressReq, user auth.AuthUser) (*model.NewsPressPost, error) {
+	np := &model.NewsPressPost{
+		ID:              primitive.NewObjectID(),
+		Event:           &req.Event,
+		MemberID:        *req.MemberID,
+		PartyId:         *req.PartyID,
+		EntityId:        *req.EntityID,
+		Subject:         string(*req.Subject),
+		Type:            string(*req.Type),
+		Tone:            string(*req.Tone),
+		Statement:       req.Statement,
+		StatementDate:   *req.StatementDate.Time,
+		Status:          string(req.Status),
+		Source:          req.Source,
+		AuditFieldsBSON: model.InsertBSONAuditFields(fmt.Sprintf("%d", user.ID)),
+	}
+	destinationPath := filepath.Join("newspress", np.ID.Hex())
+	storage, err := storage.New(destinationPath)
+	if err != nil {
+		log.Infof("Error initiating storage connection %v", err)
+		return nil, err
+	}
+
+	for i, mediaReq := range req.Media {
+		fileMeta, err := storage.Save(ctx, mediaReq)
+		if err != nil {
+			log.Warnf("Error while storing file %v", err)
+		} else {
+			media := model.NewsPressMedia{
+				URL:  fileMeta.DownloadURL,
+				Type: fileMeta.Type,
+			}
+			if i == 0 {
+				media.IsMain = true
+			}
+			np.Media = append(np.Media, media)
+		}
 	}
 	if err := s.Repository.Create(np); err != nil {
 		return nil, err
@@ -174,4 +227,80 @@ func (s *newsPressService) GetDetailByID(userID int, id string) (*dto.NewsPressP
 	result.NewsPressPost = *post
 	return &result, nil
 
+}
+
+func (s *newsPressService) GetByUserID(userID int, pagination dto.Pagination) (*[]dto.NewsPressShort, error) {
+	var newsPressPostRes []dto.NewsPressShort
+	posts, err := s.Repository.GetByUserID(userID, pagination)
+	if err != nil {
+		return nil, err
+	}
+	for _, post := range *posts {
+		var newsPresPost = dto.NewsPressShort{
+			ID:            post.ID,
+			Statement:     post.Statement,
+			StatementDate: post.StatementDate,
+			Subject:       post.Subject,
+			Type:          post.Type,
+			Tone:          post.Tone,
+			UpvoteCount:   post.UpvoteCount,
+			DownvoteCount: post.DownvoteCount,
+			CreatedAt:     post.CreatedAt,
+			Status:        utils.PostStatus(post.Status),
+			Media:         post.Media,
+		}
+		if post.MemberID > 0 {
+			member, err := s.MemberRepo.GetByID(post.MemberID)
+			if err == nil && member != nil {
+				newsPresPost.Member = dto.Member{Name: member.Name, Photo: member.Photo}
+				leader, err := s.LeadershipRepo.GetByMemberID(member.ID)
+				if err == nil {
+					if leader.Role != "" {
+						newsPresPost.Member.Position = leader.Role
+					} else {
+						position := leader.Position
+						newsPresPost.Member.Position = position.Label()
+						if leader.StateID > 0 {
+							state, err := s.StateRepo.GetByID(int(leader.StateID))
+							if err == nil {
+								newsPresPost.Member.Position = position.Label() + ", " + state.Name
+							}
+						}
+					}
+				}
+			}
+		}
+		if post.PartyId > 0 {
+			party, err := s.PartyRepo.GetByID(int(post.PartyId))
+			if err == nil && party != nil {
+				newsPresPost.Party = dto.Party{Name: party.Name, Symbol: party.Symbol, Abbrv: party.Abbrv}
+			}
+		}
+		if post.EntityId > 0 {
+			ok, entity, err := s.EntityRepo.GetByID(int(post.EntityId))
+			if err != nil {
+				log.Errorf("Error getting entity by id %d", post.EntityId)
+			}
+			if ok {
+				newsPresPost.Entity = dto.Entity{
+					Name:         entity.Name,
+					Abbrv:        entity.Abbrv,
+					IsCentral:    entity.IsCentral,
+					StateName:    entity.StateName,
+					DistrictName: entity.DistrictName,
+				}
+			}
+		}
+		if post.Event != nil {
+			event, err := s.EventRepo.GetByID(*post.Event)
+			if err != nil {
+				log.Errorf("Error getting event by id %s", *post.Event)
+			}
+			if event != nil {
+				newsPresPost.Event = &event.Name
+			}
+		}
+		newsPressPostRes = append(newsPressPostRes, newsPresPost)
+	}
+	return &newsPressPostRes, nil
 }
