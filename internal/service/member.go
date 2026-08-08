@@ -27,7 +27,7 @@ type MemberService interface {
 	GetByID(id uint) (*dto.MemberRes, error)
 	ListUnaffiliatedMembers() ([]dto.MemberRes, error)
 	GetCareerByMemberID(int) ([]map[string]interface{}, error)
-	GetPostsByMemberID(int, dto.Pagination, int) (*[]dto.NewsPressPostRes, error)
+	GetPostsByMemberID(int, dto.Pagination, int) (*[]dto.NewsPressShort, error)
 	GetGrievancesByMemberID(dto.Pagination, int, string) (*[]dto.GrievanceShort, error)
 	GetDevelopmentWelfareByMemberID(dto.Pagination, int) (*[]dto.DevelopmentWelfareShort, error)
 	// GetByID(id uint) (*dto.Member, error)
@@ -295,22 +295,38 @@ func (s *memberService) ListUnaffiliatedMembers() ([]dto.MemberRes, error) {
 	return result, nil
 }
 
-func (s *memberService) GetPostsByMemberID(userID int, pagination dto.Pagination, memberID int) (*[]dto.NewsPressPostRes, error) {
-	var newsPressPostRes []dto.NewsPressPostRes
+func (s *memberService) GetPostsByMemberID(userID int, pagination dto.Pagination, memberID int) (*[]dto.NewsPressShort, error) {
+	// var newsPressPostRes []dto.NewsPressPostRes
+	var result []dto.NewsPressShort
 	posts, err := s.NewsPressRepository.GetPostsByMemberID(pagination, memberID)
 	if err != nil {
 		return nil, err
 	}
 	for _, post := range *posts {
-		dtoPost := dto.NewsPressPostRes{NewsPressPost: post, Questionnaire: new([]dto.Questionnaire)}
+		// dtoPost := dto.NewsPressPostRes{NewsPressPost: post, Questionnaire: new([]dto.Questionnaire)}
+		feedResult := dto.NewsPressShort{
+			ID:            post.ID,
+			Event:         post.Event,
+			Statement:     post.Statement,
+			StatementDate: post.StatementDate,
+			Subject:       post.Subject,
+			Type:          post.Type,
+			Tone:          post.Tone,
+			UpvoteCount:   post.UpvoteCount,
+			DownvoteCount: post.DownvoteCount,
+			CreatedAt:     post.CreatedAt,
+			Media:         post.Media,
+			Questionnaire: new([]dto.Questionnaire),
+		}
 		memberAndParty, err := s.Repository.GetMemberAndPartyDetails(memberID, int(post.PartyId))
 		if err != nil {
 			return nil, err
 		}
-		if err := utils.MapToStruct(memberAndParty, &dtoPost); err != nil {
+		if err := utils.MapToStruct(memberAndParty, &feedResult); err != nil {
 			return nil, err
 		} else {
-			utils.TransformPositionLabel(&dtoPost.Member.Position)
+			// utils.TransformPositionLabel(&dtoPost.Member.Position)
+			utils.TransformPositionLabel(&feedResult.Member.Position)
 		}
 		//Get Questionnairs
 		ques, err := s.ReportRepository.GetQuestionnairesByCategory(string(utils.NEWSPRESS))
@@ -318,7 +334,12 @@ func (s *memberService) GetPostsByMemberID(userID int, pagination dto.Pagination
 			log.Errorf("No questionnairs found for NewsPress post %v", post.ID)
 		} else {
 			for _, q := range *ques {
-				*dtoPost.Questionnaire = append(*dtoPost.Questionnaire, dto.Questionnaire{
+				// *dtoPost.Questionnaire = append(*dtoPost.Questionnaire, dto.Questionnaire{
+				// 	ID:       q.ID,
+				// 	Title:    q.Title,
+				// 	VoteType: &q.VoteType,
+				// })
+				*feedResult.Questionnaire = append(*feedResult.Questionnaire, dto.Questionnaire{
 					ID:       q.ID,
 					Title:    q.Title,
 					VoteType: &q.VoteType,
@@ -330,15 +351,18 @@ func (s *memberService) GetPostsByMemberID(userID int, pagination dto.Pagination
 			if err != nil {
 
 			} else if reaction != nil {
-				dtoPost.Reaction = utils.Vote(reaction.Reaction)
+				// dtoPost.Reaction = utils.Vote(reaction.Reaction)
+				feedResult.Reaction = utils.Vote(reaction.Reaction)
 				if reaction.LockedAt != nil && time.Now().After(*reaction.LockedAt) {
-					dtoPost.ReactionLocked = true
+					// dtoPost.ReactionLocked = true
+					feedResult.ReactionLocked = true
 				}
 			}
 		}
-		newsPressPostRes = append(newsPressPostRes, dtoPost)
+		// newsPressPostRes = append(newsPressPostRes, dtoPost)
+		result = append(result, feedResult)
 	}
-	return &newsPressPostRes, nil
+	return &result, nil
 }
 
 func (s *memberService) GetGrievancesByMemberID(pagination dto.Pagination, memberID int, position string) (*[]dto.GrievanceShort, error) {
