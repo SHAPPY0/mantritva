@@ -26,6 +26,7 @@ type GrievanceRepository interface {
 	GetByMemberIDAndYear(dto.Pagination, int, int) (*[]model.Grievance, error)
 	GetByStateID(int) (*[]model.Grievance, error)
 	UpdateVoteCountsByID(primitive.ObjectID, uint, uint) error
+	IncrementCosignCountByID(primitive.ObjectID) error
 }
 
 type grievanceRepository struct {
@@ -197,6 +198,13 @@ func (r *grievanceRepository) UpdateVoteCountsByID(postID primitive.ObjectID, up
 		return err
 	}
 	return nil
+}
+
+func (r *grievanceRepository) IncrementCosignCountByID(postID primitive.ObjectID) error {
+	filter := bson.M{"_id": postID}
+	update := bson.M{"$inc": bson.M{"cosign_count": 1}}
+	_, err := r.DB.UpdateOne(r.DB.GrievanceCollection, filter, update)
+	return err
 }
 
 func prepareYearFilter(year int) bson.M {

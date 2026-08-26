@@ -2,6 +2,7 @@ package service
 
 import (
 	"crypto/rand"
+	"fmt"
 	"math/big"
 	"path/filepath"
 	"strings"
@@ -21,11 +22,13 @@ type GrievanceSerivce interface {
 	ListByUser(string) ([]model.Grievance, error)
 	GetByGrievanceID(string, int) (*dto.GrievanceRes, error)
 	GetByStateID(int) ([]*dto.GrievanceShort, error)
+	Cosign(string, int) (*dto.GrievanceCosignRes, error)
 }
 
 type grievanceSerivce struct {
-	Repository   repository.GrievanceRepository
-	MemberRepo   repository.MemberRepository
+	Repository       repository.GrievanceRepository
+	GrievanceCosignRepo repository.GrievanceCosignRepository
+	MemberRepo       repository.MemberRepository
 	PartyRepo    repository.PartyRepository
 	StateRepo    repository.StateRepository
 	DistrictRepo repository.DistrictRepository
@@ -38,8 +41,9 @@ type grievanceSerivce struct {
 
 func NewGrievanceService(repos *repository.Repos) GrievanceSerivce {
 	return &grievanceSerivce{
-		Repository:   repos.Grievance,
-		MemberRepo:   repos.Member,
+		Repository:          repos.Grievance,
+		GrievanceCosignRepo: repos.GrievanceCosign,
+		MemberRepo:          repos.Member,
 		PartyRepo:    repos.Party,
 		StateRepo:    repos.State,
 		DistrictRepo: repos.District,
@@ -260,6 +264,9 @@ func (s *grievanceSerivce) GetByGrievanceID(grievanceID string, userID int) (*dt
 				})
 			}
 		}
+	} else if userID > 0 {
+		cosign, _ := s.GrievanceCosignRepo.GetByUserIDAndGrievanceID(userID, grievance.ID)
+		grievanceRes.Cosigned = cosign != nil
 	}
 
 	return &grievanceRes, nil
@@ -289,4 +296,46 @@ func (s *grievanceSerivce) GetByStateID(stateID int) ([]*dto.GrievanceShort, err
 		})
 	}
 	return grievancesList, nil
+}
+
+func (s *grievanceSerivce) Cosign(grievanceID string, userID int) (*dto.GrievanceCosignRes, error) {
+	grievance, err := s.Repository.GetByGrievanceID(grievanceID)
+	if err != nil {
+		return nil, err
+	}
+	if grievance == nil || grievance.ID.IsZero() {
+		return nil, fmt.Errorf("grievance not found")
+	}
+	if grievance.FinalStatus == utils.RESOLVED || grievance.FinalStatus == utils.CLOSED {
+		return nil, fmt.Errorf("cannot cosign a resolved or closed grievance")
+	}
+
+	existing, err := s.GrievanceCosignRepo.GetByUserIDAndGrievanceID(userID, grievance.ID)
+	if err != nil {
+		return nil, err
+	}
+	if existing != nil {
+		return &dto.GrievanceCosignRes{
+			CosignCount: grievance.CosignCount,
+			Cosigned:    true,
+		}, nil
+	}
+
+	cosign := &model.GrievanceCosign{
+		GrievanceID:     grievance.ID,
+		UserID:          userID,
+		CosignedAt:      time.Now().UTC(),
+		AuditFieldsBSON: model.InsertBSONAuditFields(fmt.Sprintf("%d", userID)),
+	}
+	if err := s.GrievanceCosignRepo.Create(cosign); err != nil {
+		return nil, err
+	}
+	if err := s.Repository.IncrementCosignCountByID(grievance.ID); err != nil {
+		return nil, err
+	}
+
+	return &dto.GrievanceCosignRes{
+		CosignCount: grievance.CosignCount + 1,
+		Cosigned:    true,
+	}, nil
 }

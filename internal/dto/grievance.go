@@ -58,7 +58,13 @@ type GrievanceRes struct {
 	User               UserClaim        `json:"user,omitempty"`
 	Reaction           utils.Vote       `json:"reaction"`
 	ReactionLocked     bool             `json:"reaction_locked"`
+	Cosigned           bool             `json:"cosigned"`
 	Questionnaire      *[]Questionnaire `json:"questionnaire,omitempty"`
+}
+
+type GrievanceCosignRes struct {
+	CosignCount uint `json:"cosign_count"`
+	Cosigned    bool `json:"cosigned"`
 }
 
 type GrievanceStatus struct {
@@ -89,4 +95,6 @@ type GrievanceShort struct {
 	ReactionLocked bool                  `json:"reaction_locked"`
 	UpvoteCount    uint                  `json:"upvote_count"`
 	DownvoteCount  uint                  `json:"downvote_count"`
+	CosignCount    uint                  `json:"cosign_count"`
+	Cosigned       bool                  `json:"cosigned"`
 }

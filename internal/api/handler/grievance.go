@@ -96,6 +96,27 @@ func (h *GrievanceHandler) GetByGrievanceID(c *gin.Context) {
 	utils.Success(c, "Grievance fetched successfully", resp)
 }
 
+func (h *GrievanceHandler) Cosign(c *gin.Context) {
+	grievanceID := c.Param("grievanceID")
+	if grievanceID == "" {
+		utils.Error(c, 400, "Grievance ID is required", nil)
+		return
+	}
+
+	userID, err := auth.GetKeyInCtx[int](c, "user_id")
+	if err != nil {
+		utils.Error(c, 401, "Unauthorized Access", nil)
+		return
+	}
+
+	resp, err := h.Service.Cosign(grievanceID, userID)
+	if err != nil {
+		utils.Error(c, 400, err.Error(), err)
+		return
+	}
+	utils.Success(c, "Grievance cosigned successfully", resp)
+}
+
 func (h *GrievanceHandler) GetByStateID(c *gin.Context) {
 	stateID := c.Param("stateID")
 	if stateID == "" {

@@ -20,6 +20,7 @@ type MongoDB struct {
 	NewsPressPostCollection *mongo.Collection
 	ReactionCollection      *mongo.Collection
 	GrievanceCollection     *mongo.Collection
+	GrievanceCosignCollection *mongo.Collection
 	ScoreCollection         *mongo.Collection
 	ScoreSnapshotCollection *mongo.Collection
 	EventCollection         *mongo.Collection
@@ -43,7 +44,7 @@ func SetupMongoDB() (*MongoDB, error) {
 	)
 	mongoDB := &MongoDB{}
 	mongoOnce.Do(func() {
-		uri := fmt.Sprintf("mongodb://%s:%s@%s:%d/%s?authSource=%s", username, url.QueryEscape(password), host, port, dbName, dbName)
+		uri := fmt.Sprintf("mongodb://%s:%s@%s:%d/%s?authSource=admin", username, url.QueryEscape(password), host, port, dbName)
 		if GetConfig().GetString("ENV") == "PROD" {
 			// uri = fmt.Sprintf("mongodb+srv://%s:%s@%s/?appName=mantritva&authSource=admin", username, url.QueryEscape(password), host)
 			uri = fmt.Sprintf("mongodb://%s:%s@%s:%d/%s?authSource=admin", username, url.QueryEscape(password), host, port, dbName)
@@ -97,6 +98,12 @@ func (m *MongoDB) SetupCollections(dbName string) error {
 		return err
 	} else {
 		m.GrievanceCollection = db.Collection("grievances")
+	}
+
+	if err := createCollection(db, "grievance_cosigns"); err != nil {
+		return err
+	} else {
+		m.GrievanceCosignCollection = db.Collection("grievance_cosigns")
 	}
 
 	if err := createCollection(db, "scores"); err != nil {

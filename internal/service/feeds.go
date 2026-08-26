@@ -34,6 +34,7 @@ type feedService struct {
 	DevelopmentWelfareRepository repository.DevelopmentWelfareRepository
 	ReportRepository             repository.ReportRepository
 	ReactionRepository           repository.ReactionRepository
+	GrievanceCosignRepository    repository.GrievanceCosignRepository
 	ReactionQueue                chan dto.ReactionReq
 }
 
@@ -56,6 +57,7 @@ func NewFeedService(repos *repository.Repos) FeedService {
 		DevelopmentWelfareRepository: repos.DevelopmentWelfare,
 		ReportRepository:             repos.Report,
 		ReactionRepository:           repos.Reaction,
+		GrievanceCosignRepository:    repos.GrievanceCosign,
 		ReactionQueue:                make(chan dto.ReactionReq, 500),
 	}
 	go svc.reactionQueueListener()
@@ -388,16 +390,22 @@ func (s *feedService) GetGrievanceFeed(userID int, postID primitive.ObjectID) (*
 		Severity:       string(griev.Severity),
 		UpvoteCount:    griev.UpvoteCount,
 		DownvoteCount:  griev.DownvoteCount,
+		CosignCount:    griev.CosignCount,
 		FinalStatus:    griev.FinalStatus,
 		CreatedAt:      griev.CreatedAt,
 	}
 	if userID > 0 {
-		reaction, _ := s.ReactionRepository.GetByUserIDAndPostID(userID, griev.ID)
-		if reaction != nil {
-			grievanceRes.Reaction = utils.Vote(reaction.Reaction)
-			if reaction.LockedAt != nil && time.Now().After(*reaction.LockedAt) {
-				grievanceRes.ReactionLocked = true
+		if grievanceRes.FinalStatus == utils.RESOLVED || grievanceRes.FinalStatus == utils.CLOSED {
+			reaction, _ := s.ReactionRepository.GetByUserIDAndPostID(userID, griev.ID)
+			if reaction != nil {
+				grievanceRes.Reaction = utils.Vote(reaction.Reaction)
+				if reaction.LockedAt != nil && time.Now().After(*reaction.LockedAt) {
+					grievanceRes.ReactionLocked = true
+				}
 			}
+		} else {
+			cosign, _ := s.GrievanceCosignRepository.GetByUserIDAndGrievanceID(userID, griev.ID)
+			grievanceRes.Cosigned = cosign != nil
 		}
 	}
 	//Get Questionnaires for this feed

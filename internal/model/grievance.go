@@ -34,6 +34,7 @@ type Grievance struct {
 	StatusRevisions      []StatusRevisions       `json:"status_revisions" bson:"status_revisions"`
 	UpvoteCount          uint                    `json:"upvote_count" bson:"upvote_count"`
 	DownvoteCount        uint                    `json:"downvote_count" bson:"downvote_count"`
+	CosignCount          uint                    `json:"cosign_count" bson:"cosign_count"`
 	AuditFieldsBSON      `bson:",inline"`
 }
 
