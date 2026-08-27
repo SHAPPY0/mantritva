@@ -32,6 +32,7 @@ type NewsPressPostRes struct {
 	Reaction       utils.Vote       `json:"reaction"`
 	ReactionLocked bool             `json:"reaction_locked"`
 	Questionnaire  *[]Questionnaire `json:"questionnaire,omitempty"`
+	PostAdmin      *PostAdmin       `json:"post_admin,omitempty"`
 }
 
 type NewsPressShort struct {
@@ -55,4 +56,5 @@ type NewsPressShort struct {
 	Media          []model.NewsPressMedia `json:"media,omitempty"`
 	Questionnaire  *[]Questionnaire       `json:"questionnaire,omitempty"`
 	CreatedAt      time.Time              `json:"created_at"`
+	PostAdmin      *PostAdmin             `json:"post_admin,omitempty"`
 }

@@ -35,6 +35,7 @@ type newsPressService struct {
 	ReactionRepo   repository.ReactionRepository
 	ReportRepo     repository.ReportRepository
 	EventRepo      repository.EventRepository
+	UserRepo       repository.UserRepository
 }
 
 func NewNewsPressService(repos *repository.Repos) NewsPressService {
@@ -49,6 +50,7 @@ func NewNewsPressService(repos *repository.Repos) NewsPressService {
 		ReactionRepo:   repos.Reaction,
 		ReportRepo:     repos.Report,
 		EventRepo:      repos.Event,
+		UserRepo:       repos.User,
 	}
 }
 
@@ -210,6 +212,16 @@ func (s *newsPressService) GetDetailByID(userID int, id string) (*dto.NewsPressP
 			if reaction.LockedAt != nil && time.Now().After(*reaction.LockedAt) {
 				result.ReactionLocked = true
 			}
+		}
+	}
+	createdByInt, err := utils.StrToInt(post.CreatedBy)
+	if err != nil {
+		log.Errorf("Error converting created by to int %s", post.CreatedBy)
+	}
+	if createdByInt > 0 {
+		user, err := s.UserRepo.GetByID(createdByInt)
+		if err == nil && user != nil {
+			result.PostAdmin = &dto.PostAdmin{Name: user.Name, UserID: fmt.Sprintf("%d", user.ID)}
 		}
 	}
 

@@ -31,3 +31,8 @@ type PostVotes struct {
 	UpvoteCount   int
 	DownvoteCount int
 }
+
+type PostAdmin struct {
+	Name   string         `json:"name"`
+	UserID string         `json:"user_id"`
+}

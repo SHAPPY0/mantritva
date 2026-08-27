@@ -36,6 +36,7 @@ type feedService struct {
 	ReactionRepository           repository.ReactionRepository
 	GrievanceCosignRepository    repository.GrievanceCosignRepository
 	ReactionQueue                chan dto.ReactionReq
+	UserRepository               repository.UserRepository
 }
 
 type postSummary struct {
@@ -59,6 +60,7 @@ func NewFeedService(repos *repository.Repos) FeedService {
 		ReactionRepository:           repos.Reaction,
 		GrievanceCosignRepository:    repos.GrievanceCosign,
 		ReactionQueue:                make(chan dto.ReactionReq, 500),
+		UserRepository:               repos.User,
 	}
 	go svc.reactionQueueListener()
 	return svc
@@ -355,6 +357,18 @@ func (s *feedService) GetNewsPressFeed(userID int, postID primitive.ObjectID) (d
 			}
 		}
 	}
+	if np.CreatedBy != "" {
+		createdByInt, err := utils.StrToInt(np.CreatedBy)
+		if err != nil {
+			log.Errorf("Error converting createdBy to int: %v", err)
+		} else if createdByInt > 0 {
+			postAdmin, err := s.UserRepository.GetByID(createdByInt)
+			if err == nil && postAdmin != nil && postAdmin.Name != "" {
+				newsPressPostRes.PostAdmin = &dto.PostAdmin{Name: postAdmin.Name, UserID: np.CreatedBy}
+			}
+		}
+	}
+
 	//Get Questionnaires for this feed
 	if ques, _ := s.ReportRepository.GetQuestionnairesByCategory(string(utils.NEWSPRESS)); ques != nil {
 		newsPressPostRes.Questionnaire = new([]dto.Questionnaire)
@@ -408,6 +422,19 @@ func (s *feedService) GetGrievanceFeed(userID int, postID primitive.ObjectID) (*
 			grievanceRes.Cosigned = cosign != nil
 		}
 	}
+
+	if griev.CreatedBy != "" {
+		createdByInt, err := utils.StrToInt(griev.CreatedBy)
+		if err != nil {
+			log.Errorf("Error converting createdBy to int: %v", err)
+		} else if createdByInt > 0 {
+			postAdmin, err := s.UserRepository.GetByID(createdByInt)
+			if err == nil && postAdmin != nil && postAdmin.Name != "" {
+				grievanceRes.PostAdmin = &dto.PostAdmin{Name: postAdmin.Name, UserID: griev.CreatedBy}
+			}
+		}
+	}
+
 	//Get Questionnaires for this feed
 	if grievanceRes.FinalStatus == utils.RESOLVED || grievanceRes.FinalStatus == utils.CLOSED {
 		if ques, _ := s.ReportRepository.GetQuestionnairesByCategory(string(utils.GRIEVANCE)); ques != nil {

@@ -442,6 +442,21 @@ func (s *consoleService) GetNewsPressList() (*[]dto.NewsPressPostRes, error) {
 				}
 			}
 		}
+		if post.CreatedBy != "" {
+			createdByInt, err := utils.StrToInt(post.CreatedBy)
+			if err != nil {
+				log.Errorf("Error converting created by to int %s", post.CreatedBy)
+				continue
+			}
+			if createdByInt > 0 {
+				user, err := s.UserRepository.GetByID(createdByInt)
+				if err != nil {
+					log.Errorf("Error getting user by id %d, %v", createdByInt, err)
+					continue
+				}
+				newsPostRes.PostAdmin = &dto.PostAdmin{Name: user.Name, UserID: fmt.Sprintf("%d", user.ID)}
+			}
+		}
 		results = append(results, newsPostRes)
 	}
 	return &results, nil

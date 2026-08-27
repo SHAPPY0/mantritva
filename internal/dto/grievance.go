@@ -97,4 +97,5 @@ type GrievanceShort struct {
 	DownvoteCount  uint                  `json:"downvote_count"`
 	CosignCount    uint                  `json:"cosign_count"`
 	Cosigned       bool                  `json:"cosigned"`
+	PostAdmin      *PostAdmin            `json:"post_admin,omitempty"`
 }
