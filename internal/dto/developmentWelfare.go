@@ -62,3 +62,19 @@ type DevelopmentWelfareDetail struct {
 	ReactionLocked bool             `json:"reaction_locked"`
 	Questionnaire  *[]Questionnaire `json:"questionnaire,omitempty"`
 }
+
+type DevelopmentWelfareRes struct {
+	model.DevelopmentWelfare
+	Member   Member       `json:"member,omitempty"`
+	Party    Party        `json:"party,omitempty"`
+	State    *model.State `json:"state,omitempty"`
+	District string       `json:"district,omitempty"`
+}
+
+type DevelopmentWelfareStatus struct {
+	ID     string                  `json:"id"`
+	Date   utils.DateOnly          `json:"date"`
+	Status utils.DevelopmentStatus `json:"status"`
+	Remark string                  `json:"remark"`
+	Source string                  `json:"source"`
+}

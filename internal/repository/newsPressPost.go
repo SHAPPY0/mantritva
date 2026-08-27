@@ -22,6 +22,7 @@ type NewsPressPostRepository interface {
 	UpdateVoteCountsByID(primitive.ObjectID, uint, uint) error
 	// UpdateVote(postID string, upvoteChange int, downvoteChange int) error
 	ConsoleGetNewsPressList() ([]model.NewsPressPost, error)
+	ConsoleCountNewsPress() (int64, error)
 	GetPostsByPartyID(pagination dto.Pagination, partyID int) (*[]model.NewsPressPost, error)
 	GetPostsByMemberID(pagination dto.Pagination, memberID int) (*[]model.NewsPressPost, error)
 	GetPostsByEntityID(pagination dto.Pagination, entityID int) (*[]model.NewsPressPost, error)
@@ -106,6 +107,10 @@ func (r *newsPressPostRepository) ConsoleGetNewsPressList() ([]model.NewsPressPo
 		return newsPressPosts, err
 	}
 	return newsPressPosts, nil
+}
+
+func (r *newsPressPostRepository) ConsoleCountNewsPress() (int64, error) {
+	return r.DB.Count(r.DB.NewsPressPostCollection, bson.M{})
 }
 
 func (r *newsPressPostRepository) GetPostsByPartyID(pagination dto.Pagination, partyID int) (*[]model.NewsPressPost, error) {

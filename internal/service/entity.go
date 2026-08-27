@@ -28,10 +28,14 @@ func NewEntityService(repos *repository.Repos) EntityService {
 }
 
 func (s *entityService) Create(req dto.EntityReq) (*model.Entity, error) {
+	isCentral := false
+	if req.IsCentral != nil {
+		isCentral = *req.IsCentral
+	}
 	entity := &model.Entity{
-		Name:  req.Name,
-		Abbrv: req.Abbrv,
-		// IsCentral:  *req.IsCentral,
+		Name:       req.Name,
+		Abbrv:      req.Abbrv,
+		IsCentral:  isCentral,
 		StateID:    req.StateID,
 		DistrictID: req.DistrictID,
 	}

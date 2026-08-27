@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"github.com/shappy0/mantritva/pkg/config"
 	"github.com/shappy0/mantritva/pkg/log"
@@ -17,6 +18,10 @@ type DevelopmentWelfareRepository interface {
 	UpdateVoteCountsByID(primitive.ObjectID, uint, uint) error
 	GetByMemberID(int) ([]model.DevelopmentWelfare, error)
 	GetByMemberIDAndYear(int, int) ([]model.DevelopmentWelfare, error)
+	ConsoleGetDevelopmentWelfaresList() ([]model.DevelopmentWelfare, error)
+	ConsoleCountDevelopmentWelfares() (int64, error)
+	ConsoleGetDevelopmentWelfareByID(string) (*model.DevelopmentWelfare, error)
+	ConsoleUpdateDevelopmentWelfareStatus(string, dto.DevelopmentWelfareStatus) error
 }
 
 type developmentWelfareRepository struct {
@@ -89,4 +94,48 @@ func (r *developmentWelfareRepository) GetByMemberIDAndYear(memberID, year int) 
 		return developments, err
 	}
 	return developments, nil
+}
+
+func (r *developmentWelfareRepository) ConsoleGetDevelopmentWelfaresList() ([]model.DevelopmentWelfare, error) {
+	var developments []model.DevelopmentWelfare
+	opts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
+	if err := r.DB.FindMany(r.DB.DevelopmentWelfare, bson.M{}, opts, &developments); err != nil {
+		return developments, err
+	}
+	return developments, nil
+}
+
+func (r *developmentWelfareRepository) ConsoleCountDevelopmentWelfares() (int64, error) {
+	return r.DB.Count(r.DB.DevelopmentWelfare, bson.M{})
+}
+
+func (r *developmentWelfareRepository) ConsoleGetDevelopmentWelfareByID(id string) (*model.DevelopmentWelfare, error) {
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+	return r.GetByID(objectID)
+}
+
+func (r *developmentWelfareRepository) ConsoleUpdateDevelopmentWelfareStatus(id string, status dto.DevelopmentWelfareStatus) error {
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+	filter := bson.M{"_id": objectID}
+	update := bson.M{
+		"$push": bson.M{
+			"status_revisions": bson.M{
+				"date":   status.Date.Time,
+				"status": status.Status,
+				"remark": status.Remark,
+				"source": status.Source,
+			},
+		},
+		"$set": bson.M{
+			"status": status.Status,
+		},
+	}
+	_, err = r.DB.UpdateOne(r.DB.DevelopmentWelfare, filter, update)
+	return err
 }

@@ -29,6 +29,20 @@ func NewConsoleHandler(services *service.Services) *ConsoleHandler {
 	}
 }
 
+func (h *ConsoleHandler) GetDashboard(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
+	resp, err := h.Service.GetDashboardStats()
+	if err != nil {
+		utils.Error(c, 500, "Failed to get dashboard stats", err)
+		return
+	}
+	utils.Success(c, "", resp)
+}
+
 func (h *ConsoleHandler) GetUsersList(c *gin.Context) {
 	authUser := auth.GetAuthUser(c)
 	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
@@ -425,6 +439,56 @@ func (h *ConsoleHandler) GrievanceUpdateStatus(c *gin.Context) {
 		}
 	}
 	utils.Success(c, "Grievance status updated successfully", resp)
+}
+
+func (h *ConsoleHandler) GetDevelopmentWelfaresList(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
+	resp, err := h.Service.GetDevelopmentWelfaresList()
+	if err != nil {
+		utils.Error(c, 500, "Failed to get development welfares list", err)
+		return
+	}
+	utils.Success(c, "", resp)
+}
+
+func (h *ConsoleHandler) GetDevelopmentWelfareByID(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
+	id := c.Param("id")
+	resp, err := h.Service.GetDevelopmentWelfareByID(id)
+	if err != nil {
+		utils.Error(c, 500, "Failed to get development welfare", err)
+		return
+	}
+	utils.Success(c, "", resp)
+}
+
+func (h *ConsoleHandler) DevelopmentWelfareUpdateStatus(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
+
+	id := c.Param("id")
+	var req dto.DevelopmentWelfareStatus
+	if err := c.BindJSON(&req); err != nil {
+		utils.Error(c, 400, "Invalid request data", err)
+		return
+	}
+	resp, err := h.Service.DevelopmentWelfareUpdateStatus(id, req)
+	if err != nil {
+		utils.Error(c, 500, "Failed to update development welfare status", err)
+		return
+	}
+	utils.Success(c, "Development welfare status updated successfully", resp)
 }
 
 func (h *ConsoleHandler) ExitLeadership(c *gin.Context) {

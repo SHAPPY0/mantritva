@@ -20,6 +20,7 @@ type GrievanceRepository interface {
 	GetByID(primitive.ObjectID) (*model.Grievance, error)
 	GetByGrievanceID(string) (*model.Grievance, error)
 	ConsoleGetGrievancesList() ([]model.Grievance, error)
+	ConsoleCountGrievances() (int64, error)
 	ConsoleGetGrievanceByID(string) (*model.Grievance, error)
 	ConsoleUpdateGrievanceStatus(string, dto.GrievanceStatus) error
 	GetByMemberID(dto.Pagination, int, string) (*[]model.Grievance, error)
@@ -98,6 +99,10 @@ func (r *grievanceRepository) ConsoleGetGrievancesList() ([]model.Grievance, err
 		return grievances, err
 	}
 	return grievances, nil
+}
+
+func (r *grievanceRepository) ConsoleCountGrievances() (int64, error) {
+	return r.DB.Count(r.DB.GrievanceCollection, bson.M{})
 }
 
 func (r *grievanceRepository) ConsoleGetGrievanceByID(grievanceID string) (*model.Grievance, error) {

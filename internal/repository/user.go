@@ -15,6 +15,7 @@ type UserRepository interface {
 	GetByUserID(string) (*model.User, error)
 	UserExist(*model.User) (*model.User, error)
 	ConsoleGetUsersList() (*[]model.User, error)
+	ConsoleCountUsers() (int64, error)
 	UpdateTokenVersion(int, int) (bool, error)
 	GetTokenVersion(int) (int, error)
 	UpdateRole(dto.UpdateUserReq) (bool, error)
@@ -75,6 +76,14 @@ func (r *userRepository) ConsoleGetUsersList() (*[]model.User, error) {
 		users[i].Password = nil
 	}
 	return &users, nil
+}
+
+func (r *userRepository) ConsoleCountUsers() (int64, error) {
+	var count int64
+	if err := r.DB.Model(&model.User{}).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (r *userRepository) GetByID(id int) (*model.User, error) {

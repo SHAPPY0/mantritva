@@ -13,7 +13,7 @@ type MemberReq struct {
 	Qualifications   string              `json:"qualifications" form:"qualifications"`
 	MaritalStatus    string              `json:"marital_status" form:"marital_status"`
 	FinancialAssets  string              `json:"financial_assets" form:"financial_assets"`
-	SocialMediaLinks map[string]string   `json:"social_media_links" form:"social_media_links" binding:"required"`
+	SocialMediaLinks map[string]string   `json:"social_media_links" form:"social_media_links"`
 	CriminalRecords  []CriminalRecordReq `json:"criminal_records,omitempty" form:"criminal_records,omitempty"`
 }
 

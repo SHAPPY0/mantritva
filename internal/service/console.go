@@ -40,6 +40,9 @@ type ConsoleService interface {
 	GetGrievancesList() (*[]model.Grievance, error)
 	GetGrievanceByID(string) (*dto.GrievanceRes, error)
 	GrievanceUpdateStatus(string, dto.GrievanceStatus) (bool, error)
+	GetDevelopmentWelfaresList() (*[]model.DevelopmentWelfare, error)
+	GetDevelopmentWelfareByID(string) (*dto.DevelopmentWelfareRes, error)
+	DevelopmentWelfareUpdateStatus(string, dto.DevelopmentWelfareStatus) (bool, error)
 	ExitLeadership(dto.LeadershipExitReq) (bool, error)
 	UpdateMemberByID(*gin.Context, uint, map[string]interface{}, *multipart.FileHeader) (bool, error)
 	UpdateRole(dto.UpdateUserReq) (bool, error)
@@ -47,6 +50,7 @@ type ConsoleService interface {
 	AddRole(string, dto.AddRoleReq) (*model.UserRole, error)
 	GetUserRoles(string) ([]model.UserRole, error)
 	SetupBulkLeader(string, multipart.File) (map[string]string, map[string]string, error)
+	GetDashboardStats() (*dto.ConsoleDashboardRes, error)
 }
 
 type consoleService struct {
@@ -60,8 +64,9 @@ type consoleService struct {
 	LeadershipRepository  repository.LeadershipRepository
 	NewsPressRepository   repository.NewsPressPostRepository
 	EntityRepository      repository.EntityRepository
-	GrievanceRepository   repository.GrievanceRepository
-	DistrictRepository    repository.DistrictRepository
+	GrievanceRepository           repository.GrievanceRepository
+	DevelopmentWelfareRepository  repository.DevelopmentWelfareRepository
+	DistrictRepository            repository.DistrictRepository
 	ReportRepository      repository.ReportRepository
 	EnquiryRepository     repository.EnquiryRepository
 	LoksabhaRepository    repository.LoksabhaRepository
@@ -81,8 +86,9 @@ func NewConsoleService(repos *repository.Repos) ConsoleService {
 		LeadershipRepository:  repos.Leadership,
 		NewsPressRepository:   repos.NewsPressPost,
 		EntityRepository:      repos.Entity,
-		GrievanceRepository:   repos.Grievance,
-		DistrictRepository:    repos.District,
+		GrievanceRepository:          repos.Grievance,
+		DevelopmentWelfareRepository: repos.DevelopmentWelfare,
+		DistrictRepository:           repos.District,
 		ReportRepository:      repos.Report,
 		EnquiryRepository:     repos.Enquiry,
 		LoksabhaRepository:    repos.Loksabha,
@@ -583,6 +589,81 @@ func (s *consoleService) GrievanceUpdateStatus(grievanceID string, status dto.Gr
 	return true, nil
 }
 
+func (s *consoleService) GetDevelopmentWelfaresList() (*[]model.DevelopmentWelfare, error) {
+	developments, err := s.DevelopmentWelfareRepository.ConsoleGetDevelopmentWelfaresList()
+	if err != nil {
+		return nil, err
+	}
+	return &developments, nil
+}
+
+func (s *consoleService) GetDevelopmentWelfareByID(id string) (*dto.DevelopmentWelfareRes, error) {
+	development, err := s.DevelopmentWelfareRepository.ConsoleGetDevelopmentWelfareByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	result := dto.DevelopmentWelfareRes{
+		DevelopmentWelfare: *development,
+	}
+
+	if development.MemberID != 0 {
+		member, err := s.MemberRepository.GetMemberById(development.MemberID)
+		if err != nil {
+			log.Errorf("Error fetching member details by ID %d", development.MemberID)
+		} else {
+			var memberDto dto.Member
+			if err := utils.MapToStruct(member, &memberDto); err != nil {
+				log.Errorf("Error converting member map to dto.member")
+			} else {
+				utils.TransformPositionLabel(&memberDto.Position)
+				result.Member = memberDto
+			}
+		}
+	}
+
+	if development.PartyID != 0 {
+		party, err := s.PartyRepository.GetByID(int(development.PartyID))
+		if err != nil {
+			log.Errorf("Error fetching party details by ID %d", development.PartyID)
+		} else {
+			result.Party = dto.Party{
+				Name:   party.Name,
+				Abbrv:  party.Abbrv,
+				Symbol: party.Symbol,
+			}
+		}
+	}
+
+	if development.StateID != nil && *development.StateID != 0 {
+		state, err := s.StateRepository.GetByID(int(*development.StateID))
+		if err != nil {
+			log.Errorf("Error fetching state details by ID %d", *development.StateID)
+		} else {
+			result.State = &model.State{Name: state.Name}
+		}
+	}
+
+	if development.DistrictID != nil && *development.DistrictID != 0 {
+		district, err := s.DistrictRepository.GetByID(*development.DistrictID)
+		if err != nil {
+			log.Errorf("Error fetching district details by ID %d", *development.DistrictID)
+		} else {
+			result.District = district.Name
+		}
+	}
+
+	return &result, nil
+}
+
+func (s *consoleService) DevelopmentWelfareUpdateStatus(id string, status dto.DevelopmentWelfareStatus) (bool, error) {
+	err := s.DevelopmentWelfareRepository.ConsoleUpdateDevelopmentWelfareStatus(id, status)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func (s *consoleService) GetCurrentRulersList() ([]map[string]interface{}, error) {
 	rulers, err := s.RulerRepository.List()
 	if err != nil {
@@ -778,4 +859,30 @@ func (s *consoleService) SetupBulkLeader(username string, file multipart.File) (
 
 	}
 	return createSuccess, createError, nil
+}
+
+func (s *consoleService) GetDashboardStats() (*dto.ConsoleDashboardRes, error) {
+	users, err := s.UserRepository.ConsoleCountUsers()
+	if err != nil {
+		return nil, err
+	}
+	newsPress, err := s.NewsPressRepository.ConsoleCountNewsPress()
+	if err != nil {
+		return nil, err
+	}
+	developmentWelfares, err := s.DevelopmentWelfareRepository.ConsoleCountDevelopmentWelfares()
+	if err != nil {
+		return nil, err
+	}
+	grievances, err := s.GrievanceRepository.ConsoleCountGrievances()
+	if err != nil {
+		return nil, err
+	}
+	return &dto.ConsoleDashboardRes{
+		Users:               users,
+		NewsPress:           newsPress,
+		DevelopmentWelfares: developmentWelfares,
+		Grievances:          grievances,
+		Total:               users + newsPress + developmentWelfares + grievances,
+	}, nil
 }

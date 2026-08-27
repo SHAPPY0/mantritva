@@ -278,3 +278,14 @@ func (m *MongoDB) DeleteOne(collection *mongo.Collection, filter bson.M) (*mongo
 	}
 	return result, nil
 }
+
+func (m *MongoDB) Count(collection *mongo.Collection, filter bson.M) (int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if filter == nil {
+		filter = bson.M{}
+	}
+
+	return collection.CountDocuments(ctx, filter)
+}

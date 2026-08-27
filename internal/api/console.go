@@ -68,6 +68,7 @@ func consoleRouter(rg *gin.RouterGroup, services *service.Services) *gin.RouterG
 			}
 		}
 		// console.GET("/users", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.GetUsersList)
+		console.GET("/dashboard", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.GetDashboard)
 		console.PUT("/user/updateRole", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.UpdateRole)
 		console.POST("/user/addRole", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.AddRole)
 		console.GET("/user/:userID/roles", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.GetUserRoles)
@@ -87,6 +88,9 @@ func consoleRouter(rg *gin.RouterGroup, services *service.Services) *gin.RouterG
 		console.GET("/grievances", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.GetGrievancesList)
 		console.GET("/grievance/:grievanceID", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.GetGrievanceByID)
 		console.PUT("/grievance/:grievanceID/updateStatus", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.GrievanceUpdateStatus)
+		console.GET("/development-welfares", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.GetDevelopmentWelfaresList)
+		console.GET("/development-welfares/:id", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.GetDevelopmentWelfareByID)
+		console.PUT("/development-welfares/:id/updateStatus", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.DevelopmentWelfareUpdateStatus)
 		console.POST("/leadership/exit/:id", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.ExitLeadership)
 		console.GET("/enquiries", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.GetEnquiriesList)
 		console.POST("/setup-bulk-leader", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.SetupBulkLeader)
