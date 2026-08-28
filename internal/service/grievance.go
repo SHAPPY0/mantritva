@@ -26,17 +26,17 @@ type GrievanceSerivce interface {
 }
 
 type grievanceSerivce struct {
-	Repository       repository.GrievanceRepository
+	Repository          repository.GrievanceRepository
 	GrievanceCosignRepo repository.GrievanceCosignRepository
-	MemberRepo       repository.MemberRepository
-	PartyRepo    repository.PartyRepository
-	StateRepo    repository.StateRepository
-	DistrictRepo repository.DistrictRepository
-	UserRepo     repository.UserRepository
-	EntityRepo   repository.EntityRepository
-	ReactionRepo repository.ReactionRepository
-	ReportRepo   repository.ReportRepository
-	UlbRepo      repository.UlbRepository
+	MemberRepo          repository.MemberRepository
+	PartyRepo           repository.PartyRepository
+	StateRepo           repository.StateRepository
+	DistrictRepo        repository.DistrictRepository
+	UserRepo            repository.UserRepository
+	EntityRepo          repository.EntityRepository
+	ReactionRepo        repository.ReactionRepository
+	ReportRepo          repository.ReportRepository
+	UlbRepo             repository.UlbRepository
 }
 
 func NewGrievanceService(repos *repository.Repos) GrievanceSerivce {
@@ -44,14 +44,14 @@ func NewGrievanceService(repos *repository.Repos) GrievanceSerivce {
 		Repository:          repos.Grievance,
 		GrievanceCosignRepo: repos.GrievanceCosign,
 		MemberRepo:          repos.Member,
-		PartyRepo:    repos.Party,
-		StateRepo:    repos.State,
-		DistrictRepo: repos.District,
-		UserRepo:     repos.User,
-		EntityRepo:   repos.Entity,
-		ReactionRepo: repos.Reaction,
-		ReportRepo:   repos.Report,
-		UlbRepo:      repos.Ulb,
+		PartyRepo:           repos.Party,
+		StateRepo:           repos.State,
+		DistrictRepo:        repos.District,
+		UserRepo:            repos.User,
+		EntityRepo:          repos.Entity,
+		ReactionRepo:        repos.Reaction,
+		ReportRepo:          repos.Report,
+		UlbRepo:             repos.Ulb,
 	}
 }
 
@@ -224,7 +224,7 @@ func (s *grievanceSerivce) GetByGrievanceID(grievanceID string, userID int) (*dt
 		}
 	}
 
-	if !grievance.HideIdentity && grievance.CreatedBy != "" {
+	if grievance.CreatedBy != "" && !grievance.HideIdentity {
 		//convert string to int
 		id, err := utils.StrToInt(grievance.CreatedBy)
 		if err != nil {

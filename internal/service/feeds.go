@@ -423,7 +423,7 @@ func (s *feedService) GetGrievanceFeed(userID int, postID primitive.ObjectID) (*
 		}
 	}
 
-	if griev.CreatedBy != "" {
+	if griev.CreatedBy != "" && !griev.HideIdentity {
 		createdByInt, err := utils.StrToInt(griev.CreatedBy)
 		if err != nil {
 			log.Errorf("Error converting createdBy to int: %v", err)
