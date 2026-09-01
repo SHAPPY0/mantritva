@@ -116,10 +116,10 @@ const (
 )
 
 var KraDisplayMap = map[KRA]string{
-	KRA_DEVELOPMENTS: "Developments & Welfare",
-	KRA_GRIEVANCES:   "Grievances",
-	KRA_CALRECORDS:   "Criminal & Legal Records",
-	KRA_NEWSPRESSES:  "News & Presses",
+	KRA_DEVELOPMENTS: "Developments & Welfare Score",
+	KRA_GRIEVANCES:   "Grievances Score",
+	KRA_CALRECORDS:   "Criminal & Legal Records Score",
+	KRA_NEWSPRESSES:  "Public Statements Reception Score",
 }
 
 const (
