@@ -23,6 +23,7 @@ func consoleRouter(rg *gin.RouterGroup, services *service.Services) *gin.RouterG
 	var protectedRoutes = []ProtectedRoute{
 		{Path: "/users", Method: "GET", Handler: h.GetUsersList, Roles: []utils.Roles{utils.STATE_ADMIN}},
 		{Path: "/states", Method: "GET", Handler: h.GetStatesByUser, Roles: []utils.Roles{utils.STATE_ADMIN, utils.DISTRICT_ADMIN}},
+		{Path: "/districts", Method: "GET", Handler: h.GetDistrictsByUser, Roles: []utils.Roles{utils.STATE_ADMIN, utils.DISTRICT_ADMIN}},
 		{Path: "/state/:stateId/districts", Method: "GET", Handler: h.GetDistrictsByStateByUser, Roles: []utils.Roles{utils.STATE_ADMIN, utils.DISTRICT_ADMIN}},
 		{Path: "/district/:districtId/local-bodies", Method: "GET", Handler: h.GetLocalBodiesByDistrictByUser, Roles: []utils.Roles{utils.STATE_ADMIN, utils.DISTRICT_ADMIN, utils.LOCALBODY_ADMIN}},
 		{Path: "/parties", Method: "GET", Handler: h.GetPartiesList},

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/shappy0/mantritva/internal/dto"
@@ -77,7 +78,11 @@ func (r *allianceRepository) GetByAbbrv(abbrv string) (*dto.AlliancePartyDetail,
 
 func (r *allianceRepository) GetByID(id int) (*model.Alliance, error) {
 	var alliance model.Alliance
-	if err := r.DB.Where("id = ? AND is_active = ?", id, true).First(&alliance).Error; err != nil {
+	err := r.DB.Where("id = ? AND is_active = ?", id, true).First(&alliance).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &alliance, nil

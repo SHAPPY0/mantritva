@@ -23,7 +23,7 @@ type ConsoleService interface {
 	GetUsersList() ([]dto.UserRes, error)
 	GetStatesList() (*[]model.State, error)
 	GetStatesByUser(auth.AuthUser) (*[]model.State, error)
-	GetDistrictsByStateByUser(auth.AuthUser) (*[]model.District, error)
+	GetDistrictsByStateByUser(auth.AuthUser, string) (*[]model.District, error)
 	GetLocalBodiesByDistrictByUser(auth.AuthUser, string) (*[]model.ULB, error)
 	GetStatesByID([]uint) (*[]model.State, error)
 	GetPartiesList() (*[]model.Party, error)
@@ -54,46 +54,46 @@ type ConsoleService interface {
 }
 
 type consoleService struct {
-	UserRepository        repository.UserRepository
-	UserRoleRepository    repository.UserRoleRepository
-	StateRepository       repository.StateRepository
-	PartyRepository       repository.PartyRepository
-	AllianceRepository    repository.AllianceRepository
-	MemberRepository      repository.MemberRepository
-	RulerRepository       repository.RulerRepository
-	LeadershipRepository  repository.LeadershipRepository
-	NewsPressRepository   repository.NewsPressPostRepository
-	EntityRepository      repository.EntityRepository
-	GrievanceRepository           repository.GrievanceRepository
-	DevelopmentWelfareRepository  repository.DevelopmentWelfareRepository
-	DistrictRepository            repository.DistrictRepository
-	ReportRepository      repository.ReportRepository
-	EnquiryRepository     repository.EnquiryRepository
-	LoksabhaRepository    repository.LoksabhaRepository
-	VidhansabhaRepository repository.VidhansabhaRepository
-	LocalBodyRepository   repository.UlbRepository
+	UserRepository               repository.UserRepository
+	UserRoleRepository           repository.UserRoleRepository
+	StateRepository              repository.StateRepository
+	PartyRepository              repository.PartyRepository
+	AllianceRepository           repository.AllianceRepository
+	MemberRepository             repository.MemberRepository
+	RulerRepository              repository.RulerRepository
+	LeadershipRepository         repository.LeadershipRepository
+	NewsPressRepository          repository.NewsPressPostRepository
+	EntityRepository             repository.EntityRepository
+	GrievanceRepository          repository.GrievanceRepository
+	DevelopmentWelfareRepository repository.DevelopmentWelfareRepository
+	DistrictRepository           repository.DistrictRepository
+	ReportRepository             repository.ReportRepository
+	EnquiryRepository            repository.EnquiryRepository
+	LoksabhaRepository           repository.LoksabhaRepository
+	VidhansabhaRepository        repository.VidhansabhaRepository
+	LocalBodyRepository          repository.UlbRepository
 }
 
 func NewConsoleService(repos *repository.Repos) ConsoleService {
 	return &consoleService{
-		UserRepository:        repos.User,
-		UserRoleRepository:    repos.UserRole,
-		StateRepository:       repos.State,
-		PartyRepository:       repos.Party,
-		AllianceRepository:    repos.Alliance,
-		MemberRepository:      repos.Member,
-		RulerRepository:       repos.Ruler,
-		LeadershipRepository:  repos.Leadership,
-		NewsPressRepository:   repos.NewsPressPost,
-		EntityRepository:      repos.Entity,
+		UserRepository:               repos.User,
+		UserRoleRepository:           repos.UserRole,
+		StateRepository:              repos.State,
+		PartyRepository:              repos.Party,
+		AllianceRepository:           repos.Alliance,
+		MemberRepository:             repos.Member,
+		RulerRepository:              repos.Ruler,
+		LeadershipRepository:         repos.Leadership,
+		NewsPressRepository:          repos.NewsPressPost,
+		EntityRepository:             repos.Entity,
 		GrievanceRepository:          repos.Grievance,
 		DevelopmentWelfareRepository: repos.DevelopmentWelfare,
 		DistrictRepository:           repos.District,
-		ReportRepository:      repos.Report,
-		EnquiryRepository:     repos.Enquiry,
-		LoksabhaRepository:    repos.Loksabha,
-		VidhansabhaRepository: repos.VidhanSabha,
-		LocalBodyRepository:   repos.Ulb,
+		ReportRepository:             repos.Report,
+		EnquiryRepository:            repos.Enquiry,
+		LoksabhaRepository:           repos.Loksabha,
+		VidhansabhaRepository:        repos.VidhanSabha,
+		LocalBodyRepository:          repos.Ulb,
 	}
 }
 
@@ -202,7 +202,19 @@ func (s *consoleService) GetStatesByUser(user auth.AuthUser) (*[]model.State, er
 	return states, nil
 }
 
-func (s *consoleService) GetDistrictsByStateByUser(user auth.AuthUser) (*[]model.District, error) {
+func (s *consoleService) GetDistrictsByStateByUser(user auth.AuthUser, stateID string) (*[]model.District, error) {
+	if stateID != "" && stateID != "0" {
+		districts, err := s.DistrictRepository.GetByState(stateID)
+		if err != nil {
+			return nil, err
+		}
+		if districts == nil {
+			empty := []model.District{}
+			return &empty, nil
+		}
+		return &districts, nil
+	}
+
 	var districts *[]model.District
 	var err error
 	if user.IsAdminOrSuperAdmin() {
@@ -389,7 +401,7 @@ func (s *consoleService) PrepareRulerRes(rulers *[]model.Ruler) (*[]dto.RulerRes
 			alliance, err := s.AllianceRepository.GetByID(ruler.AllianceID)
 			if err != nil {
 				log.Errorf("Error while getting Alliance detail %d, %v", ruler.AllianceID, err)
-			} else {
+			} else if alliance != nil {
 				rulerItem.Alliance = dto.AllianceName{Name: alliance.Name, Abbrv: alliance.Abbrv}
 			}
 		}
@@ -405,7 +417,6 @@ func (s *consoleService) GetLeadershipByRulerID(rulerID int, isCentral bool) ([]
 	if err != nil {
 		return nil, err
 	}
-
 	return leaderships, nil
 }
 

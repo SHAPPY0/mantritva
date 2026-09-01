@@ -167,7 +167,6 @@ func RequiredRoles(userAuthr UserAuthorization, roles []utils.Roles) gin.Handler
 		}
 
 		userRoles, err := userAuthr.GetUserRoles(claim.UserID)
-		log.Infof("User %d has roles: %v", claim.UserID, userRoles)
 		if err != nil {
 			log.Errorf("Error fetching userRoles for user %d, err: %v", claim.UserID, err)
 			utils.Error(ctx, 403, "Access Denied", nil)

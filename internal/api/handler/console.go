@@ -93,9 +93,22 @@ func (h *ConsoleHandler) GetDistrictsByStateByUser(c *gin.Context) {
 		utils.Error(c, 401, "Access Denied", nil)
 		return
 	}
-	var resp *[]model.District
-	var err error
-	resp, err = h.Service.GetDistrictsByStateByUser(authUser)
+	stateId := c.Param("stateId")
+	resp, err := h.Service.GetDistrictsByStateByUser(authUser, stateId)
+	if err != nil {
+		utils.Error(c, 500, "Failed to get districts list", err)
+		return
+	}
+	utils.Success(c, "", resp)
+}
+
+func (h *ConsoleHandler) GetDistrictsByUser(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
+	resp, err := h.Service.GetDistrictsByStateByUser(authUser, "")
 	if err != nil {
 		utils.Error(c, 500, "Failed to get districts list", err)
 		return

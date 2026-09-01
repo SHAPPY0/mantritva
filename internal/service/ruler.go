@@ -91,7 +91,7 @@ func (s *rulerService) GetCentralRuler() (*dto.RulerRes, error) {
 			alliance, err := s.AllianceRepository.GetByID(ruler.AllianceID)
 			if err != nil {
 				log.Errorf("Failed to get alliance details by allianceID %d", ruler.AllianceID)
-			} else {
+			} else if alliance != nil {
 				rulerDetail.Alliance = dto.AllianceName{
 					Name:  alliance.Name,
 					Abbrv: alliance.Abbrv,
@@ -154,7 +154,7 @@ func (s *rulerService) GetStateRuler(stateId string) (*dto.RulerRes, error) {
 			alliance, err := s.AllianceRepository.GetByID(ruler.AllianceID)
 			if err != nil {
 				log.Errorf("Failed to get alliance details by allianceID %d", ruler.AllianceID)
-			} else {
+			} else if alliance != nil {
 				rulerDetail.Alliance = dto.AllianceName{
 					Name:  alliance.Name,
 					Abbrv: alliance.Abbrv,
