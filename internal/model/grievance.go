@@ -16,7 +16,7 @@ type Grievance struct {
 	CenterSubLevel       string                  `json:"center_sublevel" bson:"center_sublevel"`
 	CabinetMinisterID    uint                    `json:"cabinet_minister_id" bson:"cabinet_minister_id"`
 	MemberOfParliamentID uint                    `json:"member_of_parliament_id" bson:"member_of_parliament_id"`
-	UlbID                uint                    `json:"ulb_id" bson:"ulb_id"`
+	LocalBodyID          uint                    `json:"local_body_id" bson:"local_body_id"`
 	EntityID             uint                    `json:"entity_id" bson:"entity_id"`
 	StateID              uint                    `json:"state_id" bson:"state_id"`
 	DistrictID           uint                    `json:"district_id" bson:"district_id"`

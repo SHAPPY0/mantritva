@@ -32,7 +32,7 @@ type Repos struct {
 	Enquiry            EnquiryRepository
 	Reaction           ReactionRepository
 	AnalyticStat       AnalyticStatRepository
-	Ulb                UlbRepository
+	LocalBody          LocalBodyRepository
 }
 
 func NewRepos(db *gorm.DB, mongoDB *config.MongoDB) *Repos {
@@ -62,7 +62,7 @@ func NewRepos(db *gorm.DB, mongoDB *config.MongoDB) *Repos {
 		Enquiry:            NewEnquiryRepository(db),
 		Reaction:           NewReactionRepository(mongoDB),
 		AnalyticStat:       NewAnalyticStat(mongoDB),
-		Ulb:                NewULBRepository(db),
+		LocalBody:          NewLocalBodyRepository(db),
 		UserRole:           NewUserRoleRepository(db),
 	}
 }

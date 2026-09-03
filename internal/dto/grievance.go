@@ -17,7 +17,7 @@ type GrievanceReq struct {
 	CabinetMinisterID    uint                    `json:"cabinet_minister_id" form:"cabinet_minister_id" binding:"omitempty"`
 	MemberOfParliamentID uint                    `json:"member_of_parliament_id" form:"member_of_parliament_id" binding:"omitempty"`
 	EntityID             uint                    `json:"entity_id" form:"entity_id" binding:"omitempty"`
-	UlbID                uint                    `json:"ulb_id" form:"ulb_id" binding:"omitempty"`
+	LocalBodyID          uint                    `json:"local_body_id" form:"local_body_id" binding:"omitempty"`
 	StateID              uint                    `json:"state_id" form:"state_id" binding:"omitempty"`
 	DistrictID           uint                    `json:"district_id" form:"district_id" binding:"omitempty"`
 	StateLeaderID        uint                    `json:"state_leader_id" form:"state_leader_id" binding:"omitempty"`
@@ -54,7 +54,7 @@ type GrievanceRes struct {
 	State              *model.State     `json:"state,omitempty"`
 	District           string           `json:"district,omitempty"`
 	Entity             *Entity          `json:"entity,omitempty"`
-	Ulb                *ULBShort        `json:"ulb,omitempty"`
+	LocalBody          *LocalBodyShort  `json:"local_body,omitempty"`
 	User               UserClaim        `json:"user,omitempty"`
 	Reaction           utils.Vote       `json:"reaction"`
 	ReactionLocked     bool             `json:"reaction_locked"`

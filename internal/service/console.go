@@ -24,7 +24,7 @@ type ConsoleService interface {
 	GetStatesList() (*[]model.State, error)
 	GetStatesByUser(auth.AuthUser) (*[]model.State, error)
 	GetDistrictsByStateByUser(auth.AuthUser, string) (*[]model.District, error)
-	GetLocalBodiesByDistrictByUser(auth.AuthUser, string) (*[]model.ULB, error)
+	GetLocalBodiesByDistrictByUser(auth.AuthUser, string) (*[]model.LocalBody, error)
 	GetStatesByID([]uint) (*[]model.State, error)
 	GetPartiesList() (*[]model.Party, error)
 	GetAlliancesList() (*[]model.Alliance, error)
@@ -71,7 +71,7 @@ type consoleService struct {
 	EnquiryRepository            repository.EnquiryRepository
 	LoksabhaRepository           repository.LoksabhaRepository
 	VidhansabhaRepository        repository.VidhansabhaRepository
-	LocalBodyRepository          repository.UlbRepository
+	LocalBodyRepository          repository.LocalBodyRepository
 }
 
 func NewConsoleService(repos *repository.Repos) ConsoleService {
@@ -93,7 +93,7 @@ func NewConsoleService(repos *repository.Repos) ConsoleService {
 		EnquiryRepository:            repos.Enquiry,
 		LoksabhaRepository:           repos.Loksabha,
 		VidhansabhaRepository:        repos.VidhanSabha,
-		LocalBodyRepository:          repos.Ulb,
+		LocalBodyRepository:          repos.LocalBody,
 	}
 }
 
@@ -232,20 +232,20 @@ func (s *consoleService) GetDistrictsByStateByUser(user auth.AuthUser, stateID s
 	return districts, nil
 }
 
-func (s *consoleService) GetLocalBodiesByDistrictByUser(user auth.AuthUser, districtID string) (*[]model.ULB, error) {
-	var localBodies []model.ULB
+func (s *consoleService) GetLocalBodiesByDistrictByUser(user auth.AuthUser, districtID string) (*[]model.LocalBody, error) {
+	var localBodies []model.LocalBody
 	var err error
 	if user.IsAdminOrSuperAdmin() {
-		localBodies, err = s.LocalBodyRepository.ListULBsByDistrict(districtID)
+		localBodies, err = s.LocalBodyRepository.ListLocalBodiesByDistrict(districtID)
 	} else if user.IsStateAdmin() {
 		stateIDs := user.GetAssignedStates()
-		localBodies, err = s.LocalBodyRepository.ListULBsByStateAndDistrict(stateIDs, districtID)
+		localBodies, err = s.LocalBodyRepository.ListLocalBodiesByStateAndDistrict(stateIDs, districtID)
 	} else if user.IsDistrictAdmin() {
 		districtIDs := user.GetAssignedDistricts()
 		if !utils.Contains(districtIDs, utils.StrToUint(districtID)) {
 			return nil, utils.NewError("Unauthorized access to district %s", districtID)
 		}
-		localBodies, err = s.LocalBodyRepository.ListULBsByDistrict(districtID)
+		localBodies, err = s.LocalBodyRepository.ListLocalBodiesByDistrict(districtID)
 	} else if user.IsLocalBodyAdmin() {
 		localBodyIDs := user.GetAssignedLocalBodies()
 		localBodies, err = s.LocalBodyRepository.ListLocalBodiesByIDAndDistrict(localBodyIDs, districtID)

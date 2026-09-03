@@ -14,9 +14,9 @@ type NewsPressReq struct {
 	MemberID      *uint                   `json:"member_id" form:"member_id,omitempty"`
 	PartyID       *uint                   `json:"party_id" form:"party_id,omitempty"`
 	EntityID      *uint                   `json:"entity_id" form:"entity_id,omitempty"`
-	Subject       *utils.Subject          `json:"subject" form:"subject,omitempty"`
-	Type          *utils.StatementType    `json:"type" form:"type,omitempty"`
-	Tone          *utils.StatementTone    `json:"tone" form:"tone,omitempty"`
+	Subject       *utils.Subject          `json:"subject,omitempty" form:"subject,omitempty" binding:"omitempty"`
+	Type          *utils.StatementType    `json:"type,omitempty" form:"type,omitempty" binding:"omitempty"`
+	Tone          *utils.StatementTone    `json:"tone,omitempty" form:"tone,omitempty" binding:"omitempty"`
 	Statement     string                  `json:"statement" binding:"required" form:"statement"`
 	StatementDate utils.DateOnly          `json:"statement_date" binding:"required" form:"statement_date"`
 	Status        utils.PostStatus        `json:"status" form:"status"`

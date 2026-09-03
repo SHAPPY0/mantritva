@@ -36,7 +36,7 @@ type grievanceSerivce struct {
 	EntityRepo          repository.EntityRepository
 	ReactionRepo        repository.ReactionRepository
 	ReportRepo          repository.ReportRepository
-	UlbRepo             repository.UlbRepository
+	LocalBodyRepo       repository.LocalBodyRepository
 }
 
 func NewGrievanceService(repos *repository.Repos) GrievanceSerivce {
@@ -51,7 +51,7 @@ func NewGrievanceService(repos *repository.Repos) GrievanceSerivce {
 		EntityRepo:          repos.Entity,
 		ReactionRepo:        repos.Reaction,
 		ReportRepo:          repos.Report,
-		UlbRepo:             repos.Ulb,
+		LocalBodyRepo:       repos.LocalBody,
 	}
 }
 
@@ -65,7 +65,7 @@ func (s *grievanceSerivce) Create(ctx *gin.Context, req dto.Grievance) (*model.G
 		CabinetMinisterID:    req.CabinetMinisterID,
 		MemberOfParliamentID: req.MemberOfParliamentID,
 		EntityID:             req.EntityID,
-		UlbID:                req.UlbID,
+		LocalBodyID:          req.LocalBodyID,
 		StateID:              req.StateID,
 		DistrictID:           req.DistrictID,
 		StateLeaderID:        req.StateLeaderID,
@@ -76,12 +76,16 @@ func (s *grievanceSerivce) Create(ctx *gin.Context, req dto.Grievance) (*model.G
 		Location:             req.Location,
 		Severity:             req.Severity,
 		Impact:               req.Impact,
-		SLA:                  req.SLA.Time,
 		FinalStatus:          utils.UNDERREVIEW,
 		Evidences:            make([]model.Document, 0),
 		StatusRevisions:      make([]model.StatusRevisions, 0),
 		AuditFieldsBSON:      model.InsertBSONAuditFields(req.CreatedBy),
 	}
+	var sla *time.Time
+	if req.SLA != nil {
+		sla = req.SLA.Time
+	}
+	g.SLA = sla
 
 	destinationPath := filepath.Join("grievances", g.GrievanceID)
 	storage, err := storage.New(destinationPath)
@@ -211,15 +215,15 @@ func (s *grievanceSerivce) GetByGrievanceID(grievanceID string, userID int) (*dt
 			}
 		}
 	}
-	if grievance.UlbID != 0 {
-		ulb, err := s.UlbRepo.GetByID(grievance.UlbID)
+	if grievance.LocalBodyID != 0 {
+		localBody, err := s.LocalBodyRepo.GetByID(grievance.LocalBodyID)
 		if err != nil {
-			log.Error("Error fetching ulb details by ID")
-		} else if ulb != nil {
-			grievanceRes.Ulb = &dto.ULBShort{
-				ID:       ulb.ID,
-				Name:     ulb.Name,
-				BodyType: ulb.BodyType,
+			log.Error("Error fetching local body details by ID")
+		} else if localBody != nil {
+			grievanceRes.LocalBody = &dto.LocalBodyShort{
+				ID:       localBody.ID,
+				Name:     localBody.Name,
+				BodyType: localBody.BodyType,
 			}
 		}
 	}

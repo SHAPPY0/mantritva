@@ -122,7 +122,7 @@ func (h *ConsoleHandler) GetLocalBodiesByDistrictByUser(c *gin.Context) {
 		utils.Error(c, 401, "Access Denied", nil)
 		return
 	}
-	var resp *[]model.ULB
+	var resp *[]model.LocalBody
 	var err error
 	districtId := c.Param("districtId")
 	resp, err = h.Service.GetLocalBodiesByDistrictByUser(authUser, districtId)

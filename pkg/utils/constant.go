@@ -142,23 +142,18 @@ const (
 )
 
 const (
-	ULB_NAGAR_NIGAM     ULBType = "NAGAR_NIGAM"
-	ULB_NAGAR_PALIKA    ULBType = "NAGAR_PALIKA"
-	ULB_NAGAR_PANCHAYAT ULBType = "NAGAR_PANCHAYAT"
-	ULB_OTHER           ULBType = "OTHER"
+	LB_NAGAR_NIGAM     LocalBodyType = "NAGAR_NIGAM"
+	LB_NAGAR_PALIKA    LocalBodyType = "NAGAR_PALIKA"
+	LB_NAGAR_PANCHAYAT LocalBodyType = "NAGAR_PANCHAYAT"
+	LB_OTHER           LocalBodyType = "OTHER"
 )
 
-var ULBTypeDisplayMap = map[ULBType]string{
-	ULB_NAGAR_NIGAM:     "Nagar Nigam",
-	ULB_NAGAR_PALIKA:    "Nagar Palika",
-	ULB_NAGAR_PANCHAYAT: "Nagar Panchayat",
-	ULB_OTHER:           "Other",
+var LocalBodyTypeDisplayMap = map[LocalBodyType]string{
+	LB_NAGAR_NIGAM:     "Nagar Nigam",
+	LB_NAGAR_PALIKA:    "Nagar Palika",
+	LB_NAGAR_PANCHAYAT: "Nagar Panchayat",
+	LB_OTHER:           "Other",
 }
-
-const (
-	LOCAL_BODY_TYPE_URBAN LocalBodyType = "URBAN"
-	LOCAL_BODY_TYPE_RURAL LocalBodyType = "RURAL"
-)
 
 const (
 	USER              Roles = "USER"
@@ -207,3 +202,11 @@ var RoleRoleScopeMap = map[Roles]RoleScope{
 	LOCALBODY_ADMIN:   ROLE_SCOPE_LOCALBODY,
 	WARD_ADMIN:        ROLE_SCOPE_WARD,
 }
+
+const (
+	CENTRAL   RulerScopeType = "CENTRAL"
+	STATE     RulerScopeType = "STATE"
+	DISTRICT  RulerScopeType = "DISTRICT"
+	LOCALBODY RulerScopeType = "LOCALBODY"
+	WARD      RulerScopeType = "WARD"
+)

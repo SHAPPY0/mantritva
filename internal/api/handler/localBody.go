@@ -11,17 +11,17 @@ import (
 	"github.com/shappy0/mantritva/pkg/utils"
 )
 
-type UlbHandler struct {
-	services *service.UlbService
+type LocalBodyHandler struct {
+	services *service.LocalBodyService
 }
 
-func NewULBHandler(services *service.Services) *UlbHandler {
-	return &UlbHandler{
-		services: services.UlbService,
+func NewLocalBodyHandler(services *service.Services) *LocalBodyHandler {
+	return &LocalBodyHandler{
+		services: services.LocalBodyService,
 	}
 }
 
-func (h *UlbHandler) CreateULB(c *gin.Context) {
+func (h *LocalBodyHandler) CreateLocalBody(c *gin.Context) {
 	username, err := auth.GetKeyInCtx[string](c, "user_name")
 	if err != nil {
 		utils.Error(c, 401, "Unauthorized Access", nil)
@@ -31,20 +31,20 @@ func (h *UlbHandler) CreateULB(c *gin.Context) {
 		utils.Error(c, 401, "Unauthorized Access", nil)
 		return
 	}
-	var req dto.ULBReq
+	var req dto.LocalBodyReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.Error(c, http.StatusBadRequest, "Error while binding JSON ulb", err)
 		return
 	}
-	if ulb, err := h.services.CreateULB(username, &req); err != nil {
-		utils.Error(c, http.StatusInternalServerError, "Error while creating ULB", err)
+	if localBody, err := h.services.CreateLocalBody(username, &req); err != nil {
+		utils.Error(c, http.StatusInternalServerError, "Error while creating Local Body", err)
 		return
 	} else {
-		utils.Success(c, "ULB Created Successfully", ulb)
+		utils.Success(c, "Local Body Created Successfully", localBody)
 	}
 }
 
-func (h *UlbHandler) BulkCreateULB(c *gin.Context) {
+func (h *LocalBodyHandler) BulkCreateLocalBodies(c *gin.Context) {
 	username, err := auth.GetKeyInCtx[string](c, "user_name")
 	if err != nil {
 		utils.Error(c, 401, "Unauthorized Access", nil)
@@ -73,32 +73,32 @@ func (h *UlbHandler) BulkCreateULB(c *gin.Context) {
 		return
 	}
 
-	success, errored, err := h.services.BulkCreateULB(username, c, f)
+	success, errored, err := h.services.BulkCreateLocalBodies(username, c, f)
 	if err != nil {
-		utils.Error(c, http.StatusInternalServerError, "Error while creating ULBs", err)
+		utils.Error(c, http.StatusInternalServerError, "Error while creating Local Bodies", err)
 		return
 	} else {
-		utils.Success(c, "ULBs Created Successfully", map[string]any{
+		utils.Success(c, "LocalBodies Created Successfully", map[string]any{
 			"success": success,
 			"errored": errored,
 		})
 	}
 }
 
-func (h *UlbHandler) ListULBsByDistrict(c *gin.Context) {
+func (h *LocalBodyHandler) ListLocalBodiesByDistrict(c *gin.Context) {
 	districtId := c.Param("districtId")
-	if ulbs, err := h.services.ListULBsByDistrict(districtId); err != nil {
-		utils.Error(c, http.StatusInternalServerError, "Error while fetching ULBs by district", err)
+	if localBodies, err := h.services.ListLocalBodiesByDistrict(districtId); err != nil {
+		utils.Error(c, http.StatusInternalServerError, "Error while fetching Local Bodies by district", err)
 		return
 	} else {
-		result := make([]dto.LocalBodyRes, len(ulbs))
-		for i, ulb := range ulbs {
+		result := make([]dto.LocalBodyRes, len(localBodies))
+		for i, localBody := range localBodies {
 			result[i] = dto.LocalBodyRes{
-				ULB: ulb,
+				LocalBody: localBody,
 			}
-			result[i].LocalBodyType = utils.LOCAL_BODY_TYPE_URBAN
-			result[i].DisplayType = ulb.BodyType.Label()
+			// result[i].LocalBodyType = utils.LOCAL_BODY_TYPE_URBAN
+			result[i].DisplayType = localBody.BodyType.Label()
 		}
-		utils.Success(c, "ULBs fetched successfully", result)
+		utils.Success(c, "LocalBodies fetched successfully", result)
 	}
 }

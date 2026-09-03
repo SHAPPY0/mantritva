@@ -28,9 +28,9 @@ type GrievanceSeverity string
 type OTPMode string
 type OTPPurpose string
 type LocalBodyType string
-type ULBType string
 type Roles string
 type RoleScope string
+type RulerScopeType string
 
 func (d *DateOnly) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), `"`)
@@ -118,9 +118,9 @@ func (kra KRA) Label() string {
 	return string(kra)
 }
 
-func (ulb ULBType) Label() string {
-	if val, ok := ULBTypeDisplayMap[ulb]; ok {
+func (lb LocalBodyType) Label() string {
+	if val, ok := LocalBodyTypeDisplayMap[lb]; ok {
 		return val
 	}
-	return string(ulb)
+	return string(lb)
 }

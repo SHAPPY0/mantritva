@@ -38,6 +38,13 @@ type newsPressService struct {
 	UserRepo       repository.UserRepository
 }
 
+func optionalTypedString[T ~string](v *T) string {
+	if v == nil {
+		return ""
+	}
+	return string(*v)
+}
+
 func NewNewsPressService(repos *repository.Repos) NewsPressService {
 	return &newsPressService{
 		Repository:     repos.NewsPressPost,
@@ -60,9 +67,9 @@ func (s *newsPressService) Create(req dto.NewsPressReq) (*model.NewsPressPost, e
 		Event:           &req.Event,
 		MemberID:        *req.MemberID,
 		PartyId:         *req.PartyID,
-		Subject:         string(*req.Subject),
-		Type:            string(*req.Type),
-		Tone:            string(*req.Tone),
+		Subject:         optionalTypedString(req.Subject),
+		Type:            optionalTypedString(req.Type),
+		Tone:            optionalTypedString(req.Tone),
 		Statement:       req.Statement,
 		StatementDate:   *req.StatementDate.Time,
 		Status:          string(req.Status),
@@ -82,9 +89,9 @@ func (s *newsPressService) CreateWithMedia(ctx *gin.Context, req dto.NewsPressRe
 		MemberID:        *req.MemberID,
 		PartyId:         *req.PartyID,
 		EntityId:        *req.EntityID,
-		Subject:         string(*req.Subject),
-		Type:            string(*req.Type),
-		Tone:            string(*req.Tone),
+		Subject:         optionalTypedString(req.Subject),
+		Type:            optionalTypedString(req.Type),
+		Tone:            optionalTypedString(req.Tone),
 		Statement:       req.Statement,
 		StatementDate:   *req.StatementDate.Time,
 		Status:          string(req.Status),
