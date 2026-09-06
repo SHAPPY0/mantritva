@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/model"
 	"gorm.io/gorm"
 )
@@ -29,6 +30,23 @@ func (r *LocalBodyRepository) GetByID(id uint) (*model.LocalBody, error) {
 		return nil, err
 	}
 	return &localBody, nil
+}
+
+func (r *LocalBodyRepository) GetShortLBInfo(id uint) (*dto.LocalBodyShort, error) {
+	var result dto.LocalBodyShort
+	query := `SELECT lb.id, lb.name, lb.body_type, d.name AS district
+		FROM public.local_bodies lb
+		INNER JOIN public.districts d ON d.id = lb.district_id
+		WHERE lb.id = ? AND lb.deleted_at IS NULL`
+
+	tx := r.DB.Raw(query, id).Scan(&result)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	if tx.RowsAffected == 0 {
+		return nil, nil
+	}
+	return &result, nil
 }
 
 func (r *LocalBodyRepository) CreateLocalBody(localBody *model.LocalBody) error {

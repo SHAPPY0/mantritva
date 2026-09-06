@@ -15,6 +15,7 @@ type RulerRepository interface {
 	ConsoleGetRulersList() (*[]model.Ruler, error)
 	ConsoleGetRulersListByStateIDs([]uint) (*[]model.Ruler, error)
 	ConsoleGetRulersListByDistrictIDs([]uint) (*[]model.Ruler, error)
+	ConsoleGetRulersListByLocalBodyIDs([]uint) (*[]model.Ruler, error)
 }
 
 type rulerRepository struct {
@@ -104,6 +105,14 @@ func (r *rulerRepository) ConsoleGetRulersListByStateIDs(stateIDs []uint) (*[]mo
 func (r *rulerRepository) ConsoleGetRulersListByDistrictIDs(districtIDs []uint) (*[]model.Ruler, error) {
 	var rulers []model.Ruler
 	if err := r.DB.Where("state_id IN (select state_id from districts where id IN ?)", districtIDs).Find(&rulers).Error; err != nil {
+		return nil, err
+	}
+	return &rulers, nil
+}
+
+func (r *rulerRepository) ConsoleGetRulersListByLocalBodyIDs(localBodyIDs []uint) (*[]model.Ruler, error) {
+	var rulers []model.Ruler
+	if err := r.DB.Where("local_body_id IN ?", localBodyIDs).Find(&rulers).Error; err != nil {
 		return nil, err
 	}
 	return &rulers, nil

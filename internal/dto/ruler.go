@@ -6,15 +6,16 @@ import (
 )
 
 type RulerReq struct {
-	Scope      utils.RulerScopeType `json:"scope" required:"true"`
-	StateID    int                  `json:"state_id"`
-	IsCentral  bool                 `json:"is_central"`
-	PartyID    int                  `json:"party_id" required:"true"`
-	AllianceID int                  `json:"alliance_id"`
-	IsAlliance bool                 `json:"is_alliance"`
-	StartDate  utils.DateOnly       `json:"start_date" required:"true"`
-	EndDate    utils.DateOnly       `json:"end_date,omitempty"`
-	IsActive   bool                 `json:"is_active"`
+	Scope       utils.RulerScopeType `json:"scope" required:"true"`
+	StateID     int                  `json:"state_id"`
+	LocalBodyID int                  `json:"local_body_id"`
+	IsCentral   bool                 `json:"is_central"`
+	PartyID     int                  `json:"party_id" required:"true"`
+	AllianceID  int                  `json:"alliance_id"`
+	IsAlliance  bool                 `json:"is_alliance"`
+	StartDate   utils.DateOnly       `json:"start_date" required:"true"`
+	EndDate     utils.DateOnly       `json:"end_date,omitempty"`
+	IsActive    bool                 `json:"is_active"`
 }
 
 type RulerRes struct {
@@ -24,4 +25,5 @@ type RulerRes struct {
 	IsAlliance bool               `json:"is_alliance"`
 	Alliance   AllianceName       `json:"alliance"`
 	State      *model.StateDetail `json:"state,omitempty"`
+	LocalBody  *LocalBodyShort    `json:"local_body,omitempty"`
 }

@@ -204,9 +204,9 @@ var RoleRoleScopeMap = map[Roles]RoleScope{
 }
 
 const (
-	CENTRAL   RulerScopeType = "CENTRAL"
-	STATE     RulerScopeType = "STATE"
-	DISTRICT  RulerScopeType = "DISTRICT"
-	LOCALBODY RulerScopeType = "LOCALBODY"
-	WARD      RulerScopeType = "WARD"
+	RULER_SCOPE_CENTRAL   RulerScopeType = "CENTRAL"
+	RULER_SCOPE_STATE     RulerScopeType = "STATE"
+	RULER_SCOPE_DISTRICT  RulerScopeType = "DISTRICT"
+	RULER_SCOPE_LOCALBODY RulerScopeType = "LOCALBODY"
+	RULER_SCOPE_WARD      RulerScopeType = "WARD"
 )

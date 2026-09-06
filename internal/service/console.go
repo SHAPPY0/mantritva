@@ -368,10 +368,14 @@ func (s *consoleService) GetRulersListByUser(user auth.AuthUser) (*[]dto.RulerRe
 	} else if user.IsDistrictAdmin() {
 		districtIDs := user.GetAssignedDistricts()
 		rulers, err = s.RulerRepository.ConsoleGetRulersListByDistrictIDs(districtIDs)
+	} else if user.IsLocalBodyAdmin() {
+		localBodyIDs := user.GetAssignedLocalBodies()
+		rulers, err = s.RulerRepository.ConsoleGetRulersListByLocalBodyIDs(localBodyIDs)
 	}
 	if err != nil {
 		return nil, err
 	}
+	log.Infof("Rulers: %+v", rulers)
 	return s.PrepareRulerRes(rulers)
 }
 
@@ -403,6 +407,15 @@ func (s *consoleService) PrepareRulerRes(rulers *[]model.Ruler) (*[]dto.RulerRes
 				log.Errorf("Error while getting Alliance detail %d, %v", ruler.AllianceID, err)
 			} else if alliance != nil {
 				rulerItem.Alliance = dto.AllianceName{Name: alliance.Name, Abbrv: alliance.Abbrv}
+			}
+		}
+
+		if (ruler.Scope == utils.RULER_SCOPE_LOCALBODY) && ruler.LocalBodyID > 0 {
+			localBody, err := s.LocalBodyRepository.GetShortLBInfo(uint(ruler.LocalBodyID))
+			if err != nil {
+				log.Errorf("Error while getting Local Body detail %d, %v", ruler.LocalBodyID, err)
+			} else {
+				rulerItem.LocalBody = localBody
 			}
 		}
 		rulersList = append(rulersList, rulerItem)

@@ -42,15 +42,16 @@ func NewRulerService(repos *repository.Repos) RulerService {
 
 func (s *rulerService) Create(req dto.RulerReq) (*model.Ruler, error) {
 	ruler := &model.Ruler{
-		Scope:      req.Scope,
-		PartyID:    req.PartyID,
-		IsAlliance: req.IsAlliance,
-		AllianceID: req.AllianceID,
-		IsCentral:  req.IsCentral,
-		StateID:    req.StateID,
-		StartDate:  req.StartDate,
-		EndDate:    req.EndDate,
-		IsActive:   req.IsActive,
+		Scope:       req.Scope,
+		LocalBodyID: req.LocalBodyID,
+		PartyID:     req.PartyID,
+		IsAlliance:  req.IsAlliance,
+		AllianceID:  req.AllianceID,
+		IsCentral:   req.IsCentral,
+		StateID:     req.StateID,
+		StartDate:   req.StartDate,
+		EndDate:     req.EndDate,
+		IsActive:    req.IsActive,
 	}
 
 	if err := s.Repository.Create(ruler); err != nil {
