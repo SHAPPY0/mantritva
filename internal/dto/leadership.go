@@ -37,9 +37,10 @@ type Leader struct {
 }
 
 type Position struct {
-	Position    string `json:"position"`
-	Role        string `json:"role,omitempty"`
-	Departments string `json:"departments,omitempty"`
+	Position    string  `json:"position"`
+	Role        string  `json:"role,omitempty"`
+	Departments string  `json:"departments,omitempty"`
+	Region      *Region `json:"region,omitempty"`
 }
 
 type LeadershipRes struct {
@@ -57,6 +58,7 @@ type Region struct {
 	Loksabha    string `json:"loksabha,omitempty"`
 	Vidhansabha string `json:"vidhansabha,omitempty"`
 	Rajyasabha  string `json:"rajyasabha,omitempty"`
+	LocalBody   string `json:"local_body,omitempty"`
 }
 
 type LeadershipExitReq struct {

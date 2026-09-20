@@ -52,37 +52,119 @@ const (
 )
 
 const (
-	PRESIDENT                     Position = "PRESIDENT"
-	VICE_PRESIDENT                Position = "VICE_PRESIDENT"
-	PRIME_MINISTER                Position = "PRIME_MINISTER"
-	CABINET_MINISTER              Position = "CABINET_MINISTER"
-	MINISTER_OF_STATE_INDEPENDENT Position = "MINISTER_OF_STATE_INDEPENDENT"
-	MINISTER_OF_STATE             Position = "MINISTER_OF_STATE"
-	MP_LS                         Position = "MP_LS"
-	MP_RS                         Position = "MP_RS"
-	GOVERNOR                      Position = "GOVERNOR"
-	CHIEF_MINISTER                Position = "CHIEF_MINISTER"
-	DEPUTY_CHIEF_MINISTER         Position = "DEPUTY_CHIEF_MINISTER"
-	S_MINISTER_OF_STATE           Position = "STATE_MINISTER_OF_STATE"
-	MLA                           Position = "MLA"
-	MLC                           Position = "MLC"
+	PRESIDENT                           Position = "PRESIDENT"
+	VICE_PRESIDENT                      Position = "VICE_PRESIDENT"
+	PRIME_MINISTER                      Position = "PRIME_MINISTER"
+	CABINET_MINISTER                    Position = "CABINET_MINISTER"
+	MINISTER_OF_STATE_INDEPENDENT_IC    Position = "MINISTER_OF_STATE_INDEPENDENT_IC"
+	MINISTER_OF_STATE                   Position = "MINISTER_OF_STATE"
+	ATTORNEY_GENERAL                    Position = "ATTORNEY_GENERAL"
+	CABINET_SECRETARY                   Position = "CABINET_SECRETARY"
+	SPEAKER                             Position = "SPEAKER"
+	DEPUTY_SPEAKER                      Position = "DEPUTY_SPEAKER"
+	ASSISTANT_SPEAKER                   Position = "ASSISTANT_SPEAKER"
+	CHAIRMAN                            Position = "CHAIRMAN"
+	DEPUTY_CHAIRMAN                     Position = "DEPUTY_CHAIRMAN"
+	ASSISTANT_CHAIRMAN                  Position = "ASSISTANT_CHAIRMAN"
+	CHIEF_MINISTER                      Position = "CHIEF_MINISTER"
+	DEPUTY_CHIEF_MINISTER               Position = "DEPUTY_CHIEF_MINISTER"
+	MEMBER_OF_PARLIAMENT                Position = "MEMBER_OF_PARLIAMENT"
+	MEMBER_OF_PARLIAMENT_RS             Position = "MEMBER_OF_PARLIAMENT_RS"
+	GOVERNOR                            Position = "GOVERNOR"
+	CHIEF_SECRETARY                     Position = "CHIEF_SECRETARY"
+	DIRECTOR_GENERAL                    Position = "DIRECTOR_GENERAL"
+	DIRECTOR                            Position = "DIRECTOR"
+	ADDITIONAL_SECRETARY                Position = "ADDITIONAL_SECRETARY"
+	JOINT_SECRETARY                     Position = "JOINT_SECRETARY"
+	UNDER_SECRETARY                     Position = "UNDER_SECRETARY"
+	ASSISTANT_SECRETARY                 Position = "ASSISTANT_SECRETARY"
+	DEPUTY_SECRETARY                    Position = "DEPUTY_SECRETARY"
+	ASSISTANT_DIRECTOR                  Position = "ASSISTANT_DIRECTOR"
+	DEPUTY_DIRECTOR                     Position = "DEPUTY_DIRECTOR"
+	ASSISTANT_DEPUTY_DIRECTOR           Position = "ASSISTANT_DEPUTY_DIRECTOR"
+	ADVOCATE_GENERAL                    Position = "ADVOCATE_GENERAL"
+	COMMISSIONER                        Position = "COMMISSIONER"
+	DEPUTY_COMMISSIONER                 Position = "DEPUTY_COMMISSIONER"
+	ASSISTANT_COMMISSIONER              Position = "ASSISTANT_COMMISSIONER"
+	SUB_DIVISIONAL_OFFICER              Position = "SUB_DIVISIONAL_OFFICER"
+	DEPUTY_SUB_DIVISIONAL_OFFICER       Position = "DEPUTY_SUB_DIVISIONAL_OFFICER"
+	ASSISTANT_SUB_DIVISIONAL_OFFICER    Position = "ASSISTANT_SUB_DIVISIONAL_OFFICER"
+	DISTRICT_COLLECTOR                  Position = "DISTRICT_COLLECTOR"
+	DEPUTY_DISTRICT_COLLECTOR           Position = "DEPUTY_DISTRICT_COLLECTOR"
+	MEMBER_OF_LEGISLATIVE_ASSEMBLY      Position = "MEMBER_OF_LEGISLATIVE_ASSEMBLY"
+	MEMBER_OF_LEGISLATIVE_COUNCIL       Position = "MEMBER_OF_LEGISLATIVE_COUNCIL"
+	MEMBER_OF_LEGISLATIVE_PARLIAMENT    Position = "MEMBER_OF_LEGISLATIVE_PARLIAMENT"
+	MEMBER_OF_LEGISLATIVE_PARLIAMENT_IC Position = "MEMBER_OF_LEGISLATIVE_PARLIAMENT_IC"
+	MEMBER_OF_LEGISLATIVE_PARLIAMENT_RS Position = "MEMBER_OF_LEGISLATIVE_PARLIAMENT_RS"
+	MAYOR                               Position = "MAYOR"
+	DEPUTY_MAYOR                        Position = "DEPUTY_MAYOR"
+	MUNICIPAL_COUNCILLORS               Position = "MUNICIPAL_COUNCILLORS"
+	STANDING_COMMITTEE_CHAIRPERSONS     Position = "STANDING_COMMITTEE_CHAIRPERSONS"
+	ALDERMEN                            Position = "ALDERMEN"
+	NAGAR_PALIKA_PRESIDENT              Position = "NAGAR_PALIKA_PRESIDENT"
+	NAGAR_PALIKA_VICE_PRESIDENT         Position = "NAGAR_PALIKA_VICE_PRESIDENT"
+	WARD_MEMBER                         Position = "WARD_MEMBER"
+	MUNICIPAL_COUNCILLOR                Position = "MUNICIPAL_COUNCILLOR"
+	NOMINATED_MEMBER                    Position = "NOMINATED_MEMBER"
+	LEADER_OF_OPPOSITION                Position = "LEADER_OF_OPPOSITION"
 )
 
 var PositionDisplayMap = map[Position]string{
-	PRESIDENT:                     "President of India",
-	VICE_PRESIDENT:                "Vice President of India",
-	PRIME_MINISTER:                "Prime Minister",
-	CABINET_MINISTER:              "Cabinet Minister",
-	MINISTER_OF_STATE_INDEPENDENT: "MoS-IC",
-	MINISTER_OF_STATE:             "MoS",
-	MP_LS:                         "MP",
-	MP_RS:                         "MP-RS",
-	GOVERNOR:                      "Governor",
-	CHIEF_MINISTER:                "Chief Minister",
-	DEPUTY_CHIEF_MINISTER:         "Deputy Chief Minister",
-	S_MINISTER_OF_STATE:           "State MoS",
-	MLA:                           "MLA",
-	MLC:                           "MLC",
+	PRESIDENT:                           "President of India",
+	VICE_PRESIDENT:                      "Vice President of India",
+	PRIME_MINISTER:                      "Prime Minister",
+	CABINET_MINISTER:                    "Cabinet Minister",
+	MINISTER_OF_STATE_INDEPENDENT_IC:    "MoS-IC",
+	MINISTER_OF_STATE:                   "MoS",
+	GOVERNOR:                            "Governor",
+	CHIEF_MINISTER:                      "Chief Minister",
+	DEPUTY_CHIEF_MINISTER:               "Deputy Chief Minister",
+	ATTORNEY_GENERAL:                    "Attorney General",
+	CABINET_SECRETARY:                   "Cabinet Secretary",
+	SPEAKER:                             "Speaker",
+	DEPUTY_SPEAKER:                      "Deputy Speaker",
+	ASSISTANT_SPEAKER:                   "Assistant Speaker",
+	CHAIRMAN:                            "Chairman",
+	DEPUTY_CHAIRMAN:                     "Deputy Chairman",
+	ASSISTANT_CHAIRMAN:                  "Assistant Chairman",
+	MEMBER_OF_PARLIAMENT:                "MP",
+	MEMBER_OF_PARLIAMENT_RS:             "MP-RS",
+	CHIEF_SECRETARY:                     "Chief Secretary",
+	DIRECTOR_GENERAL:                    "Director General",
+	DIRECTOR:                            "Director",
+	ADDITIONAL_SECRETARY:                "Additional Secretary",
+	JOINT_SECRETARY:                     "Joint Secretary",
+	UNDER_SECRETARY:                     "Under Secretary",
+	ASSISTANT_SECRETARY:                 "Assistant Secretary",
+	DEPUTY_SECRETARY:                    "Deputy Secretary",
+	ASSISTANT_DIRECTOR:                  "Assistant Director",
+	DEPUTY_DIRECTOR:                     "Deputy Director",
+	ASSISTANT_DEPUTY_DIRECTOR:           "Assistant Deputy Director",
+	ADVOCATE_GENERAL:                    "Advocate General",
+	COMMISSIONER:                        "Commissioner",
+	DEPUTY_COMMISSIONER:                 "Deputy Commissioner",
+	ASSISTANT_COMMISSIONER:              "Assistant Commissioner",
+	SUB_DIVISIONAL_OFFICER:              "Sub-Division Officer",
+	DEPUTY_SUB_DIVISIONAL_OFFICER:       "Deputy Sub-Division Officer",
+	ASSISTANT_SUB_DIVISIONAL_OFFICER:    "Assistant Sub-Division Officer",
+	DISTRICT_COLLECTOR:                  "District Collector",
+	DEPUTY_DISTRICT_COLLECTOR:           "Deputy District Collector",
+	MEMBER_OF_LEGISLATIVE_ASSEMBLY:      "MLA",
+	MEMBER_OF_LEGISLATIVE_COUNCIL:       "MLC",
+	MEMBER_OF_LEGISLATIVE_PARLIAMENT:    "MLP",
+	MEMBER_OF_LEGISLATIVE_PARLIAMENT_IC: "MLP-IC",
+	MEMBER_OF_LEGISLATIVE_PARLIAMENT_RS: "MLP-RS",
+	MAYOR:                               "Mayor",
+	DEPUTY_MAYOR:                        "Deputy Mayor",
+	MUNICIPAL_COUNCILLORS:               "Municipal Councillors",
+	STANDING_COMMITTEE_CHAIRPERSONS:     "Standing Committee Chairpersons",
+	ALDERMEN:                            "Aldermen",
+	NAGAR_PALIKA_PRESIDENT:              "Nagar Palika President",
+	NAGAR_PALIKA_VICE_PRESIDENT:         "Nagar Palika Vice-President",
+	WARD_MEMBER:                         "Ward Member",
+	MUNICIPAL_COUNCILLOR:                "Municipal Councillor",
+	NOMINATED_MEMBER:                    "Nominated Member",
+	LEADER_OF_OPPOSITION:                "LoP",
 }
 
 const (

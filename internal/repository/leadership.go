@@ -214,7 +214,7 @@ func (r *leadershipRepository) GetRajyaSabhMembersByStateID(stateId string) ([]m
 			WHERE l.state_id = ? AND l."position"  = ? AND l.term_end IS NULL 
 			ORDER BY l.term_start DESC, l.term_end DESC;	
 	`
-	if err := r.DB.Raw(query, stateId, utils.MP_RS).Scan(&results).Error; err != nil {
+	if err := r.DB.Raw(query, stateId, utils.MEMBER_OF_PARLIAMENT_RS).Scan(&results).Error; err != nil {
 		return nil, err
 	}
 	return results, nil

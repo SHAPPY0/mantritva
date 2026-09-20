@@ -28,6 +28,7 @@ type NewsPressPostRepository interface {
 	GetPostsByEntityID(pagination dto.Pagination, entityID int) (*[]model.NewsPressPost, error)
 	GetByMemberIDAndYear(dto.Pagination, int, int) (*[]model.NewsPressPost, error)
 	UpdatePost(string, map[string]interface{}) (bool, error)
+	ConsoleUpdateNewsPressStatus(string, dto.NewsPressStatus, string) error
 	GetByUserID(userID int, pagination dto.Pagination) (*[]model.NewsPressPost, error)
 }
 
@@ -212,6 +213,23 @@ func (r *newsPressPostRepository) GetByMemberIDAndYear(pagination dto.Pagination
 		return &newsPressList, err
 	}
 	return &newsPressList, nil
+}
+
+func (r *newsPressPostRepository) ConsoleUpdateNewsPressStatus(id string, status dto.NewsPressStatus, updatedBy string) error {
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+	filter := bson.M{"_id": objectID}
+	update := bson.M{
+		"$set": bson.M{
+			"status":     status.Status,
+			"updated_by": updatedBy,
+			"updated_at": time.Now(),
+		},
+	}
+	_, err = r.DB.UpdateOne(r.DB.NewsPressPostCollection, filter, update)
+	return err
 }
 
 func (r *newsPressPostRepository) GetByUserID(userID int, pagination dto.Pagination) (*[]model.NewsPressPost, error) {

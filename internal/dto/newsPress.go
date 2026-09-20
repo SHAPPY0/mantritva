@@ -35,6 +35,11 @@ type NewsPressPostRes struct {
 	PostAdmin      *PostAdmin       `json:"post_admin,omitempty"`
 }
 
+type NewsPressStatus struct {
+	ID     string           `json:"id"`
+	Status utils.PostStatus `json:"status"`
+}
+
 type NewsPressShort struct {
 	ID             primitive.ObjectID     `json:"id"`
 	Event          *string                `json:"event"`

@@ -37,6 +37,7 @@ type ConsoleService interface {
 	GetNewsPressList() (*[]dto.NewsPressPostRes, error)
 	GetNewsPressPostByID(string) (*model.NewsPressPost, error)
 	UpdateNewsPressPost(string, map[string]interface{}) (bool, error)
+	NewsPressUpdateStatus(string, dto.NewsPressStatus, string) (bool, error)
 	GetGrievancesList() (*[]model.Grievance, error)
 	GetGrievanceByID(string) (*dto.GrievanceRes, error)
 	GrievanceUpdateStatus(string, dto.GrievanceStatus) (bool, error)
@@ -511,6 +512,14 @@ func (s *consoleService) UpdateNewsPressPost(id string, data map[string]interfac
 		return false, err
 	}
 	return ok, nil
+}
+
+func (s *consoleService) NewsPressUpdateStatus(id string, status dto.NewsPressStatus, updatedBy string) (bool, error) {
+	err := s.NewsPressRepository.ConsoleUpdateNewsPressStatus(id, status, updatedBy)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (s *consoleService) GetGrievancesList() (*[]model.Grievance, error) {

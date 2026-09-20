@@ -86,6 +86,7 @@ func consoleRouter(rg *gin.RouterGroup, services *service.Services) *gin.RouterG
 		console.GET("/news-press", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.GetNewsPressList)
 		console.GET("/news-press/:id", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.GetNewsPressPostByID)
 		console.PUT("/news-press/:id", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.UpdateNewsPressPost)
+		console.PUT("/news-press/:id/updateStatus", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.NewsPressUpdateStatus)
 		console.GET("/grievances", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.GetGrievancesList)
 		console.GET("/grievance/:grievanceID", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.GetGrievanceByID)
 		console.PUT("/grievance/:grievanceID/updateStatus", auth.AuthRequired(true), auth.ValidateVersion(services.UserService), h.GrievanceUpdateStatus)

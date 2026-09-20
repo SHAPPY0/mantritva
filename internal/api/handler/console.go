@@ -386,6 +386,45 @@ func (h *ConsoleHandler) UpdateNewsPressPost(c *gin.Context) {
 	utils.Success(c, "NewsPress Post Updated!", ok)
 }
 
+func (h *ConsoleHandler) NewsPressUpdateStatus(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
+
+	id := c.Param("id")
+	var req dto.NewsPressStatus
+	if err := c.BindJSON(&req); err != nil {
+		utils.Error(c, 400, "Invalid request data", err)
+		return
+	}
+	updatedBy := fmt.Sprintf("%d", authUser.ID)
+	resp, err := h.Service.NewsPressUpdateStatus(id, req, updatedBy)
+	if err != nil {
+		utils.Error(c, 500, "Failed to update news press status", err)
+		return
+	}
+	if req.Status == utils.Published {
+		postId, err := primitive.ObjectIDFromHex(id)
+		if err != nil {
+			utils.Error(c, 500, "Invalid news press post ID", err)
+			return
+		}
+		feed := dto.FeedReq{
+			Type:   utils.NEWSPRESS,
+			PostID: postId,
+			Status: utils.Published,
+		}
+		_, err = h.FeedService.UpdateStatus(authUser.Name, feed)
+		if err != nil {
+			utils.Error(c, 500, "Failed to update news press feed record", err)
+			return
+		}
+	}
+	utils.Success(c, "News press status updated successfully", resp)
+}
+
 func (h *ConsoleHandler) GetGrievancesList(c *gin.Context) {
 	authUser := auth.GetAuthUser(c)
 	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
