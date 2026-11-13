@@ -24,8 +24,10 @@ type MongoDB struct {
 	ScoreCollection         *mongo.Collection
 	ScoreSnapshotCollection *mongo.Collection
 	EventCollection         *mongo.Collection
-	DevelopmentWelfare      *mongo.Collection
-	AnalyticStatsCollection *mongo.Collection
+	DevelopmentWelfare          *mongo.Collection
+	SuggestionCollection        *mongo.Collection
+	SuggestionSupportCollection *mongo.Collection
+	AnalyticStatsCollection     *mongo.Collection
 	Filter                  bson.M
 }
 
@@ -135,6 +137,19 @@ func (m *MongoDB) SetupCollections(dbName string) error {
 	} else {
 		m.AnalyticStatsCollection = db.Collection("analytic_stats")
 	}
+
+	if err := createCollection(db, "suggestions"); err != nil {
+		return err
+	} else {
+		m.SuggestionCollection = db.Collection("suggestions")
+	}
+
+	if err := createCollection(db, "suggestion_supports"); err != nil {
+		return err
+	} else {
+		m.SuggestionSupportCollection = db.Collection("suggestion_supports")
+	}
+
 	return nil
 }
 

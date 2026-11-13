@@ -25,6 +25,7 @@ type GrievanceStatus string
 type KRA string
 type DevelopmentStatus string
 type GrievanceSeverity string
+type SuggestionStatus string
 type OTPMode string
 type OTPPurpose string
 type LocalBodyType string

@@ -41,6 +41,9 @@ type ConsoleService interface {
 	GetGrievancesList() (*[]model.Grievance, error)
 	GetGrievanceByID(string) (*dto.GrievanceRes, error)
 	GrievanceUpdateStatus(string, dto.GrievanceStatus) (bool, error)
+	GetSuggestionsList() (*[]model.Suggestion, error)
+	GetSuggestionByID(string) (*dto.SuggestionRes, error)
+	SuggestionUpdateStatus(string, dto.SuggestionStatusUpdate) (bool, error)
 	GetDevelopmentWelfaresList() (*[]model.DevelopmentWelfare, error)
 	GetDevelopmentWelfareByID(string) (*dto.DevelopmentWelfareRes, error)
 	DevelopmentWelfareUpdateStatus(string, dto.DevelopmentWelfareStatus) (bool, error)
@@ -66,6 +69,7 @@ type consoleService struct {
 	NewsPressRepository          repository.NewsPressPostRepository
 	EntityRepository             repository.EntityRepository
 	GrievanceRepository          repository.GrievanceRepository
+	SuggestionRepository         repository.SuggestionRepository
 	DevelopmentWelfareRepository repository.DevelopmentWelfareRepository
 	DistrictRepository           repository.DistrictRepository
 	ReportRepository             repository.ReportRepository
@@ -88,6 +92,7 @@ func NewConsoleService(repos *repository.Repos) ConsoleService {
 		NewsPressRepository:          repos.NewsPressPost,
 		EntityRepository:             repos.Entity,
 		GrievanceRepository:          repos.Grievance,
+		SuggestionRepository:         repos.Suggestion,
 		DevelopmentWelfareRepository: repos.DevelopmentWelfare,
 		DistrictRepository:           repos.District,
 		ReportRepository:             repos.Report,
@@ -617,6 +622,52 @@ func (s *consoleService) GrievanceUpdateStatus(grievanceID string, status dto.Gr
 	var err error
 	err = s.GrievanceRepository.ConsoleUpdateGrievanceStatus(grievanceID, status)
 	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (s *consoleService) GetSuggestionsList() (*[]model.Suggestion, error) {
+	suggestions, err := s.SuggestionRepository.ConsoleGetSuggestionsList()
+	if err != nil {
+		return nil, err
+	}
+	return &suggestions, nil
+}
+
+func (s *consoleService) GetSuggestionByID(suggestionID string) (*dto.SuggestionRes, error) {
+	var suggestionRes dto.SuggestionRes
+	suggestion, err := s.SuggestionRepository.ConsoleGetSuggestionByID(suggestionID)
+	if err != nil {
+		return nil, err
+	}
+	suggestionRes.Suggestion = *suggestion
+
+	if !suggestion.HideIdentity && suggestion.CreatedBy != "" {
+		id, err := utils.StrToInt(suggestion.CreatedBy)
+		if err != nil {
+			log.Errorf("Error: Error converting CreatedBy to int")
+		} else {
+			user, err := s.UserRepository.GetByID(id)
+			if err != nil {
+				log.Errorf("Error: Error fetching user details by ID %+v", err)
+			} else {
+				suggestionRes.User = dto.UserClaim{
+					UserID: user.UserID,
+					Name:   user.Name,
+					Email:  user.Email,
+				}
+			}
+		}
+	}
+	return &suggestionRes, nil
+}
+
+func (s *consoleService) SuggestionUpdateStatus(
+	suggestionID string,
+	status dto.SuggestionStatusUpdate,
+) (bool, error) {
+	if err := s.SuggestionRepository.ConsoleUpdateSuggestionStatus(suggestionID, status); err != nil {
 		return false, err
 	}
 	return true, nil

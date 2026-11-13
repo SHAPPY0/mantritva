@@ -493,6 +493,72 @@ func (h *ConsoleHandler) GrievanceUpdateStatus(c *gin.Context) {
 	utils.Success(c, "Grievance status updated successfully", resp)
 }
 
+func (h *ConsoleHandler) GetSuggestionsList(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
+	resp, err := h.Service.GetSuggestionsList()
+	if err != nil {
+		utils.Error(c, 500, "Failed to get suggestions list", err)
+		return
+	}
+	utils.Success(c, "", resp)
+}
+
+func (h *ConsoleHandler) GetSuggestionByID(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
+	suggestionID := c.Param("suggestionID")
+	resp, err := h.Service.GetSuggestionByID(suggestionID)
+	if err != nil {
+		utils.Error(c, 500, "Failed to get suggestion", err)
+		return
+	}
+	utils.Success(c, "", resp)
+}
+
+func (h *ConsoleHandler) SuggestionUpdateStatus(c *gin.Context) {
+	authUser := auth.GetAuthUser(c)
+	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {
+		utils.Error(c, 401, "Access Denied", nil)
+		return
+	}
+
+	suggestionID := c.Param("suggestionID")
+	var req dto.SuggestionStatusUpdate
+	if err := c.BindJSON(&req); err != nil {
+		utils.Error(c, 400, "Invalid request data", err)
+		return
+	}
+	resp, err := h.Service.SuggestionUpdateStatus(suggestionID, req)
+	if err != nil {
+		utils.Error(c, 500, "Failed to update suggestion status", err)
+		return
+	}
+	if req.Status == utils.SUGGESTION_PUBLISHED {
+		postID, err := primitive.ObjectIDFromHex(req.ID)
+		if err != nil {
+			utils.Error(c, 500, "Invalid suggestion ID", err)
+			return
+		}
+		_, err = h.FeedService.Create(dto.FeedReq{
+			Type:   utils.SUGGESTION,
+			PostID: postID,
+			Status: utils.Published,
+		})
+		if err != nil {
+			utils.Error(c, 500, "Failed to create suggestion feed", err)
+			return
+		}
+	}
+	utils.Success(c, "Suggestion status updated successfully", resp)
+}
+
 func (h *ConsoleHandler) GetDevelopmentWelfaresList(c *gin.Context) {
 	authUser := auth.GetAuthUser(c)
 	if !authUser.Found || !authUser.IsAdminOrSuperAdmin() {

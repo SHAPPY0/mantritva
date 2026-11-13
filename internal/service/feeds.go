@@ -31,6 +31,7 @@ type feedService struct {
 	StateRepository              repository.StateRepository
 	EntityRepository             repository.EntityRepository
 	GrievanceRepository          repository.GrievanceRepository
+	SuggestionRepository         repository.SuggestionRepository
 	DevelopmentWelfareRepository repository.DevelopmentWelfareRepository
 	ReportRepository             repository.ReportRepository
 	ReactionRepository           repository.ReactionRepository
@@ -55,6 +56,7 @@ func NewFeedService(repos *repository.Repos) FeedService {
 		StateRepository:              repos.State,
 		EntityRepository:             repos.Entity,
 		GrievanceRepository:          repos.Grievance,
+		SuggestionRepository:         repos.Suggestion,
 		DevelopmentWelfareRepository: repos.DevelopmentWelfare,
 		ReportRepository:             repos.Report,
 		ReactionRepository:           repos.Reaction,
@@ -111,6 +113,13 @@ func (s *feedService) GetLatestFeed(pagination dto.Pagination, userID int) (*[]d
 			} else {
 				preparedFeed.Feed = dw
 			}
+		case string(utils.SUGGESTION):
+			sg, err := s.GetSuggestionFeed(userID, feed.PostID)
+			if err != nil {
+				log.Errorf("Error while getting suggestion feed by %s: %v", feed.PostID, err)
+			} else {
+				preparedFeed.Feed = sg
+			}
 		default:
 			log.Info("No Valid Feed Type Found")
 		}
@@ -146,6 +155,12 @@ func (s *feedService) getPostSummary(feedType utils.FeedType, postID primitive.O
 			return nil, err
 		}
 		return &postSummary{ID: g.ID, UpvoteCount: g.UpvoteCount, DownvoteCount: g.DownvoteCount}, nil
+	case utils.SUGGESTION:
+		sg, err := s.SuggestionRepository.GetByID(postID)
+		if err != nil {
+			return nil, err
+		}
+		return &postSummary{ID: sg.ID, UpvoteCount: sg.UpvoteCount, DownvoteCount: sg.DownvoteCount}, nil
 
 	default:
 		return nil, fmt.Errorf("Unsupported feed type: %v", feedType)
@@ -160,6 +175,8 @@ func (s *feedService) persistPostCounts(feedType utils.FeedType, ps *postSummary
 		return s.DevelopmentWelfareRepository.UpdateVoteCountsByID(ps.ID, ps.UpvoteCount, ps.DownvoteCount)
 	case utils.GRIEVANCE:
 		return s.GrievanceRepository.UpdateVoteCountsByID(ps.ID, ps.UpvoteCount, ps.DownvoteCount)
+	case utils.SUGGESTION:
+		return s.SuggestionRepository.UpdateVoteCountsByID(ps.ID, ps.UpvoteCount, ps.DownvoteCount)
 	default:
 		return fmt.Errorf("Unsupported feed type: %v", feedType)
 	}
@@ -255,7 +272,7 @@ func (s *feedService) SaveReaction(req dto.ReactionReq, userIP string) (bool, er
 		reaction.LockedAt = &lockTime
 		reaction.Locked = false
 	}
-	if req.FeedType == utils.NEWSPRESS || req.FeedType == utils.DEVELOPMENT || req.FeedType == utils.GRIEVANCE {
+	if req.FeedType == utils.NEWSPRESS || req.FeedType == utils.DEVELOPMENT || req.FeedType == utils.GRIEVANCE || req.FeedType == utils.SUGGESTION {
 		reactionScore := 0
 		questionnaire, err := s.ReportRepository.GetQuestionnairesByCategory(string(req.FeedType))
 		if err != nil {
@@ -451,6 +468,59 @@ func (s *feedService) GetGrievanceFeed(userID int, postID primitive.ObjectID) (*
 	return &grievanceRes, nil
 }
 
+func (s *feedService) GetSuggestionFeed(userID int, postID primitive.ObjectID) (*dto.SuggestionShort, error) {
+	var suggestionRes dto.SuggestionShort
+	suggestion, err := s.SuggestionRepository.GetByID(postID)
+	if err != nil {
+		return nil, err
+	}
+	suggestionRes = dto.SuggestionShort{
+		ID:            suggestion.ID,
+		SuggestionID:  suggestion.SuggestionID,
+		Title:         suggestion.Title,
+		Suggestion:    suggestion.Suggestion,
+		Topic:         suggestion.Topic,
+		Tags:          suggestion.Tags,
+		Scope:         suggestion.Scope,
+		ScopeID:       suggestion.ScopeID,
+		Status:        suggestion.Status,
+		UpvoteCount:   suggestion.UpvoteCount,
+		DownvoteCount: suggestion.DownvoteCount,
+		CreatedAt:     suggestion.CreatedAt,
+	}
+	if userID > 0 {
+		reaction, _ := s.ReactionRepository.GetByUserIDAndPostID(userID, suggestion.ID)
+		if reaction != nil {
+			suggestionRes.Reaction = utils.Vote(reaction.Reaction)
+			if reaction.LockedAt != nil && time.Now().After(*reaction.LockedAt) {
+				suggestionRes.ReactionLocked = true
+			}
+		}
+	}
+	if suggestion.CreatedBy != "" && !suggestion.HideIdentity {
+		createdByInt, err := utils.StrToInt(suggestion.CreatedBy)
+		if err != nil {
+			log.Errorf("Error converting createdBy to int: %v", err)
+		} else if createdByInt > 0 {
+			postAdmin, err := s.UserRepository.GetByID(createdByInt)
+			if err == nil && postAdmin != nil && postAdmin.Name != "" {
+				suggestionRes.PostAdmin = &dto.PostAdmin{Name: postAdmin.Name, UserID: suggestion.CreatedBy}
+			}
+		}
+	}
+	if ques, _ := s.ReportRepository.GetQuestionnairesByCategory(string(utils.SUGGESTION)); ques != nil {
+		suggestionRes.Questionnaire = new([]dto.Questionnaire)
+		for _, q := range *ques {
+			*suggestionRes.Questionnaire = append(*suggestionRes.Questionnaire, dto.Questionnaire{
+				ID:       q.ID,
+				Title:    q.Title,
+				VoteType: &q.VoteType,
+			})
+		}
+	}
+	return &suggestionRes, nil
+}
+
 func (s *feedService) GetDevelopmentWelfareShort(userID int, postID primitive.ObjectID) (*dto.DevelopmentWelfareShort, error) {
 	var devWelRes dto.DevelopmentWelfareShort
 	devWel, err := s.DevelopmentWelfareRepository.GetByID(postID)
@@ -598,6 +668,13 @@ func (s *feedService) GetPostByFeedID(feedID string) (string, any, error) {
 				log.Errorf("Error while getting development welfare feed by %s: %v", feed.PostID, err)
 			} else {
 				post = dw
+			}
+		case string(utils.SUGGESTION):
+			sg, err := s.GetSuggestionFeed(0, feed.PostID)
+			if err != nil {
+				log.Errorf("Error while getting suggestion feed by %s: %v", feed.PostID, err)
+			} else {
+				post = sg
 			}
 		default:
 			log.Info("No Valid Feed Type Found")

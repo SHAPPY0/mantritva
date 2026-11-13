@@ -44,6 +44,7 @@ const (
 	NEWSPRESS   FeedType = "NEWSPRESS"
 	DEVELOPMENT FeedType = "DEVELOPMENT & WELFARE"
 	GRIEVANCE   FeedType = "GRIEVANCE"
+	SUGGESTION  FeedType = "SUGGESTION"
 )
 
 const (
@@ -203,6 +204,19 @@ var KraDisplayMap = map[KRA]string{
 	KRA_CALRECORDS:   "Criminal & Legal Records Score",
 	KRA_NEWSPRESSES:  "Public Statements Reception Score",
 }
+
+const (
+	SUGGESTION_SUBMITTED         SuggestionStatus = "SUBMITTED"
+	SUGGESTION_UNDER_REVIEW      SuggestionStatus = "UNDER_REVIEW"
+	SUGGESTION_PUBLISHED         SuggestionStatus = "PUBLISHED"
+	SUGGESTION_ACKNOWLEDGED      SuggestionStatus = "ACKNOWLEDGED"
+	SUGGESTION_UNDER_EVALUATION  SuggestionStatus = "UNDER_EVALUATION"
+	SUGGESTION_ADOPTED           SuggestionStatus = "ADOPTED"
+	SUGGESTION_PARTIALLY_ADOPTED SuggestionStatus = "PARTIALLY_ADOPTED"
+	SUGGESTION_DECLINED          SuggestionStatus = "DECLINED"
+	SUGGESTION_REJECTED          SuggestionStatus = "REJECTED"
+	SUGGESTION_ARCHIVED          SuggestionStatus = "ARCHIVED"
+)
 
 const (
 	GRIEVANCE_LOW      GrievanceSeverity = "LOW"

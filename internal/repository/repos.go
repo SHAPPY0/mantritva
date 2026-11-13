@@ -33,6 +33,8 @@ type Repos struct {
 	Reaction           ReactionRepository
 	AnalyticStat       AnalyticStatRepository
 	LocalBody          LocalBodyRepository
+	Suggestion         SuggestionRepository
+	SuggestionSupport  SuggestionSupportRepository
 }
 
 func NewRepos(db *gorm.DB, mongoDB *config.MongoDB) *Repos {
@@ -64,5 +66,7 @@ func NewRepos(db *gorm.DB, mongoDB *config.MongoDB) *Repos {
 		AnalyticStat:       NewAnalyticStat(mongoDB),
 		LocalBody:          NewLocalBodyRepository(db),
 		UserRole:           NewUserRoleRepository(db),
+		Suggestion:         NewSuggestionRepository(db, mongoDB),
+		SuggestionSupport:  NewSuggestionSupportRepository(mongoDB),
 	}
 }

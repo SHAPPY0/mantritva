@@ -55,6 +55,7 @@ func SetupRouter(db *gorm.DB, mongoDB *config.MongoDB) (*gin.Engine, *cron.CronJ
 		developmentWelfareRouter(v1, services)
 		commonRouter(v1, services)
 		localBodyRouter(v1, services)
+		suggestionRouter(v1, services)
 	}
 
 	cj := cron.NewCronJob()
