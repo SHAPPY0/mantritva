@@ -9,6 +9,7 @@ import (
 	"github.com/shappy0/mantritva/internal/dto"
 	"github.com/shappy0/mantritva/internal/service"
 	"github.com/shappy0/mantritva/pkg/auth"
+	"github.com/shappy0/mantritva/pkg/log"
 	"github.com/shappy0/mantritva/pkg/utils"
 )
 
@@ -91,7 +92,13 @@ func (h *SuggestionHandler) GetBySuggestionID(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.Service.GetBySuggestionID(suggestionID)
+	userID, err := auth.GetKeyInCtx[int](c, "user_id")
+	if err != nil {
+		utils.Error(c, 401, "Unauthorized Access", nil)
+		return
+	}
+	log.Infof("%d", userID)
+	resp, err := h.Service.GetBySuggestionID(userID, suggestionID)
 	if err != nil {
 		utils.Error(c, 404, "Suggestion not found", err)
 		return

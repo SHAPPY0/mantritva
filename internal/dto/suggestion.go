@@ -48,7 +48,10 @@ type SuggestionCreateRes struct {
 
 type SuggestionRes struct {
 	model.Suggestion
-	User UserClaim `json:"user,omitempty"`
+	User           UserClaim  `json:"user,omitempty"`
+	PostAdmin      *PostAdmin `json:"post_admin,omitempty"`
+	Reaction       utils.Vote `json:"reaction"`
+	ReactionLocked bool       `json:"reaction_locked"`
 }
 
 type SuggestionStatusUpdate struct {

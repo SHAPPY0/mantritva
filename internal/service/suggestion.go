@@ -3,6 +3,7 @@ package service
 import (
 	"crypto/rand"
 	"encoding/json"
+	"fmt"
 	"math/big"
 	"path/filepath"
 	"strings"
@@ -21,16 +22,20 @@ import (
 type SuggestionService interface {
 	Create(*gin.Context, dto.SuggestionCreate) (*dto.SuggestionCreateRes, error)
 	ListByUser(string) ([]model.Suggestion, error)
-	GetBySuggestionID(string) (*model.Suggestion, error)
+	GetBySuggestionID(int, string) (*dto.SuggestionRes, error)
 }
 
 type suggestionService struct {
-	Repository repository.SuggestionRepository
+	Repository   repository.SuggestionRepository
+	UserRepo     repository.UserRepository
+	ReactionRepo repository.ReactionRepository
 }
 
 func NewSuggestionService(repos *repository.Repos) SuggestionService {
 	return &suggestionService{
-		Repository: repos.Suggestion,
+		Repository:   repos.Suggestion,
+		UserRepo:     repos.User,
+		ReactionRepo: repos.Reaction,
 	}
 }
 
@@ -105,15 +110,41 @@ func (s *suggestionService) ListByUser(userID string) ([]model.Suggestion, error
 	return s.Repository.ListByUser(userID)
 }
 
-func (s *suggestionService) GetBySuggestionID(suggestionID string) (*model.Suggestion, error) {
+func (s *suggestionService) GetBySuggestionID(userID int, suggestionID string) (*dto.SuggestionRes, error) {
+	var result dto.SuggestionRes
 	suggestion, err := s.Repository.GetBySuggestionID(suggestionID)
 	if err != nil {
 		return nil, err
 	}
+	if suggestion == nil {
+		return nil, fmt.Errorf("suggestion %s is nil", suggestionID)
+	}
+	result.Suggestion = *suggestion
+	createdByInt, err := utils.StrToInt(suggestion.CreatedBy)
+	if err != nil {
+		log.Errorf("Error converting created by to int %s", suggestion.CreatedBy)
+	}
+	if createdByInt > 0 && s.UserRepo != nil {
+		user, err := s.UserRepo.GetByID(createdByInt)
+		if err == nil && user != nil {
+			result.PostAdmin = &dto.PostAdmin{Name: user.Name, UserID: fmt.Sprintf("%d", user.ID)}
+		}
+	}
+	log.Infof("%d", userID)
+	if userID > 0 && s.ReactionRepo != nil {
+		reaction, _ := s.ReactionRepo.GetByUserIDAndPostID(userID, suggestion.ID)
+		log.Infof("%v", reaction)
+		if reaction != nil {
+			result.Reaction = utils.Vote(reaction.Reaction)
+			if reaction.LockedAt != nil && time.Now().After(*reaction.LockedAt) {
+				result.ReactionLocked = true
+			}
+		}
+	}
 	if err := s.Repository.IncrementViewCount(suggestion.ID); err != nil {
 		log.Warnf("Failed to increment view count for suggestion %s: %v", suggestionID, err)
 	}
-	return suggestion, nil
+	return &result, nil
 }
 
 func generateSuggestionID(n int) string {
