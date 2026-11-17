@@ -15,20 +15,22 @@ import (
 )
 
 type MongoDB struct {
-	Client                  *mongo.Client
-	FeedCollection          *mongo.Collection
-	NewsPressPostCollection *mongo.Collection
-	ReactionCollection      *mongo.Collection
-	GrievanceCollection     *mongo.Collection
-	GrievanceCosignCollection *mongo.Collection
-	ScoreCollection         *mongo.Collection
-	ScoreSnapshotCollection *mongo.Collection
-	EventCollection         *mongo.Collection
+	Client                      *mongo.Client
+	FeedCollection              *mongo.Collection
+	NewsPressPostCollection     *mongo.Collection
+	ReactionCollection          *mongo.Collection
+	GrievanceCollection         *mongo.Collection
+	GrievanceCosignCollection   *mongo.Collection
+	ScoreCollection             *mongo.Collection
+	ScoreSnapshotCollection     *mongo.Collection
+	EventCollection             *mongo.Collection
 	DevelopmentWelfare          *mongo.Collection
 	SuggestionCollection        *mongo.Collection
 	SuggestionSupportCollection *mongo.Collection
+	PollCollection              *mongo.Collection
+	PollVoteCollection          *mongo.Collection
 	AnalyticStatsCollection     *mongo.Collection
-	Filter                  bson.M
+	Filter                      bson.M
 }
 
 var (
@@ -148,6 +150,24 @@ func (m *MongoDB) SetupCollections(dbName string) error {
 		return err
 	} else {
 		m.SuggestionSupportCollection = db.Collection("suggestion_supports")
+	}
+
+	if err := createCollection(db, "polls"); err != nil {
+		return err
+	} else {
+		m.PollCollection = db.Collection("polls")
+	}
+	if err := createCollection(db, "poll_votes"); err != nil {
+		return err
+	} else {
+		m.PollVoteCollection = db.Collection("poll_votes")
+		_, err := m.PollVoteCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+			Keys:    bson.D{{Key: "poll_id", Value: 1}, {Key: "user_id", Value: 1}},
+			Options: options.Index().SetUnique(true),
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

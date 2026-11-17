@@ -45,6 +45,7 @@ const (
 	DEVELOPMENT FeedType = "DEVELOPMENT & WELFARE"
 	GRIEVANCE   FeedType = "GRIEVANCE"
 	SUGGESTION  FeedType = "SUGGESTION"
+	POLL        FeedType = "POLL"
 )
 
 const (

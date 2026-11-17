@@ -20,6 +20,7 @@ type Services struct {
 	AnalyticStatsService      AnalyticStatsService
 	LocalBodyService          *LocalBodyService
 	SuggestionService         SuggestionService
+	PollService               PollService
 }
 
 func NewServices(repos *repository.Repos) *Services {
@@ -36,6 +37,7 @@ func NewServices(repos *repository.Repos) *Services {
 		AnalyticStatsService:      NewAnalyticStatService(repos),
 		LocalBodyService:          NewLocalBodyService(repos),
 		SuggestionService:         NewSuggestionService(repos),
+		PollService:               NewPollService(repos),
 	}
 	svcs.ReportService = NewReportService(repos, svcs)
 	return svcs

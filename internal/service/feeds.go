@@ -38,6 +38,8 @@ type feedService struct {
 	GrievanceCosignRepository    repository.GrievanceCosignRepository
 	ReactionQueue                chan dto.ReactionReq
 	UserRepository               repository.UserRepository
+	PollRepository               repository.PollRepository
+	PollService                  PollService
 }
 
 type postSummary struct {
@@ -63,6 +65,8 @@ func NewFeedService(repos *repository.Repos) FeedService {
 		GrievanceCosignRepository:    repos.GrievanceCosign,
 		ReactionQueue:                make(chan dto.ReactionReq, 500),
 		UserRepository:               repos.User,
+		PollRepository:               repos.Poll,
+		PollService:                  NewPollService(repos),
 	}
 	go svc.reactionQueueListener()
 	return svc
@@ -119,6 +123,13 @@ func (s *feedService) GetLatestFeed(pagination dto.Pagination, userID int) (*[]d
 				log.Errorf("Error while getting suggestion feed by %s: %v", feed.PostID, err)
 			} else {
 				preparedFeed.Feed = sg
+			}
+		case string(utils.POLL):
+			p, err := s.PollService.Get(userID, feed.PostID)
+			if err != nil {
+				log.Errorf("Error while getting poll feed by %s: %v", feed.PostID, err)
+			} else {
+				preparedFeed.Feed = p
 			}
 		default:
 			log.Info("No Valid Feed Type Found")

@@ -56,11 +56,13 @@ func SetupRouter(db *gorm.DB, mongoDB *config.MongoDB) (*gin.Engine, *cron.CronJ
 		commonRouter(v1, services)
 		localBodyRouter(v1, services)
 		suggestionRouter(v1, services)
+		pollRouter(v1, services)
 	}
 
 	cj := cron.NewCronJob()
 	cj.AddFunc("@hourly", services.ReportService.GeneratReportCron)
 	cj.AddFunc("@monthly", services.ReportService.MonthlySnapShotCron)
+	cj.AddFunc("@hourly", func() { _ = services.PollService.CloseExpired() })
 
 	return r, cj
 }
